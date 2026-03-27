@@ -3,7 +3,10 @@
     "allow": [
       "Bash(mvn compile:*)",
       "Bash(chmod:*)",
-      "Bash(mvn clean:*)"
+      "Bash(mvn clean:*)",
+      "Bash(cd:*)",
+      "Bash(cp:*)",
+      "Bash(mvn -q clean test)"
     ]
   }
 }

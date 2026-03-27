@@ -32,17 +32,18 @@ CaseHub is a lightweight case management framework implementing the classic Blac
 - Maven 3.9+
 - Quarkus 3.17.5
 
-### Run the Example
+### Run the Examples
 
 ```bash
 # Clone the repository
 git clone <repository-url>
 cd casehub
 
-# Compile
+# Compile all modules
 mvn compile
 
-# Run the document analysis example
+# Run the document analysis examples
+cd casehub-examples
 mvn quarkus:dev
 ```
 
@@ -50,7 +51,7 @@ mvn quarkus:dev
 
 ```bash
 # No dependencies - runs anywhere!
-cd casehub/src/main/java
+cd casehub-examples/src/main/java
 javac io/casehub/examples/SimpleDocumentAnalysis.java
 java io.casehub.examples.SimpleDocumentAnalysis
 ```
@@ -197,26 +198,31 @@ public class LlmAnalysisTaskDefinition implements TaskDefinition {
 
 ## 📁 Project Structure
 
+CaseHub is a multi-module Maven project:
+
 ```
 casehub/
-├── src/main/java/io/casehub/
-│   ├── core/                    # CaseFile, TaskDefinition, ListenerEvaluator
-│   ├── control/                 # CasePlanModel, PlanningStrategy, PlanItem
-│   ├── coordination/            # CaseEngine, PropagationContext, LineageService
-│   ├── worker/                  # Task, Worker, TaskBroker, WorkerRegistry
-│   ├── resilience/              # RetryPolicy, Timeout, DeadLetter, Idempotency
-│   ├── error/                   # Exception types, ErrorInfo
-│   └── examples/                # Complete working examples
+├── pom.xml                      # Parent POM
+├── casehub-core/                # Core framework
+│   └── src/main/java/io/casehub/
+│       ├── core/                # CaseFile, TaskDefinition, ListenerEvaluator
+│       ├── control/             # CasePlanModel, PlanningStrategy, PlanItem
+│       ├── coordination/        # CaseEngine, PropagationContext, LineageService
+│       ├── worker/              # Task, Worker, TaskBroker, WorkerRegistry
+│       ├── resilience/          # RetryPolicy, Timeout, DeadLetter, Idempotency
+│       └── error/               # Exception types, ErrorInfo
+├── casehub-examples/            # Working examples
+│   └── src/main/java/io/casehub/examples/
 │       ├── SimpleDocumentAnalysis.java       # Standalone conceptual demo
 │       ├── DocumentAnalysisApp.java          # Real implementation
 │       └── workers/
 │           ├── LlmReasoningWorker.java       # Claude API integration
 │           ├── LlmAnalysisTaskDefinition.java
-│           └── DocumentAnalysisWithLlmApp.java
-├── docs/                        # Documentation
-│   ├── CaseHub_Design_Document.md
-│   └── examples/
-└── pom.xml
+│           ├── DocumentAnalysisWithLlmApp.java
+│           └── AutonomousMonitoringWorker.java
+└── docs/                        # Documentation
+    ├── CaseHub_Design_Document.md
+    └── examples/
 ```
 
 ---
@@ -236,7 +242,7 @@ Shows core concepts with no dependencies.
 ### Real Implementation (10 minutes)
 
 ```bash
-cd casehub
+cd casehub-examples
 mvn quarkus:dev
 ```
 
@@ -246,13 +252,13 @@ Demonstrates actual CaseHub APIs with Quarkus.
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-your-key
-cd casehub
+cd casehub-examples
 mvn quarkus:dev
 ```
 
 Shows dual execution model with Claude API Worker.
 
-**See**: [`casehub/src/main/java/io/casehub/examples/README.md`](casehub/src/main/java/io/casehub/examples/README.md)
+**See**: [`casehub-examples/src/main/java/io/casehub/examples/README.md`](casehub-examples/src/main/java/io/casehub/examples/README.md)
 
 ---
 
@@ -298,7 +304,7 @@ casehub.worker.claim-timeout=10s
 casehub.dead-letter.retention-days=7
 ```
 
-See: [`casehub/src/main/resources/application.properties`](casehub/src/main/resources/application.properties)
+See: [`casehub-core/src/main/resources/application.properties`](casehub-core/src/main/resources/application.properties)
 
 ---
 

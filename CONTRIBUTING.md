@@ -94,29 +94,37 @@ Unsure where to begin? You can start by looking through issues labeled:
 git clone https://github.com/your-username/casehub.git
 cd casehub
 
-# Build
+# Build all modules
 mvn clean compile
 
 # Run tests
 mvn test
 
-# Run in dev mode
+# Run examples in dev mode
+cd casehub-examples
 mvn quarkus:dev
 ```
 
 ### Project Structure
 
+CaseHub is a multi-module Maven project:
+
 ```
 casehub/
-├── src/main/java/io/casehub/
-│   ├── core/           # Core CaseFile, TaskDefinition logic
-│   ├── control/        # CasePlanModel, PlanningStrategy
-│   ├── coordination/   # CaseEngine orchestration
-│   ├── worker/         # Task model, Workers
-│   ├── resilience/     # Retry, timeout, dead-letter
-│   └── examples/       # Working examples
-├── src/test/java/      # Tests
-└── docs/               # Documentation
+├── pom.xml                      # Parent POM
+├── casehub-core/                # Core framework
+│   ├── src/main/java/io/casehub/
+│   │   ├── core/                # Core CaseFile, TaskDefinition logic
+│   │   ├── control/             # CasePlanModel, PlanningStrategy
+│   │   ├── coordination/        # CaseEngine orchestration
+│   │   ├── worker/              # Task model, Workers
+│   │   ├── resilience/          # Retry, timeout, dead-letter
+│   │   └── error/               # Exception types
+│   └── src/test/java/           # Core tests
+├── casehub-examples/            # Working examples
+│   ├── src/main/java/io/casehub/examples/
+│   └── src/test/java/           # Example tests
+└── docs/                        # Documentation
 ```
 
 ---
@@ -136,8 +144,12 @@ casehub/
 
 3. **Test thoroughly**
    ```bash
+   # From root - tests all modules
    mvn clean test
-   mvn verify
+
+   # Test specific module
+   cd casehub-core && mvn test
+   cd casehub-examples && mvn test
    ```
 
 4. **Commit with meaningful messages**
@@ -251,10 +263,13 @@ if (worker.isPresent()) {
 ### Test Organization
 
 ```
-src/test/java/io/casehub/
+casehub-core/src/test/java/io/casehub/
 ├── core/               # Unit tests for core components
 ├── integration/        # Integration tests
-└── examples/           # Example tests
+└── ...
+
+casehub-examples/src/test/java/io/casehub/examples/
+└── ...                 # Example tests
 ```
 
 ### Writing Tests
@@ -339,14 +354,15 @@ class DocumentAnalysisIntegrationTest {
 ### Running Tests
 
 ```bash
-# All tests
+# All tests (all modules)
 mvn test
 
-# Specific test class
-mvn test -Dtest=CaseFileTest
+# Specific module
+cd casehub-core && mvn test
+cd casehub-examples && mvn test
 
-# Integration tests only
-mvn verify -Pintegration-tests
+# Specific test class
+cd casehub-core && mvn test -Dtest=CaseFileTest
 
 # With coverage
 mvn clean test jacoco:report

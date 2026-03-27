@@ -2,17 +2,50 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Project Structure
+
+CaseHub is a multi-module Maven project:
+
+```
+casehub/
+├── pom.xml                    # Parent POM
+├── casehub-core/             # Core framework implementation
+│   └── src/main/java/io/casehub/
+│       ├── core/             # CaseFile, TaskDefinition, etc.
+│       ├── control/          # CasePlanModel, PlanningStrategy
+│       ├── coordination/     # CaseEngine, PropagationContext
+│       ├── worker/           # Task, Worker, TaskBroker
+│       ├── resilience/       # Retry, timeout, dead-letter
+│       └── error/            # Exception types
+└── casehub-examples/         # Examples demonstrating architecture
+    └── src/main/java/io/casehub/examples/
+        ├── SimpleDocumentAnalysis.java
+        ├── DocumentAnalysisApp.java
+        └── workers/
+            ├── LlmReasoningWorker.java
+            ├── LlmAnalysisTaskDefinition.java
+            ├── DocumentAnalysisWithLlmApp.java
+            └── AutonomousMonitoringWorker.java
+```
+
 ## Build Commands
 
 ```bash
-mvn compile                          # Compile all 53 source files
-mvn clean compile                    # Clean build
-mvn test -Dtest=TestClassName        # Run a single test class
-mvn clean test                       # Run all tests
-mvn clean quarkus:dev                # Quarkus dev mode with hot reload
+# From root directory - builds all modules
+mvn compile                          # Compile all modules
+mvn clean compile                    # Clean build all modules
+mvn test                             # Run all tests
+mvn clean test                       # Clean and test all modules
+
+# Build specific module
+cd casehub-core && mvn compile       # Build core only
+cd casehub-examples && mvn compile   # Build examples only
+
+# Run examples (Quarkus dev mode)
+cd casehub-examples && mvn quarkus:dev
 ```
 
-Build runs from the `casehub/` module directory. Java 21, Quarkus 3.17.5, Maven.
+**Requirements:** Java 21, Quarkus 3.17.5, Maven 3.9+
 
 ## Architecture
 
@@ -35,18 +68,29 @@ CaseEngine.createAndSolve(caseType, initialState)
 
 **TaskBroker** accepts TaskRequests, **TaskScheduler** selects a **Worker** by capability match, worker executes and returns TaskResult.
 
-### Package Structure (`casehub/src/main/java/io/casehub/`)
+**Autonomous Workers:** CaseHub also supports decentralized workers that work on their own agency. Autonomous workers monitor external systems, decide when work is needed, and notify the system via `WorkerRegistry.notifyAutonomousWork()`. These tasks have `TaskOrigin.AUTONOMOUS` (vs `BROKER_ALLOCATED`) and fully integrate with PropagationContext for lineage tracking. See `casehub/src/main/java/io/casehub/examples/workers/AutonomousMonitoringWorker.java`.
+
+### Package Structure
+
+**casehub-core module** (`casehub-core/src/main/java/io/casehub/`):
 
 | Package | Responsibility |
 |---------|---------------|
 | `core/` | CaseFile, TaskDefinition, TaskDefinitionRegistry, ListenerEvaluator, CaseStatus |
 | `control/` | CasePlanModel, PlanItem, PlanningStrategy — control reasoning layer |
 | `coordination/` | CaseEngine (orchestrator), PropagationContext, LineageService |
-| `worker/` | Task, TaskBroker, Worker, TaskRegistry, TaskScheduler |
+| `worker/` | Task, TaskBroker, Worker, TaskRegistry, TaskScheduler, TaskOrigin |
 | `resilience/` | RetryPolicy, TimeoutEnforcer, PoisonPillDetector, DeadLetterQueue, IdempotencyService |
 | `error/` | Exception types and ErrorInfo |
 | `core/spi/` | Storage provider interfaces (CaseFileStorageProvider, TaskStorageProvider, PropagationStorageProvider) |
 | `annotation/` | CaseType CDI qualifier |
+
+**casehub-examples module** (`casehub-examples/src/main/java/io/casehub/examples/`):
+
+| Package | Contents |
+|---------|----------|
+| `examples/` | SimpleDocumentAnalysis.java (conceptual), DocumentAnalysisApp.java (real implementation) |
+| `examples/workers/` | LlmReasoningWorker, LlmAnalysisTaskDefinition, DocumentAnalysisWithLlmApp, AutonomousMonitoringWorker |
 
 ### Key Flow
 

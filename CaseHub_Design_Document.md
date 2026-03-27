@@ -580,7 +580,132 @@ public enum TaskStatus {
 }
 ```
 
-### 4.3 Task Lifecycle
+### 4.3 Autonomous Workers
+
+In addition to the traditional **broker-allocated** pattern (TaskBroker creates task → TaskScheduler assigns worker), CaseHub supports **autonomous/decentralized** workers that work on their own agency.
+
+#### Autonomous Worker Pattern
+
+Autonomous workers:
+- Monitor external systems (APIs, message queues, databases, file systems)
+- Decide independently when work is needed based on observed conditions
+- Notify the system when starting work via `WorkerRegistry.notifyAutonomousWork()`
+- Perform work and submit results
+- Fully integrate with PropagationContext for lineage tracking
+- Can spawn sub-workers that become children in the execution hierarchy
+
+**Use Cases:**
+- Event-driven workflows: Monitor message queue, trigger case analysis when events arrive
+- Scheduled analysis: Periodic scans that spawn case-specific work
+- Threshold monitoring: Watch metrics/KPIs, trigger alerts or analysis when thresholds exceeded
+- Multi-agent collaboration: Agents observe shared CaseFile, contribute autonomously when they can add value
+
+#### TaskOrigin Enum
+
+```java
+public enum TaskOrigin {
+    BROKER_ALLOCATED,  // Traditional: TaskBroker creates, scheduler assigns
+    AUTONOMOUS         // Worker-initiated: Worker self-selects and notifies
+}
+```
+
+#### Autonomous Task Creation API
+
+```java
+@ApplicationScoped
+public class WorkerRegistry {
+    /**
+     * Register autonomous task initiated by a decentralized worker.
+     * Creates Task with AUTONOMOUS origin and links to PropagationContext.
+     * Task immediately ASSIGNED (worker already owns it).
+     *
+     * @param workerId Worker's unique identifier
+     * @param taskType Type of task being performed
+     * @param context Task context/parameters
+     * @param caseFileId Optional - associate work with a case
+     * @param parentContext Optional - parent PropagationContext for lineage
+     * @return Created Task with AUTONOMOUS origin
+     */
+    public Task notifyAutonomousWork(
+        String workerId,
+        String taskType,
+        Map<String, Object> context,
+        String caseFileId,
+        PropagationContext parentContext
+    ) throws UnauthorizedException;
+}
+```
+
+#### Extended Task Fields
+
+```java
+public class Task {
+    // ... existing fields ...
+    private TaskOrigin taskOrigin;          // BROKER_ALLOCATED or AUTONOMOUS
+    private Optional<String> caseFileId;    // For autonomous tasks associated with a case
+}
+```
+
+#### Autonomous Worker Lifecycle
+
+```
+1. Worker monitors external system (API, queue, etc.)
+2. Worker detects condition requiring work
+3. Worker calls WorkerRegistry.notifyAutonomousWork()
+   → System creates Task with AUTONOMOUS origin
+   → Task immediately in ASSIGNED state
+   → PropagationContext created/propagated for lineage
+   → If caseFileId provided, task associated with case
+4. Worker performs work
+5. Worker submits result via WorkerRegistry.submitResult()
+6. Optional: Worker spawns sub-workers by passing parent PropagationContext
+```
+
+**Key Difference from Broker-Allocated:**
+- No TaskBroker or TaskScheduler involvement
+- Worker decides WHAT to work on (not system allocation)
+- Task creation is worker-initiated (not requestor-initiated)
+- Still fully tracked and observable via TaskRegistry
+- Full PropagationContext lineage support
+- Can be part of hierarchical execution (parent/child tasks)
+
+**Example:**
+
+```java
+// Autonomous monitoring worker
+public class FraudMonitoringWorker implements Runnable {
+    public void run() {
+        while (running) {
+            // 1. Monitor external system
+            List<Transaction> suspicious = pollApi("https://api.example.com/transactions");
+
+            for (Transaction txn : suspicious) {
+                if (txn.fraudScore > THRESHOLD) {
+                    // 2. Autonomously decide work is needed
+                    // 3. Notify system
+                    Task task = workerRegistry.notifyAutonomousWork(
+                        workerId,
+                        "fraud-analysis",
+                        Map.of("transaction", txn),
+                        "fraud-case-" + txn.id
+                    );
+
+                    // 4. Perform work
+                    Map<String, Object> analysis = analyzeFraud(txn);
+
+                    // 5. Submit result
+                    TaskResult result = TaskResult.success(task.getTaskId(), analysis);
+                    workerRegistry.submitResult(workerId, task.getTaskId(), result);
+                }
+            }
+        }
+    }
+}
+```
+
+**See:** `casehub/src/main/java/io/casehub/examples/workers/AutonomousMonitoringWorker.java` for complete implementation.
+
+### 4.4 Task Lifecycle
 
 ```
 [PENDING] ──select──> [ASSIGNED] ──execute──> [RUNNING]
@@ -606,7 +731,7 @@ public enum TaskStatus {
 - **TaskRegistry**: Task storage and lifecycle management — stores metadata, manages state transitions, handles cleanup
 - **TaskScheduler**: Task-to-case-worker matching — selects available case worker, marks task as ASSIGNED
 
-### 4.4 Worker Selection Strategy
+### 4.5 Worker Selection Strategy
 
 ```java
 public interface WorkerSelectionStrategy {
@@ -617,7 +742,7 @@ public interface WorkerSelectionStrategy {
 **MVP Implementation**: Simple round-robin or random selection
 **Future**: Capability matching, load balancing, bidding protocols
 
-### 4.5 Cleanup Policy
+### 4.6 Cleanup Policy
 
 **CaseFile Model:**
 - **On COMPLETED**: CaseFile state retained for configurable TTL (default: 1 hour) for result retrieval
