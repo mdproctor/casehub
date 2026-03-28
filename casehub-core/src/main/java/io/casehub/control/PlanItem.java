@@ -20,6 +20,7 @@ public class PlanItem implements Comparable<PlanItem> {
     private String triggerKey;
     private Instant createdAt;
     private Optional<String> focusArea;
+    private Optional<String> parentStageId;
     private PlanItemStatus status;
 
     /** Lifecycle status of a {@link PlanItem}, aligned with CNCF Serverless Workflow (OWL) phases. */
@@ -38,6 +39,7 @@ public class PlanItem implements Comparable<PlanItem> {
         this.priority = 0;
         this.createdAt = Instant.now();
         this.focusArea = Optional.empty();
+        this.parentStageId = Optional.empty();
         this.status = PlanItemStatus.PENDING;
     }
 
@@ -70,6 +72,8 @@ public class PlanItem implements Comparable<PlanItem> {
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
     public Optional<String> getFocusArea() { return focusArea; }
     public void setFocusArea(Optional<String> focusArea) { this.focusArea = focusArea; }
+    public Optional<String> getParentStageId() { return parentStageId; }
+    public void setParentStageId(Optional<String> parentStageId) { this.parentStageId = parentStageId; }
     public PlanItemStatus getStatus() { return status; }
     public void setStatus(PlanItemStatus status) { this.status = status; }
 }

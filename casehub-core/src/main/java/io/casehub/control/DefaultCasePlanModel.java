@@ -28,6 +28,8 @@ public class DefaultCasePlanModel implements CasePlanModel {
     private final PriorityBlockingQueue<PlanItem> agenda;
     private final ConcurrentHashMap<String, Object> state;
     private final ConcurrentHashMap<String, Object> resourceBudget;
+    private final ConcurrentHashMap<String, Stage> stages;
+    private final ConcurrentHashMap<String, Milestone> milestones;
 
     private volatile String focus;
     private volatile String focusRationale;
@@ -39,6 +41,8 @@ public class DefaultCasePlanModel implements CasePlanModel {
         this.agenda = new PriorityBlockingQueue<>(11); // default initial capacity
         this.state = new ConcurrentHashMap<>();
         this.resourceBudget = new ConcurrentHashMap<>();
+        this.stages = new ConcurrentHashMap<>();
+        this.milestones = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -155,5 +159,91 @@ public class DefaultCasePlanModel implements CasePlanModel {
     @Override
     public Map<String, Object> snapshot() {
         return Collections.unmodifiableMap(new ConcurrentHashMap<>(state));
+    }
+
+    // ---- Stage Management ----
+
+    @Override
+    public void addStage(Stage stage) {
+        Objects.requireNonNull(stage, "stage must not be null");
+        stages.put(stage.getStageId(), stage);
+    }
+
+    @Override
+    public void removeStage(String stageId) {
+        Objects.requireNonNull(stageId, "stageId must not be null");
+        stages.remove(stageId);
+    }
+
+    @Override
+    public Optional<Stage> getStage(String stageId) {
+        Objects.requireNonNull(stageId, "stageId must not be null");
+        return Optional.ofNullable(stages.get(stageId));
+    }
+
+    @Override
+    public List<Stage> getAllStages() {
+        return Collections.unmodifiableList(new ArrayList<>(stages.values()));
+    }
+
+    @Override
+    public List<Stage> getActiveStages() {
+        return stages.values().stream()
+                .filter(Stage::isActive)
+                .collect(Collectors.collectingAndThen(
+                        Collectors.toList(),
+                        Collections::unmodifiableList));
+    }
+
+    @Override
+    public List<Stage> getRootStages() {
+        return stages.values().stream()
+                .filter(stage -> stage.getParentStageId().isEmpty())
+                .collect(Collectors.collectingAndThen(
+                        Collectors.toList(),
+                        Collections::unmodifiableList));
+    }
+
+    // ---- Milestone Management ----
+
+    @Override
+    public void addMilestone(Milestone milestone) {
+        Objects.requireNonNull(milestone, "milestone must not be null");
+        milestones.put(milestone.getMilestoneId(), milestone);
+    }
+
+    @Override
+    public void removeMilestone(String milestoneId) {
+        Objects.requireNonNull(milestoneId, "milestoneId must not be null");
+        milestones.remove(milestoneId);
+    }
+
+    @Override
+    public Optional<Milestone> getMilestone(String milestoneId) {
+        Objects.requireNonNull(milestoneId, "milestoneId must not be null");
+        return Optional.ofNullable(milestones.get(milestoneId));
+    }
+
+    @Override
+    public List<Milestone> getAllMilestones() {
+        return Collections.unmodifiableList(new ArrayList<>(milestones.values()));
+    }
+
+    @Override
+    public List<Milestone> getPendingMilestones() {
+        return milestones.values().stream()
+                .filter(Milestone::isPending)
+                .collect(Collectors.collectingAndThen(
+                        Collectors.toList(),
+                        Collections::unmodifiableList));
+    }
+
+    @Override
+    public List<Milestone> getAchievedMilestones() {
+        return milestones.values().stream()
+                .filter(Milestone::isAchieved)
+                .collect(Collectors.collectingAndThen(
+                        Collectors.toList(),
+                        Collections::unmodifiableList));
     }
 }

@@ -12,11 +12,13 @@ CaseHub is a lightweight case management architecture service for Quarkus-based 
 - **True Case Management Semantics**: Shared workspace (CaseFile) where multiple task definitions read from and contribute to an evolving solution
 - **Data-Driven Activation**: Task definitions fire when their preconditions are met on the case file, enabling opportunistic problem solving
 - **Dual Execution Model**: CaseFile model for collaborative multi-contributor problems; Task model for simple request-response work
+- **Modular Architecture**: Multi-module Maven structure with isolated dependencies; core framework has zero workflow engine dependencies
 - **Separation of Concerns**: Specialized components (CaseEngine, TaskBroker, registries, schedulers)
 - **Observable by Default**: Built-in metrics, structured logging, and health checks
 - **Secure by Default**: API key authentication for case workers, RBAC for requestors
 - **Thread-Safe**: Concurrent reads and writes to the shared workspace without data races
 - **Pluggable Storage**: SPI-based abstraction for future Redis/PostgreSQL backends
+- **Workflow Integration**: Optional modules for Quarkus Flow, Temporal, Camunda, and other workflow engines
 
 ### Document Structure
 
@@ -24,12 +26,74 @@ This document is organized around six conceptual pillars:
 
 | # | Pillar | What It Covers |
 |---|--------|---------------|
+| §0.5 | **Project Structure** | Multi-module Maven architecture, module dependencies, workflow integration |
 | §3 | **Case Management Core** | CaseFile (shared workspace), TaskDefinitions, ListenerEvaluator, storage SPI |
 | §4 | **Workers** | Workers, Task model (request-response), case worker lifecycle |
 | §5 | **Coordination** | CaseEngine (control loop), context propagation, lineage & hierarchy |
 | §6 | **Observability & Control** | CasePlanModel, PlanningStrategy, PlanItems, logging, metrics, health checks |
 | §7 | **Resilience** | Error handling, timeouts, retry, dead letter, distributed consistency |
-| §8 | **Agentic AI Specifics** | Dual execution model, Quarkus/CDI integration, security, end-to-end examples |
+| §8 | **Agentic AI Specifics** | Dual execution model, Quarkus/CDI integration, security, workflow examples |
+
+---
+
+## 0.5 Project Structure
+
+CaseHub is organized as a multi-module Maven project to support modularity and dependency isolation:
+
+```
+casehub/
+├── pom.xml                     # Parent POM (Quarkus 3.32.2)
+├── casehub-core/              # Core framework implementation
+│   └── src/main/java/io/casehub/
+│       ├── core/              # CaseFile, TaskDefinition, ListenerEvaluator
+│       ├── control/           # CasePlanModel, PlanItem, PlanningStrategy
+│       ├── coordination/      # CaseEngine, PropagationContext, LineageService
+│       ├── worker/            # Task, Worker, TaskBroker, TaskScheduler
+│       ├── resilience/        # Retry, timeout, dead-letter, idempotency
+│       ├── error/             # Exception types and ErrorInfo
+│       ├── core/spi/          # Storage provider interfaces
+│       └── annotation/        # CaseType CDI qualifier
+├── casehub-examples/          # Examples demonstrating architecture
+│   └── src/main/java/io/casehub/examples/
+│       ├── SimpleDocumentAnalysis.java
+│       ├── DocumentAnalysisApp.java
+│       └── workers/
+│           ├── LlmReasoningWorker.java
+│           ├── LlmAnalysisTaskDefinition.java
+│           ├── DocumentAnalysisWithLlmApp.java
+│           └── AutonomousMonitoringWorker.java
+└── casehub-flow-worker/       # Optional: Quarkus Flow workflow integration
+    └── src/main/java/io/casehub/flow/
+        ├── FlowWorker.java                    # Worker for executing workflows
+        ├── FlowWorkflowDefinition.java        # Workflow interface
+        ├── FlowExecutionContext.java          # Execution context
+        ├── FlowWorkflowRegistry.java          # Workflow registry
+        └── examples/
+            ├── QuarkusFlowDocumentWorkflow.java   # Programmatic workflow
+            ├── DocumentFunctions.java             # Workflow step functions
+            └── FlowWorkerQuarkusDemo.java         # Quarkus runtime demo
+```
+
+### Module Dependencies
+
+```
+casehub-core (no workflow dependencies)
+    ↑
+    ├── casehub-examples (depends on core)
+    └── casehub-flow-worker (depends on core + quarkus-flow 0.7.1)
+```
+
+**Dependency Isolation Strategy:**
+- **casehub-core**: Contains all framework components with no workflow engine dependencies
+- **casehub-examples**: Demonstrates core functionality without workflow engines
+- **casehub-flow-worker**: Optional module with isolated Quarkus Flow dependencies
+- Future modules (e.g., `casehub-temporal-worker`, `casehub-camunda-worker`) can be added without affecting core
+
+**Benefits:**
+- Users can use CaseHub without workflow engines (just `casehub-core`)
+- Multiple workflow engines supported via separate modules
+- Core framework remains lightweight and dependency-free
+- Each workflow module maintains version compatibility independently
 
 ---
 
@@ -54,7 +118,7 @@ Current agentic AI platforms lack a standalone, lightweight case management arch
 3. **Quarkus Integration**: First-class Quarkus support with minimal dependencies
 4. **Pluggable Storage**: SPI-based storage abstraction (Redis as primary target)
 5. **Asynchronous Coordination**: Support decoupling between requestors and task definitions
-6. **Incremental Evolution**: Architecture that supports future enhancements without major rewrites
+6. **Incremental Evolution**: Architecture that supports future enhancements without major rewrites, including modular support for multiple workflow engines
 7. **Terminology Alignment**: Consistency with CMMN, CNCF OWL, Quarkus Flow, and classic blackboard literature where applicable
 
 ### Non-Goals (Deferred to Future Iterations)
@@ -1323,7 +1387,241 @@ public class PlanItem {
 [CANCELLED] (by Planning Strategy or parent case file cancellation)
 ```
 
-### 6.4 Logging Strategy
+### 6.4 CMMN Stages and Milestones
+
+CaseHub implements CMMN (Case Management Model and Notation) **Stages** and **Milestones** to provide hierarchical workflow organization and progress tracking. These concepts complement the dynamic task activation model with structured lifecycle management.
+
+#### Stages
+
+A **Stage** is a container for TaskDefinitions and other Stages that can be activated and completed as a unit. Stages provide:
+
+- **Entry Criteria**: Conditions (CaseFile keys) that must be satisfied for stage activation
+- **Exit Criteria**: Conditions that trigger stage termination (abnormal completion)
+- **Autocomplete**: Stages can complete automatically when all contained work finishes
+- **Hierarchical Containment**: Stages can nest other stages and plan items
+- **Manual Activation**: Stages can require explicit activation even when criteria are met
+
+**Stage Lifecycle States** (CMMN-aligned):
+
+```
+[PENDING] ──entry criteria met──> [ACTIVE] ──all work complete──> [COMPLETED]
+                                      │
+                                      ├──exit criteria met──> [TERMINATED]
+                                      │
+                                      ├──suspend──> [SUSPENDED] ──resume──> [ACTIVE]
+                                      │
+                                      └──error──> [FAULTED]
+```
+
+**Stage Interface**:
+
+```java
+public class Stage {
+    private String stageId;
+    private String name;
+    private String caseFileId;
+    private StageStatus status;                   // PENDING, ACTIVE, COMPLETED, etc.
+
+    // Criteria
+    private Set<String> entryCriteria;            // CaseFile keys required for activation
+    private Set<String> exitCriteria;             // CaseFile keys that trigger termination
+
+    // Containment
+    private Optional<String> parentStageId;       // Parent stage (if nested)
+    private List<String> containedPlanItemIds;    // PlanItems in this stage
+    private List<String> containedStageIds;       // Nested stages
+    private List<String> requiredItems;           // Items that must complete for autocomplete
+
+    // Behavior
+    private boolean manualActivation;             // Requires explicit activation
+    private boolean autocomplete;                 // Complete when all required items finish
+
+    public enum StageStatus {
+        PENDING,      // Entry criteria not yet satisfied
+        ACTIVE,       // Stage running, contained items can execute
+        SUSPENDED,    // Temporarily paused
+        COMPLETED,    // Normal completion (autocomplete or manual)
+        TERMINATED,   // Abnormal completion (exit criteria triggered)
+        FAULTED       // Error occurred
+    }
+
+    // Lifecycle methods
+    public void activate();
+    public void complete();
+    public void terminate();
+    public void suspend();
+    public void resume();
+    public void fault();
+    public boolean isTerminal();
+    public boolean isActive();
+}
+```
+
+**Stage Evaluation**:
+
+The `ListenerEvaluator` evaluates stages alongside task definitions:
+
+```java
+public class ListenerEvaluator {
+    // Stage activation
+    public List<Stage> evaluateAndActivateStages(CaseFile caseFile, CasePlanModel casePlanModel);
+
+    // Stage completion (exit criteria + autocomplete logic)
+    public List<Stage> evaluateAndCompleteStages(CaseFile caseFile, CasePlanModel casePlanModel);
+
+    // Create plan items within active stages
+    public List<PlanItem> evaluateAndCreatePlanItemsInStage(
+        CaseFile caseFile, CasePlanModel casePlanModel,
+        List<TaskDefinition> registered, String stageId, String triggerKey);
+}
+```
+
+**Autocomplete Logic**:
+
+Stages with `autocomplete=true` complete automatically in two scenarios:
+
+1. **No required items**: Stage completes immediately upon activation (empty stage)
+2. **All required items complete**: Stage completes when all contained plan items and nested stages reach terminal states
+
+#### Milestones
+
+A **Milestone** represents a significant achievement in the case workflow. Milestones are simpler than stages:
+
+- **Achievement Criteria**: CaseFile keys that must be present for milestone to be achieved
+- **Once Achieved, Always Achieved**: Milestones are immutable markers of progress
+- **Progress Tracking**: Used to track workflow progression and trigger notifications
+
+**Milestone Interface**:
+
+```java
+public class Milestone {
+    private String milestoneId;
+    private String name;
+    private String caseFileId;
+    private MilestoneStatus status;               // PENDING or ACHIEVED
+    private Set<String> achievementCriteria;      // CaseFile keys required
+    private Instant achievedAt;                   // When milestone was achieved
+
+    public enum MilestoneStatus {
+        PENDING,      // Achievement criteria not yet met
+        ACHIEVED      // Milestone achieved (terminal state)
+    }
+
+    public void achieve();
+    public boolean isAchieved();
+}
+```
+
+**Milestone Evaluation**:
+
+```java
+// ListenerEvaluator
+public List<Milestone> evaluateAndAchieveMilestones(CaseFile caseFile, CasePlanModel casePlanModel);
+```
+
+#### Integration with CasePlanModel
+
+The CasePlanModel interface extends to support stages and milestones:
+
+```java
+public interface CasePlanModel {
+    // Stages
+    void addStage(Stage stage);
+    void removeStage(String stageId);
+    Optional<Stage> getStage(String stageId);
+    List<Stage> getAllStages();
+    List<Stage> getActiveStages();
+    List<Stage> getPendingStages();
+
+    // Milestones
+    void addMilestone(Milestone milestone);
+    void removeMilestone(String milestoneId);
+    Optional<Milestone> getMilestone(String milestoneId);
+    List<Milestone> getAllMilestones();
+    List<Milestone> getPendingMilestones();
+    List<Milestone> getAchievedMilestones();
+}
+```
+
+#### Persistence
+
+Stages and milestones are persisted via the CaseFileStorageProvider SPI:
+
+```java
+public interface CaseFileStorageProvider {
+    // Stage persistence
+    void saveStage(String caseFileId, Stage stage);
+    Optional<Stage> getStage(String caseFileId, String stageId);
+    List<Stage> getAllStages(String caseFileId);
+    void deleteStage(String caseFileId, String stageId);
+
+    // Milestone persistence
+    void saveMilestone(String caseFileId, Milestone milestone);
+    Optional<Milestone> getMilestone(String caseFileId, String milestoneId);
+    List<Milestone> getAllMilestones(String caseFileId);
+    void deleteMilestone(String caseFileId, String milestoneId);
+}
+```
+
+The `InMemoryCaseFileStorage` implementation uses `ConcurrentHashMap` to store stages and milestones indexed by case file ID.
+
+#### Example: Multi-Stage Document Processing
+
+```java
+// Create stages
+Stage preparationStage = Stage.create("Data Preparation")
+    .withEntryCriteria(Set.of("raw_document"))
+    .withAutocomplete(true);
+casePlanModel.addStage(preparationStage);
+
+Stage analysisStage = Stage.create("Analysis")
+    .withEntryCriteria(Set.of("extracted_text"))
+    .withAutocomplete(true);
+casePlanModel.addStage(analysisStage);
+
+Stage outputStage = Stage.create("Output")
+    .withEntryCriteria(Set.of("entities", "sentiment"))
+    .withExitCriteria(Set.of("summary"));  // Terminates when summary produced
+casePlanModel.addStage(outputStage);
+
+// Create milestones
+Milestone dataReady = Milestone.create("Data Ready")
+    .withAchievementCriteria(Set.of("extracted_text"));
+casePlanModel.addMilestone(dataReady);
+
+Milestone analysisComplete = Milestone.create("Analysis Complete")
+    .withAchievementCriteria(Set.of("entities", "sentiment"));
+casePlanModel.addMilestone(analysisComplete);
+
+// Workflow execution
+while (!evaluator.isQuiescent(casePlanModel)) {
+    // Activate stages when entry criteria are met
+    evaluator.evaluateAndActivateStages(caseFile, casePlanModel);
+
+    // Create and execute plan items
+    evaluator.evaluateAndCreatePlanItems(caseFile, casePlanModel, taskDefs, null);
+
+    // Check milestone achievements
+    evaluator.evaluateAndAchieveMilestones(caseFile, casePlanModel);
+
+    // Complete stages (exit criteria or autocomplete)
+    evaluator.evaluateAndCompleteStages(caseFile, casePlanModel);
+}
+```
+
+**Key Benefits**:
+
+- **Hierarchical Organization**: Group related work into logical stages
+- **Progress Visibility**: Milestones provide clear workflow state tracking
+- **Conditional Execution**: Stages only activate when prerequisites are met
+- **Flexible Completion**: Autocomplete or explicit exit criteria
+- **CMMN Compliance**: Standard semantics for case management workflows
+
+See `casehub-examples/src/main/java/io/casehub/examples/StageBasedDocumentProcessingExample.java` and `StageBasedWorkerIntegrationExample.java` for complete demonstrations.
+
+---
+
+### 6.5 Logging Strategy
 
 - **Framework**: SLF4J with structured JSON output
 - **Correlation**: `trace_id`, `span_id`, `parent_span_id` from PropagationContext added to MDC for all logs; plus `case_file_id` or `task_id` and `td_id` during task definition execution. This enables tracing across the full Goal → CaseFile → TaskDefinition → Task → sub-Task hierarchy
@@ -1333,7 +1631,7 @@ public class PlanItem {
   - ERROR: Task definition failures, task failures, timeouts, case worker crashes
   - WARN: Quiescence detected, missed heartbeats, task definition rollbacks
 
-### 6.5 Metrics (Micrometer)
+### 6.6 Metrics (Micrometer)
 
 CaseHub exposes the following metrics for monitoring:
 
@@ -1389,7 +1687,7 @@ CaseHub exposes the following metrics for monitoring:
 - `casehub_poison_pill_quarantines_total{source_id}` - Quarantine events
 - `casehub_poison_pill_active_quarantines` - Currently quarantined sources (gauge)
 
-### 6.6 Health Checks
+### 6.7 Health Checks
 
 Quarkus health check integration for deployment orchestration:
 
@@ -2024,6 +2322,76 @@ Map<String, Object> solution = result.snapshot();
 String summary = (String) solution.get("case_summary");
 ```
 
+#### Example: Document Processing with Quarkus Flow (casehub-flow-worker)
+
+The optional `casehub-flow-worker` module demonstrates workflow engine integration:
+
+```java
+// 1. Define workflow using Quarkus Flow programmatic API
+@ApplicationScoped
+public class QuarkusFlowDocumentWorkflow extends Flow implements FlowWorkflowDefinition {
+
+    @Inject
+    DocumentFunctions documentFunctions;
+
+    @Override
+    public Workflow descriptor() {
+        return FuncWorkflowBuilder.workflow("document-processing")
+            .tasks(
+                function("extractText", documentFunctions::extractText, Map.class),
+                function("recognizeEntities",
+                    ctx -> documentFunctions.recognizeEntities((Map) ctx),
+                    Map.class),
+                function("analyzeSentiment",
+                    ctx -> documentFunctions.analyzeSentiment((Map) ctx),
+                    Map.class),
+                function("generateSummary",
+                    ctx -> documentFunctions.generateSummary((Map) ctx),
+                    Map.class)
+            )
+            .build();
+    }
+
+    @Override
+    public Map<String, Object> execute(FlowExecutionContext context) throws Exception {
+        // Extract inputs from CaseHub task context
+        String documentUrl = context.getInput("documentUrl", String.class).orElseThrow();
+
+        // Execute Quarkus Flow workflow
+        var result = this.startInstance(
+            Map.of("documentUrl", documentUrl, "traceId", context.getTraceId())
+        ).await().indefinitely();
+
+        return extractWorkflowData(result);
+    }
+}
+
+// 2. Submit task to FlowWorker
+TaskRequest request = TaskRequest.builder()
+    .taskType("document-processing")
+    .context(Map.of("documentUrl", "https://example.com/doc.pdf"))
+    .requiredCapabilities(Set.of("flow"))
+    .build();
+
+TaskResult result = taskBroker.submitTask(request).awaitResult(Duration.ofMinutes(2));
+Map<String, Object> output = result.getData();
+// {extractedText: "...", entities: [...], sentiment: {...}, summary: "..."}
+```
+
+**Key Features:**
+- **Workflow Definition**: Quarkus Flow's programmatic DSL for sequential steps
+- **CDI Integration**: Workflows and functions are `@ApplicationScoped` beans
+- **PropagationContext**: Full trace ID and lineage tracking through workflow steps
+- **Data Flow**: Functions pass accumulated context between steps
+- **Execution**: Workflow runs via `this.startInstance()` and returns combined results
+
+**Module Benefits:**
+- Isolated dependency: Quarkus Flow only required if using this module
+- Multiple engines: Future modules can support Temporal, Camunda, etc.
+- Standard integration: FlowWorker follows the same Worker pattern as other workers
+
+See `casehub-flow-worker/README.md` and `QUARKUS_FLOW_INTEGRATION.md` for complete setup instructions.
+
 ---
 
 ## 9. Implementation Plan (2-Week Sprint)
@@ -2382,6 +2750,41 @@ Reserved for:
 ---
 
 ## Appendix D: Design Refinement Changelog
+
+**Version 9.0 (2026-03-28)** - Multi-Module Architecture & Workflow Integration
+
+### Project Structure
+- **Refactored to multi-module Maven project**: Separated into `casehub-core`, `casehub-examples`, and optional workflow modules
+- **Added §0.5 Project Structure**: New section documenting module organization, dependencies, and isolation strategy
+- **Module dependency isolation**: Core framework has zero workflow engine dependencies; workflow integrations are opt-in via separate modules
+
+### Workflow Integration Module (casehub-flow-worker)
+- **Added casehub-flow-worker module**: Optional module for Quarkus Flow workflow integration (quarkus-flow 0.7.1)
+- **Added FlowWorker**: Worker implementation that executes Quarkus Flow workflows from CaseHub tasks
+- **Added FlowWorkflowDefinition**: Interface for defining executable workflows that integrate with CaseHub
+- **Added FlowExecutionContext**: Context object providing task inputs, metadata, and PropagationContext to workflows
+- **Added FlowWorkflowRegistry**: CDI-based registry for workflow definitions
+- **Added QuarkusFlowDocumentWorkflow**: Example workflow using Quarkus Flow programmatic API
+- **Added DocumentFunctions**: Example workflow step functions as `@ApplicationScoped` beans
+- **Added FlowWorkerQuarkusDemo**: Quarkus runtime demo validating end-to-end workflow execution
+- **Validated integration**: All 4 workflow steps (extractText, recognizeEntities, analyzeSentiment, generateSummary) execute successfully with data flow between steps
+- **Version alignment**: Quarkus 3.32.2 aligned with quarkus-flow 0.7.1
+
+### Documentation Updates
+- **Updated §8.4 End-to-End Examples**: Added complete example of Quarkus Flow integration showing workflow definition, execution, and task submission
+- **Added workflow module benefits**: Documented isolated dependencies, multi-engine support, and standard Worker pattern integration
+
+### Storage Provider Implementations
+- **Added InMemoryCaseFileStorage**: In-memory implementation of CaseFileStorageProvider SPI
+- **Added InMemoryTaskStorage**: In-memory implementation of TaskStorageProvider SPI
+- **Added InMemoryPropagationStorage**: In-memory implementation of PropagationStorageProvider SPI
+
+### Build System
+- **Parent POM structure**: Centralized dependency and plugin management in root `pom.xml`
+- **Module-specific dependencies**: Each module declares only its required dependencies
+- **Quarkus version**: Standardized on Quarkus 3.32.2 across all modules
+
+---
 
 **Version 8.0 (2026-03-26)** - CMMN Terminology Alignment
 

@@ -41,4 +41,20 @@ public interface CasePlanModel {
     void put(String key, Object value);
     <T> Optional<T> get(String key, Class<T> type);
     Map<String, Object> snapshot();
+
+    // Stage Management
+    void addStage(Stage stage);
+    void removeStage(String stageId);
+    Optional<Stage> getStage(String stageId);
+    List<Stage> getAllStages();
+    List<Stage> getActiveStages();
+    List<Stage> getRootStages(); // Stages with no parent
+
+    // Milestone Management
+    void addMilestone(Milestone milestone);
+    void removeMilestone(String milestoneId);
+    Optional<Milestone> getMilestone(String milestoneId);
+    List<Milestone> getAllMilestones();
+    List<Milestone> getPendingMilestones();
+    List<Milestone> getAchievedMilestones();
 }

@@ -9,7 +9,7 @@ import io.casehub.core.TaskDefinitionRegistry;
 import io.casehub.worker.TaskBroker;
 import io.casehub.worker.WorkerRegistry;
 import io.quarkus.runtime.QuarkusApplication;
-import io.quarkus.runtime.annotations.QuarkusMain;
+// import io.quarkus.runtime.annotations.QuarkusMain;
 import jakarta.inject.Inject;
 
 import java.time.Duration;
@@ -51,7 +51,7 @@ import java.util.concurrent.TimeoutException;
  * ─────────
  * mvn quarkus:dev -Dquarkus.args="--llm-enabled"
  */
-@QuarkusMain
+// @QuarkusMain
 public class DocumentAnalysisWithLlmApp implements QuarkusApplication {
 
     @Inject

@@ -220,9 +220,15 @@ casehub/
 │           ├── LlmAnalysisTaskDefinition.java
 │           ├── DocumentAnalysisWithLlmApp.java
 │           └── AutonomousMonitoringWorker.java
+├── casehub-flow-worker/         # Quarkus Flow integration (optional)
+│   └── src/main/java/io/casehub/flow/
+│       ├── FlowWorker.java      # Worker for Quarkus Flow workflows
+│       ├── FlowWorkflowDefinition.java
+│       ├── FlowExecutionContext.java
+│       └── examples/
+│           ├── DocumentProcessingWorkflow.java
+│           └── FlowWorkerDemo.java
 └── docs/                        # Documentation
-    ├── CaseHub_Design_Document.md
-    └── examples/
 ```
 
 ---

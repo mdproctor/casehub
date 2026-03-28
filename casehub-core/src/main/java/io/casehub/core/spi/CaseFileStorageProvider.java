@@ -1,5 +1,7 @@
 package io.casehub.core.spi;
 
+import io.casehub.control.Milestone;
+import io.casehub.control.Stage;
 import io.casehub.core.CaseStatus;
 import io.casehub.core.CaseFileContribution;
 import io.casehub.core.CaseFileItem;
@@ -41,6 +43,18 @@ public interface CaseFileStorageProvider {
     Optional<LockHandle> tryLock(String caseFileId, Duration ttl);
     boolean renewLock(LockHandle handle, Duration ttl);
     void releaseLock(LockHandle handle);
+
+    // Stage persistence
+    void saveStage(String caseFileId, Stage stage);
+    Optional<Stage> getStage(String caseFileId, String stageId);
+    List<Stage> getAllStages(String caseFileId);
+    void deleteStage(String caseFileId, String stageId);
+
+    // Milestone persistence
+    void saveMilestone(String caseFileId, Milestone milestone);
+    Optional<Milestone> getMilestone(String caseFileId, String milestoneId);
+    List<Milestone> getAllMilestones(String caseFileId);
+    void deleteMilestone(String caseFileId, String milestoneId);
 
     // Lifecycle
     void cleanup(Predicate<CaseFileMetadata> shouldDelete);

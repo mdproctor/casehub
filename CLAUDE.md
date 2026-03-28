@@ -92,6 +92,15 @@ CaseEngine.createAndSolve(caseType, initialState)
 | `examples/` | SimpleDocumentAnalysis.java (conceptual), DocumentAnalysisApp.java (real implementation) |
 | `examples/workers/` | LlmReasoningWorker, LlmAnalysisTaskDefinition, DocumentAnalysisWithLlmApp, AutonomousMonitoringWorker |
 
+**casehub-flow-worker module** (`casehub-flow-worker/src/main/java/io/casehub/flow/`) - **Optional**:
+
+| Package | Contents |
+|---------|----------|
+| `flow/` | FlowWorker, FlowWorkflowDefinition, FlowExecutionContext, FlowWorkflowRegistry |
+| `flow/examples/` | DocumentProcessingWorkflow, FlowWorkerDemo |
+
+**Note:** The flow-worker module has isolated Quarkus Flow dependencies. Include only if using Quarkus Flow workflows.
+
 ### Key Flow
 
 **CaseEngine** is the central orchestrator. It creates a CaseFile + CasePlanModel, then loops: **ListenerEvaluator** evaluates which TaskDefinitions can fire → creates **PlanItems** → **PlanningStrategies** reason about control → top PlanItem executes → TaskDefinition writes to CaseFile → re-evaluate. Loop exits on quiescence (WAITING), completion, fault, or cancellation.
