@@ -1,0 +1,106 @@
+{
+  "id": "document-processing",
+  "version": "1.0",
+  "name": "Document Processing Workflow",
+  "description": "Multi-step document processing pipeline using Serverless Workflow",
+  "start": "ExtractText",
+  "states": [
+    {
+      "name": "ExtractText",
+      "type": "operation",
+      "actions": [
+        {
+          "name": "extractText",
+          "functionRef": {
+            "refName": "extractTextFunction",
+            "arguments": {
+              "documentUrl": "${ .documentUrl }"
+            }
+          }
+        }
+      ],
+      "stateDataFilter": {
+        "output": "${ {extractedText: .extractedText, documentUrl: .documentUrl} }"
+      },
+      "transition": "RecognizeEntities"
+    },
+    {
+      "name": "RecognizeEntities",
+      "type": "operation",
+      "actions": [
+        {
+          "name": "recognizeEntities",
+          "functionRef": {
+            "refName": "recognizeEntitiesFunction",
+            "arguments": {
+              "text": "${ .extractedText }"
+            }
+          }
+        }
+      ],
+      "stateDataFilter": {
+        "output": "${ {extractedText: .extractedText, entities: .entities, documentUrl: .documentUrl} }"
+      },
+      "transition": "AnalyzeSentiment"
+    },
+    {
+      "name": "AnalyzeSentiment",
+      "type": "operation",
+      "actions": [
+        {
+          "name": "analyzeSentiment",
+          "functionRef": {
+            "refName": "analyzeSentimentFunction",
+            "arguments": {
+              "text": "${ .extractedText }"
+            }
+          }
+        }
+      ],
+      "stateDataFilter": {
+        "output": "${ {extractedText: .extractedText, entities: .entities, sentiment: .sentiment, documentUrl: .documentUrl} }"
+      },
+      "transition": "GenerateSummary"
+    },
+    {
+      "name": "GenerateSummary",
+      "type": "operation",
+      "actions": [
+        {
+          "name": "generateSummary",
+          "functionRef": {
+            "refName": "generateSummaryFunction",
+            "arguments": {
+              "text": "${ .extractedText }",
+              "entities": "${ .entities }",
+              "sentiment": "${ .sentiment }"
+            }
+          }
+        }
+      ],
+      "end": true
+    }
+  ],
+  "functions": [
+    {
+      "name": "extractTextFunction",
+      "type": "custom",
+      "operation": "service:java:io.casehub.flow.examples.DocumentFunctions::extractText"
+    },
+    {
+      "name": "recognizeEntitiesFunction",
+      "type": "custom",
+      "operation": "service:java:io.casehub.flow.examples.DocumentFunctions::recognizeEntities"
+    },
+    {
+      "name": "analyzeSentimentFunction",
+      "type": "custom",
+      "operation": "service:java:io.casehub.flow.examples.DocumentFunctions::analyzeSentiment"
+    },
+    {
+      "name": "generateSummaryFunction",
+      "type": "custom",
+      "operation": "service:java:io.casehub.flow.examples.DocumentFunctions::generateSummary"
+    }
+  ]
+}

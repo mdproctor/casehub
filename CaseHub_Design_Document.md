@@ -1531,7 +1531,7 @@ public interface CasePlanModel {
     Optional<Stage> getStage(String stageId);
     List<Stage> getAllStages();
     List<Stage> getActiveStages();
-    List<Stage> getPendingStages();
+    List<Stage> getRootStages();  // Stages with no parent
 
     // Milestones
     void addMilestone(Milestone milestone);
