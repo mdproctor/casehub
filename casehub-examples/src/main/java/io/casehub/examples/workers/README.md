@@ -652,7 +652,7 @@ export ANTHROPIC_API_KEY=sk-ant-your-actual-key
 
 ## Related Documentation
 
-- `/CaseHub_Design_Document.md` - Full architecture
+- `/docs/DESIGN.md` - Full architecture
 - `/casehub/src/main/java/io/casehub/examples/README.md` - Examples guide
 - [Claude API Documentation](https://docs.anthropic.com/)
 - [Quarkus HTTP Client](https://quarkus.io/guides/rest-client)

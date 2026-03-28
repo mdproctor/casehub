@@ -472,7 +472,7 @@ This enables:
 - [Quarkus Flow Documentation](https://docs.quarkiverse.io/quarkus-flow/dev/index.html)
 - [CNCF Serverless Workflow Specification](https://serverlessworkflow.io/)
 - [Kogito Serverless Workflow](https://kogito.kie.org/)
-- [CaseHub Design Document](../docs/CaseHub_Design_Document.md)
+- [CaseHub Design Document](../docs/DESIGN.md)
 
 ## Summary
 

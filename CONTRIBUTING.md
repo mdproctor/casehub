@@ -382,7 +382,7 @@ mvn clean test jacoco:report
 
 When adding features:
 
-1. **Update design document**: `docs/CaseHub_Design_Document.md`
+1. **Update design document**: `docs/DESIGN.md`
 2. **Update examples**: Add/modify examples if applicable
 3. **Update README**: If changing public APIs or adding major features
 4. **Add example code**: Show how to use new features

@@ -475,7 +475,7 @@ For high-throughput scenarios, consider:
 2. **Modify a TaskDefinition**: Add your own logic
 3. **Add a TaskDefinition**: Create a new specialist
 4. **Explore Worker integration**: See `DocumentAnalysisWithWorkers.java`
-5. **Read the design doc**: `/CaseHub_Design_Document.md`
+5. **Read the design doc**: `/docs/DESIGN.md`
 
 ---
 
