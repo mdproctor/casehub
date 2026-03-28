@@ -304,7 +304,7 @@ The Blackboard pattern (CaseHub) is ideal for:
 - **CaseHub Design Document**: `/design/CaseHub_Design_Document.md`
 - **CMMN Specification**: [OMG CMMN](https://www.omg.org/cmmn/)
 - **Blackboard Architecture**: Hayes-Roth 1985 paper
-- **Build Instructions**: `/design/CLAUDE.md`
+- **Build Instructions**: `/CLAUDE.md`
 - **Quarkus Guide**: [quarkus.io](https://quarkus.io)
 
 ---
@@ -327,7 +327,7 @@ See the existing examples as templates.
 ## Support
 
 - **Issues**: Report at the main project repository
-- **Questions**: See `/design/CLAUDE.md` for documentation
+- **Questions**: See `/CLAUDE.md` for documentation
 - **Design**: Read `/design/CaseHub_Design_Document.md`
 
 ---
