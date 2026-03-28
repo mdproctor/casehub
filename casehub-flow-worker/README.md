@@ -454,7 +454,7 @@ Other modules (casehub-core, casehub-examples) remain **unaffected** and do not 
 ## Related Documentation
 
 - **[Programmatic API Guide](PROGRAMMATIC_API.md)** - Detailed guide on using the programmatic workflow API
-- [CaseHub Design Document](../design/CaseHub_Design_Document.md)
+- [CaseHub Design Document](../docs/CaseHub_Design_Document.md)
 - [Worker Pattern](../casehub-examples/src/main/java/io/casehub/examples/workers/README.md)
 - [Quarkus Flow Documentation](https://docs.quarkiverse.io/quarkus-flow/dev/index.html)
 - [Quarkus Flow DSL Cheatsheet](https://docs.quarkiverse.io/quarkus-flow/dev/dsl-cheatsheet.html)

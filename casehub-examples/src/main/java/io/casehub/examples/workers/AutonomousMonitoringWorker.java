@@ -353,7 +353,7 @@ public class AutonomousMonitoringWorker implements Runnable {
                 ✓ Full PropagationContext lineage for parent-child relationships
                 ✓ Sub-workers can be spawned with hierarchical tracking
 
-                See: design/CaseHub_Design_Document.md section 4.3 for full specification
+                See: docs/CaseHub_Design_Document.md section 4.3 for full specification
                 See: casehub/src/main/java/io/casehub/examples for working examples
                 """);
     }

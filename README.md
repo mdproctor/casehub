@@ -316,7 +316,7 @@ See: [`casehub-core/src/main/resources/application.properties`](casehub-core/src
 
 ## 📚 Documentation
 
-- **[Design Document](design/CaseHub_Design_Document.md)**: Complete architecture specification
+- **[Design Document](docs/CaseHub_Design_Document.md)**: Complete architecture specification
 - **[Examples Guide](casehub/src/main/java/io/casehub/examples/README.md)**: Working examples and tutorials
 - **[Worker Guide](casehub/src/main/java/io/casehub/examples/workers/README.md)**: LLM integration and Worker patterns
 - **[Build Guide](CLAUDE.md)**: Development instructions and terminology
