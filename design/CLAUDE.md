@@ -132,4 +132,4 @@ Config properties use the `casehub.` prefix (e.g., `casehub.timeout.check-interv
 
 ## Design Document
 
-`CaseHub_Design_Document.md` contains the comprehensive architecture specification. Keep it consistent with code changes. `Blackboard_Design_Document.md` is the original document, used prior to the changes to introduce CMMN terminology
+`design/CaseHub_Design_Document.md` contains the comprehensive architecture specification. Keep it consistent with code changes. `QuarkBoard_Design_Document.md` is the original document, used prior to the changes to introduce CMMN terminology

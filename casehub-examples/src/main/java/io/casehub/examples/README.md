@@ -268,7 +268,7 @@ Repeat until complete/quiescent
    - See data-driven activation dynamically adapt
 
 5. **Read the design document**
-   - `/CaseHub_Design_Document.md` - comprehensive architecture
+   - `/design/CaseHub_Design_Document.md` - comprehensive architecture
    - Understand the full system design
 
 6. **Build something real**
@@ -301,10 +301,10 @@ The Blackboard pattern (CaseHub) is ideal for:
 
 ## Further Reading
 
-- **CaseHub Design Document**: `/CaseHub_Design_Document.md`
+- **CaseHub Design Document**: `/design/CaseHub_Design_Document.md`
 - **CMMN Specification**: [OMG CMMN](https://www.omg.org/cmmn/)
 - **Blackboard Architecture**: Hayes-Roth 1985 paper
-- **Build Instructions**: `/CLAUDE.md`
+- **Build Instructions**: `/design/CLAUDE.md`
 - **Quarkus Guide**: [quarkus.io](https://quarkus.io)
 
 ---
@@ -327,8 +327,8 @@ See the existing examples as templates.
 ## Support
 
 - **Issues**: Report at the main project repository
-- **Questions**: See `/CLAUDE.md` for documentation
-- **Design**: Read `/CaseHub_Design_Document.md`
+- **Questions**: See `/design/CLAUDE.md` for documentation
+- **Design**: Read `/design/CaseHub_Design_Document.md`
 
 ---
 
