@@ -86,7 +86,7 @@ public class StageBasedDocumentProcessingExample {
         Stage extractionStage = Stage.create("Extraction")
                 .withEntryCriteria(Set.of("raw_documents"))
                 .withAutocomplete(true);
-        extractionStage.setCaseFileId(caseFile.getCaseFileId());
+        extractionStage.setCaseFileId(caseFile.getId().toString());
         casePlanModel.addStage(extractionStage);
         System.out.println("  ✓ Stage 1: Extraction (entry: raw_documents)");
 
@@ -94,7 +94,7 @@ public class StageBasedDocumentProcessingExample {
         Stage analysisStage = Stage.create("Analysis")
                 .withEntryCriteria(Set.of("extracted_text"))
                 .withAutocomplete(true);
-        analysisStage.setCaseFileId(caseFile.getCaseFileId());
+        analysisStage.setCaseFileId(caseFile.getId().toString());
         casePlanModel.addStage(analysisStage);
         System.out.println("  ✓ Stage 2: Analysis (entry: extracted_text)");
 
@@ -102,7 +102,7 @@ public class StageBasedDocumentProcessingExample {
         Stage synthesisStage = Stage.create("Synthesis")
                 .withEntryCriteria(Set.of("entities", "sentiment"))
                 .withExitCriteria(Set.of("summary", "recommendations"));
-        synthesisStage.setCaseFileId(caseFile.getCaseFileId());
+        synthesisStage.setCaseFileId(caseFile.getId().toString());
         casePlanModel.addStage(synthesisStage);
         System.out.println("  ✓ Stage 3: Synthesis (entry: entities+sentiment, exit: summary+recommendations)");
     }
@@ -116,21 +116,21 @@ public class StageBasedDocumentProcessingExample {
         // Milestone 1: Content Extracted
         Milestone contentExtracted = Milestone.create("Content Extracted")
                 .withAchievementCriteria(Set.of("extracted_text"));
-        contentExtracted.setCaseFileId(caseFile.getCaseFileId());
+        contentExtracted.setCaseFileId(caseFile.getId().toString());
         casePlanModel.addMilestone(contentExtracted);
         System.out.println("  ✓ Milestone: Content Extracted (criteria: extracted_text)");
 
         // Milestone 2: Analysis Complete
         Milestone analysisComplete = Milestone.create("Analysis Complete")
                 .withAchievementCriteria(Set.of("entities", "sentiment"));
-        analysisComplete.setCaseFileId(caseFile.getCaseFileId());
+        analysisComplete.setCaseFileId(caseFile.getId().toString());
         casePlanModel.addMilestone(analysisComplete);
         System.out.println("  ✓ Milestone: Analysis Complete (criteria: entities+sentiment)");
 
         // Milestone 3: Document Processed
         Milestone documentProcessed = Milestone.create("Document Processed")
                 .withAchievementCriteria(Set.of("summary", "recommendations"));
-        documentProcessed.setCaseFileId(caseFile.getCaseFileId());
+        documentProcessed.setCaseFileId(caseFile.getId().toString());
         casePlanModel.addMilestone(documentProcessed);
         System.out.println("  ✓ Milestone: Document Processed (criteria: summary+recommendations)");
     }

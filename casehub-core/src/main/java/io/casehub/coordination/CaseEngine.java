@@ -23,7 +23,6 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -59,9 +58,9 @@ public class CaseEngine {
     @Inject
     PoisonPillDetector poisonPillDetector;
 
-    private final Map<String, CaseFile> activeCaseFiles = new ConcurrentHashMap<>();
-    private final Map<String, CasePlanModel> casePlanModels = new ConcurrentHashMap<>();
-    private final Map<String, CompletableFuture<CaseFile>> caseFileFutures = new ConcurrentHashMap<>();
+    private final Map<Long, CaseFile> activeCaseFiles = new ConcurrentHashMap<>();
+    private final Map<Long, CasePlanModel> casePlanModels = new ConcurrentHashMap<>();
+    private final Map<Long, CompletableFuture<CaseFile>> caseFileFutures = new ConcurrentHashMap<>();
     private final ExecutorService controlLoopExecutor = Executors.newCachedThreadPool();
 
     public CaseFile createAndSolve(String caseType, Map<String, Object> initialState)
@@ -78,8 +77,8 @@ public class CaseEngine {
 
     private CaseFile createAndSolveInternal(String caseType, Map<String, Object> initialState,
                                           PropagationContext context) {
-        String caseFileId = UUID.randomUUID().toString();
-        DefaultCaseFile caseFile = new DefaultCaseFile(caseFileId, caseType, initialState, context);
+        DefaultCaseFile caseFile = new DefaultCaseFile(caseType, initialState, context);
+        Long caseFileId = caseFile.getId();
         DefaultCasePlanModel casePlanModel = new DefaultCasePlanModel(caseFile);
 
         activeCaseFiles.put(caseFileId, caseFile);
@@ -94,13 +93,12 @@ public class CaseEngine {
     }
 
     private void runControlLoop(CaseFile caseFile) {
-        String caseFileId = caseFile.getCaseFileId();
+        Long caseFileId = caseFile.getId();
         CasePlanModel casePlanModel = casePlanModels.get(caseFileId);
-        DefaultCaseFile defaultCaseFile = (DefaultCaseFile) caseFile;
 
-        defaultCaseFile.setStatus(CaseStatus.RUNNING);
+        caseFile.setStatus(CaseStatus.RUNNING);
 
-        String caseType = defaultCaseFile.getCaseType();
+        String caseType = caseFile.getCaseType();
         List<TaskDefinition> taskDefs = taskDefRegistry.getForCaseType(caseType);
         List<PlanningStrategy> strategies = taskDefRegistry.getStrategiesForCaseType(caseType);
 
@@ -123,7 +121,7 @@ public class CaseEngine {
 
             if (topPlanItems.isEmpty()) {
                 if (listenerEvaluator.isQuiescent(casePlanModel)) {
-                    defaultCaseFile.setStatus(CaseStatus.WAITING);
+                    caseFile.setStatus(CaseStatus.WAITING);
                     break;
                 }
             }
@@ -181,7 +179,7 @@ public class CaseEngine {
 
     public CaseFile awaitCompletion(CaseFile caseFile, Duration timeout)
             throws InterruptedException, TimeoutException {
-        CompletableFuture<CaseFile> future = caseFileFutures.get(caseFile.getCaseFileId());
+        CompletableFuture<CaseFile> future = caseFileFutures.get(caseFile.getId());
         if (future == null) {
             return caseFile;
         }
@@ -200,15 +198,14 @@ public class CaseEngine {
     }
 
     public boolean cancel(CaseFile caseFile) {
-        DefaultCaseFile defaultCaseFile = (DefaultCaseFile) caseFile;
-        defaultCaseFile.setStatus(CaseStatus.CANCELLED);
+        caseFile.setStatus(CaseStatus.CANCELLED);
 
-        CasePlanModel casePlanModel = casePlanModels.get(caseFile.getCaseFileId());
+        CasePlanModel casePlanModel = casePlanModels.get(caseFile.getId());
         if (casePlanModel != null) {
             casePlanModel.clearAgenda();
         }
 
-        CompletableFuture<CaseFile> future = caseFileFutures.get(caseFile.getCaseFileId());
+        CompletableFuture<CaseFile> future = caseFileFutures.get(caseFile.getId());
         if (future != null) {
             future.complete(caseFile);
         }
@@ -225,7 +222,7 @@ public class CaseEngine {
     }
 
     public CasePlanModel getCasePlanModel(CaseFile caseFile) {
-        return casePlanModels.get(caseFile.getCaseFileId());
+        return casePlanModels.get(caseFile.getId());
     }
 
     public LineageTree getLineage(CaseFile caseFile) {

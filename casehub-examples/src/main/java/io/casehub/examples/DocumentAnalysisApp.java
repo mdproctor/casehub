@@ -147,7 +147,7 @@ public class DocumentAnalysisApp implements QuarkusApplication {
         System.out.println("═══════════════════════════════════════════════════════════");
         System.out.println("📊 FINAL RESULTS\n");
 
-        System.out.println("  Case ID: " + caseFile.getCaseFileId());
+        System.out.println("  Case ID: " + caseFile.getId());
         System.out.println("  Status: " + caseFile.getStatus());
         System.out.println("  Created: " + caseFile.getCreatedAt());
         System.out.println();

@@ -3,6 +3,7 @@ package io.casehub.core;
 import io.casehub.coordination.PropagationContext;
 import io.casehub.error.ErrorInfo;
 import io.casehub.error.StaleVersionException;
+import io.casehub.worker.Task;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
@@ -30,10 +32,17 @@ import java.util.function.Consumer;
  */
 public class DefaultCaseFile implements CaseFile {
 
-    private final String caseFileId;
+    private static final AtomicLong ID_SEQ = new AtomicLong(0);
+
+    private final Long id = ID_SEQ.incrementAndGet();
+    private final UUID otelTraceId = UUID.randomUUID();
     private final String caseType;
     private final PropagationContext propagationContext;
     private final Instant createdAt;
+
+    private CaseFile parentCase;
+    private final List<CaseFile> childCases = new CopyOnWriteArrayList<>();
+    private final List<Task> tasks = new CopyOnWriteArrayList<>();
 
     private final ConcurrentHashMap<String, CaseFileItem> store = new ConcurrentHashMap<>();
     private final AtomicLong caseFileVersion = new AtomicLong(0);
@@ -42,9 +51,8 @@ public class DefaultCaseFile implements CaseFile {
     private final ConcurrentHashMap<String, CopyOnWriteArrayList<Consumer<CaseFileItemEvent>>> keyListeners = new ConcurrentHashMap<>();
     private final CopyOnWriteArrayList<Consumer<CaseFileItemEvent>> anyChangeListeners = new CopyOnWriteArrayList<>();
 
-    public DefaultCaseFile(String caseFileId, String caseType, Map<String, Object> initialState,
+    public DefaultCaseFile(String caseType, Map<String, Object> initialState,
                         PropagationContext propagationContext) {
-        this.caseFileId = caseFileId;
         this.caseType = caseType;
         this.propagationContext = propagationContext;
         this.createdAt = Instant.now();
@@ -58,10 +66,21 @@ public class DefaultCaseFile implements CaseFile {
     }
 
     @Override
-    public String getCaseFileId() {
-        return caseFileId;
+    public Long getId() {
+        return id;
     }
 
+    @Override
+    public Long getVersion() {
+        return caseFileVersion.get();
+    }
+
+    @Override
+    public UUID getOtelTraceId() {
+        return otelTraceId;
+    }
+
+    @Override
     public String getCaseType() {
         return caseType;
     }
@@ -126,11 +145,6 @@ public class DefaultCaseFile implements CaseFile {
     }
 
     @Override
-    public long getVersion() {
-        return caseFileVersion.get();
-    }
-
-    @Override
     public void putIfVersion(String key, Object value, long expectedVersion) throws StaleVersionException {
         synchronized (key.intern()) {
             long currentKeyVersion = getKeyVersion(key);
@@ -156,8 +170,28 @@ public class DefaultCaseFile implements CaseFile {
     }
 
     @Override
+    public Optional<CaseFile> getParentCase() {
+        return Optional.ofNullable(parentCase);
+    }
+
+    @Override
+    public List<CaseFile> getChildCases() {
+        return Collections.unmodifiableList(childCases);
+    }
+
+    @Override
+    public List<Task> getTasks() {
+        return Collections.unmodifiableList(tasks);
+    }
+
+    @Override
     public CaseStatus getStatus() {
         return status.get();
+    }
+
+    @Override
+    public void setStatus(CaseStatus newStatus) {
+        status.set(newStatus);
     }
 
     @Override
@@ -199,20 +233,29 @@ public class DefaultCaseFile implements CaseFile {
         }
     }
 
-    public void setStatus(CaseStatus newStatus) {
-        status.set(newStatus);
+    // Package-accessible wiring methods (not on interface)
+    void setParentCase(CaseFile parent) {
+        this.parentCase = parent;
+    }
+
+    void addChildCase(CaseFile child) {
+        childCases.add(child);
+    }
+
+    void addTask(Task task) {
+        tasks.add(task);
     }
 
     private boolean isTerminal(CaseStatus s) {
         return s == CaseStatus.COMPLETED || s == CaseStatus.FAULTED
-                || s == CaseStatus.CANCELLED || s == CaseStatus.FAULTED;
+                || s == CaseStatus.CANCELLED;
     }
 
     private void fireCaseFileItemEvent(String key, Object value, CaseFileItem previous) {
         Optional<Object> previousValue = previous != null
                 ? Optional.of(previous.getValue())
                 : Optional.empty();
-        CaseFileItemEvent event = new CaseFileItemEvent(caseFileId, key, value, previousValue, Optional.empty());
+        CaseFileItemEvent event = new CaseFileItemEvent(id.toString(), key, value, previousValue, Optional.empty());
 
         List<Consumer<CaseFileItemEvent>> perKey = keyListeners.get(key);
         if (perKey != null) {

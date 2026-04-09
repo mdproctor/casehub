@@ -75,21 +75,21 @@ public class StageBasedWorkerIntegrationExample {
         Stage preparationStage = Stage.create("Data Preparation")
                 .withEntryCriteria(Set.of("raw_document"))
                 .withAutocomplete(true);
-        preparationStage.setCaseFileId(caseFile.getCaseFileId());
+        preparationStage.setCaseFileId(caseFile.getId().toString());
         casePlanModel.addStage(preparationStage);
         System.out.println("  ✓ Stage: Data Preparation");
 
         Stage analysisStage = Stage.create("Analysis")
                 .withEntryCriteria(Set.of("extracted_text"))
                 .withAutocomplete(true);
-        analysisStage.setCaseFileId(caseFile.getCaseFileId());
+        analysisStage.setCaseFileId(caseFile.getId().toString());
         casePlanModel.addStage(analysisStage);
         System.out.println("  ✓ Stage: Analysis");
 
         Stage outputStage = Stage.create("Output")
                 .withEntryCriteria(Set.of("entities", "sentiment"))
                 .withAutocomplete(true);
-        outputStage.setCaseFileId(caseFile.getCaseFileId());
+        outputStage.setCaseFileId(caseFile.getId().toString());
         casePlanModel.addStage(outputStage);
         System.out.println("  ✓ Stage: Output");
 
@@ -98,19 +98,19 @@ public class StageBasedWorkerIntegrationExample {
 
         Milestone dataReady = Milestone.create("Data Ready")
                 .withAchievementCriteria(Set.of("extracted_text"));
-        dataReady.setCaseFileId(caseFile.getCaseFileId());
+        dataReady.setCaseFileId(caseFile.getId().toString());
         casePlanModel.addMilestone(dataReady);
         System.out.println("  ✓ Milestone: Data Ready");
 
         Milestone analysisComplete = Milestone.create("Analysis Complete")
                 .withAchievementCriteria(Set.of("entities", "sentiment"));
-        analysisComplete.setCaseFileId(caseFile.getCaseFileId());
+        analysisComplete.setCaseFileId(caseFile.getId().toString());
         casePlanModel.addMilestone(analysisComplete);
         System.out.println("  ✓ Milestone: Analysis Complete");
 
         Milestone reportReady = Milestone.create("Report Ready")
                 .withAchievementCriteria(Set.of("summary"));
-        reportReady.setCaseFileId(caseFile.getCaseFileId());
+        reportReady.setCaseFileId(caseFile.getId().toString());
         casePlanModel.addMilestone(reportReady);
         System.out.println("  ✓ Milestone: Report Ready");
 

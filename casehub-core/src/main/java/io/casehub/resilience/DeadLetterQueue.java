@@ -33,7 +33,7 @@ public class DeadLetterQueue {
         DeadLetterEntry entry = new DeadLetterEntry();
         entry.setType(DeadLetterEntry.DeadLetterType.PlanItem);
         entry.setOriginalId(planItem.getPlanItemId());
-        entry.setCaseFileId(caseFile.getCaseFileId());
+        entry.setCaseFileId(caseFile.getId().toString());
         entry.setOriginalContext(caseFile.snapshot());
         entry.setPropagationContext(caseFile.getPropagationContext());
         entry.setFinalError(finalError);
