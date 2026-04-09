@@ -1,20 +1,21 @@
 package io.casehub.coordination;
 
 import io.casehub.control.CasePlanModel;
-import io.casehub.control.PlanningStrategy;
-import io.casehub.control.PlanningStrategy.ControlActivationCondition;
 import io.casehub.control.DefaultCasePlanModel;
 import io.casehub.control.PlanItem;
 import io.casehub.control.PlanItem.PlanItemStatus;
-import io.casehub.core.ListenerEvaluator;
+import io.casehub.control.PlanningStrategy;
+import io.casehub.control.PlanningStrategy.ControlActivationCondition;
 import io.casehub.core.CaseFile;
 import io.casehub.core.CaseStatus;
-import io.casehub.core.DefaultCaseFile;
+import io.casehub.core.ListenerEvaluator;
 import io.casehub.core.TaskDefinition;
 import io.casehub.core.TaskDefinitionRegistry;
+import io.casehub.core.spi.CaseFileRepository;
 import io.casehub.error.CaseCreationException;
 import io.casehub.resilience.PoisonPillDetector;
 import io.casehub.worker.NotificationService;
+import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.jboss.logging.Logger;
@@ -23,6 +24,7 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -31,29 +33,25 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * The execution engine and scheduler for the CaseHub control loop. Creates and manages domain
- * CaseFiles paired with CasePlanModels, then runs the control loop: detect CaseFile changes,
- * create PlanItems via the {@link ListenerEvaluator}, invoke {@link PlanningStrategy}s, execute
- * the top-priority PlanItems, and repeat until the CaseFile is complete, quiescent, or timed out.
- * Also handles child CaseFile creation with {@link PropagationContext} inheritance, hierarchical
- * cancellation, and lineage queries. See section 5.1.
+ * The execution engine for the CaseHub control loop. Creates CaseFiles via
+ * {@link CaseFileRepository}, pairs them with CasePlanModels, then runs the
+ * control loop: evaluate entry criteria → create PlanItems → invoke
+ * PlanningStrategies → execute top PlanItem → repeat until complete or quiescent.
+ *
+ * Child CaseFiles are created with parent references set via the repository,
+ * forming the POJO object graph. Lineage traversal is done directly via
+ * {@link CaseFile#getParentCase()} and {@link CaseFile#getChildCases()}.
  */
 @ApplicationScoped
 public class CaseEngine {
 
     private static final Logger LOG = Logger.getLogger(CaseEngine.class);
 
-    @Inject
-    TaskDefinitionRegistry taskDefRegistry;
-
-    @Inject
-    ListenerEvaluator listenerEvaluator;
-
-    @Inject
-    NotificationService notificationService;
-
-    @Inject
-    PoisonPillDetector poisonPillDetector;
+    @Inject CaseFileRepository caseFileRepository;
+    @Inject TaskDefinitionRegistry taskDefRegistry;
+    @Inject ListenerEvaluator listenerEvaluator;
+    @Inject NotificationService notificationService;
+    @Inject PoisonPillDetector poisonPillDetector;
 
     private final Map<Long, CaseFile> activeCaseFiles = new ConcurrentHashMap<>();
     private final Map<Long, CasePlanModel> casePlanModels = new ConcurrentHashMap<>();
@@ -62,58 +60,57 @@ public class CaseEngine {
 
     public CaseFile createAndSolve(String caseType, Map<String, Object> initialState)
             throws CaseCreationException {
-        PropagationContext context = PropagationContext.createRoot();
-        return createAndSolveInternal(caseType, initialState, context);
-    }
-
-    public CaseFile createAndSolve(String caseType, Map<String, Object> initialState,
-                                 Duration timeout) throws CaseCreationException {
-        PropagationContext context = PropagationContext.createRoot(Map.of(), timeout);
-        return createAndSolveInternal(caseType, initialState, context);
-    }
-
-    private CaseFile createAndSolveInternal(String caseType, Map<String, Object> initialState,
-                                          PropagationContext context) {
-        DefaultCaseFile caseFile = new DefaultCaseFile(caseType, initialState, context);
-        Long caseFileId = caseFile.getId();
-        DefaultCasePlanModel casePlanModel = new DefaultCasePlanModel(caseFile);
-
-        activeCaseFiles.put(caseFileId, caseFile);
-        casePlanModels.put(caseFileId, casePlanModel);
-
-        CompletableFuture<CaseFile> future = new CompletableFuture<>();
-        caseFileFutures.put(caseFileId, future);
-
-        controlLoopExecutor.submit(() -> runControlLoop(caseFile));
-
+        PropagationContext ctx = PropagationContext.createRoot();
+        CaseFile caseFile = caseFileRepository.create(caseType, initialState, ctx);
+        scheduleControlLoop(caseFile);
         return caseFile;
     }
 
+    public CaseFile createAndSolve(String caseType, Map<String, Object> initialState,
+                                    Duration timeout) throws CaseCreationException {
+        PropagationContext ctx = PropagationContext.createRoot(Map.of(), timeout);
+        CaseFile caseFile = caseFileRepository.create(caseType, initialState, ctx);
+        scheduleControlLoop(caseFile);
+        return caseFile;
+    }
+
+    public CaseFile createChildCaseFile(CaseFile parent, String caseType,
+                                         Map<String, Object> initialState) {
+        CaseFile child = caseFileRepository.createChild(caseType, initialState, parent);
+        scheduleControlLoop(child);
+        return child;
+    }
+
+    private void scheduleControlLoop(CaseFile caseFile) {
+        Long id = caseFile.getId();
+        activeCaseFiles.put(id, caseFile);
+        casePlanModels.put(id, new DefaultCasePlanModel(caseFile));
+        caseFileFutures.put(id, new CompletableFuture<>());
+        controlLoopExecutor.submit(() -> runControlLoop(caseFile));
+    }
+
     private void runControlLoop(CaseFile caseFile) {
-        Long caseFileId = caseFile.getId();
-        CasePlanModel casePlanModel = casePlanModels.get(caseFileId);
+        Long id = caseFile.getId();
+        CasePlanModel casePlanModel = casePlanModels.get(id);
 
         caseFile.setStatus(CaseStatus.RUNNING);
 
-        String caseType = caseFile.getCaseType();
-        List<TaskDefinition> taskDefs = taskDefRegistry.getForCaseType(caseType);
-        List<PlanningStrategy> strategies = taskDefRegistry.getStrategiesForCaseType(caseType);
+        List<TaskDefinition> taskDefs = taskDefRegistry.getForCaseType(caseFile.getCaseType());
+        List<PlanningStrategy> strategies = taskDefRegistry.getStrategiesForCaseType(caseFile.getCaseType());
 
-        // Initial evaluation
-        List<PlanItem> newPlanItems = listenerEvaluator.evaluateAndCreatePlanItems(caseFile, casePlanModel, taskDefs, null);
+        List<PlanItem> newPlanItems = listenerEvaluator.evaluateAndCreatePlanItems(
+                caseFile, casePlanModel, taskDefs, null);
 
         while (caseFile.getStatus() == CaseStatus.RUNNING) {
-            // Invoke PlanningStrategies based on activation conditions
             for (PlanningStrategy strategy : strategies) {
-                if (strategy.getActivationCondition() == ControlActivationCondition.ON_NEW_PLAN_ITEMS
-                        && !newPlanItems.isEmpty()) {
+                ControlActivationCondition condition = strategy.getActivationCondition();
+                if (condition == ControlActivationCondition.ON_NEW_PLAN_ITEMS && !newPlanItems.isEmpty()) {
                     strategy.reason(casePlanModel, caseFile);
-                } else if (strategy.getActivationCondition() == ControlActivationCondition.ALWAYS) {
+                } else if (condition == ControlActivationCondition.ALWAYS) {
                     strategy.reason(casePlanModel, caseFile);
                 }
             }
 
-            // Get top PlanItem to execute
             List<PlanItem> topPlanItems = casePlanModel.getTopPlanItems(1);
 
             if (topPlanItems.isEmpty()) {
@@ -123,43 +120,36 @@ public class CaseEngine {
                 }
             }
 
-            newPlanItems = List.of(); // Reset for next iteration
+            newPlanItems = List.of();
 
             for (PlanItem planItem : topPlanItems) {
                 planItem.setStatus(PlanItemStatus.RUNNING);
 
-                String tdId = planItem.getTaskDefinitionId();
-                var tdOpt = taskDefRegistry.getById(tdId);
+                var tdOpt = taskDefRegistry.getById(planItem.getTaskDefinitionId());
                 if (tdOpt.isEmpty()) {
                     planItem.setStatus(PlanItemStatus.FAULTED);
                     casePlanModel.removePlanItem(planItem.getPlanItemId());
-                    LOG.warnf("TaskDefinition not found for PlanItem: tdId=%s", tdId);
+                    LOG.warnf("TaskDefinition not found: %s", planItem.getTaskDefinitionId());
                     continue;
                 }
 
-                TaskDefinition td = tdOpt.get();
                 try {
-                    td.execute(caseFile);
+                    tdOpt.get().execute(caseFile);
                     planItem.setStatus(PlanItemStatus.COMPLETED);
                     casePlanModel.removePlanItem(planItem.getPlanItemId());
-
-                    // Re-evaluate entry criteria with the trigger key
                     newPlanItems = listenerEvaluator.evaluateAndCreatePlanItems(
                             caseFile, casePlanModel, taskDefs, planItem.getTriggerKey());
                 } catch (Exception e) {
                     planItem.setStatus(PlanItemStatus.FAULTED);
-                    LOG.errorf(e, "TaskDefinition %s failed during execution", tdId);
-                    continue;
+                    LOG.errorf(e, "TaskDefinition %s failed", planItem.getTaskDefinitionId());
                 }
 
-                // Check if CaseFile was completed or faulted during execution
                 CaseStatus currentStatus = caseFile.getStatus();
                 if (currentStatus == CaseStatus.COMPLETED || currentStatus == CaseStatus.FAULTED) {
                     break;
                 }
             }
 
-            // Invoke PlanningStrategies that react to completion
             for (PlanningStrategy strategy : strategies) {
                 if (strategy.getActivationCondition() == ControlActivationCondition.ON_TASK_COMPLETION) {
                     strategy.reason(casePlanModel, caseFile);
@@ -167,19 +157,20 @@ public class CaseEngine {
             }
         }
 
-        // Complete the future
-        CompletableFuture<CaseFile> future = caseFileFutures.get(caseFileId);
+        CompletableFuture<CaseFile> future = caseFileFutures.get(id);
         if (future != null) {
             future.complete(caseFile);
         }
+        // Clean up to prevent memory accumulation in long-running deployments
+        activeCaseFiles.remove(id);
+        casePlanModels.remove(id);
+        caseFileFutures.remove(id);
     }
 
     public CaseFile awaitCompletion(CaseFile caseFile, Duration timeout)
             throws InterruptedException, TimeoutException {
         CompletableFuture<CaseFile> future = caseFileFutures.get(caseFile.getId());
-        if (future == null) {
-            return caseFile;
-        }
+        if (future == null) return caseFile;
         try {
             future.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
         } catch (java.util.concurrent.ExecutionException e) {
@@ -188,25 +179,15 @@ public class CaseEngine {
         return caseFile;
     }
 
-    public CaseFile createChildCaseFile(CaseFile parentCaseFile, String caseType,
-                                        Map<String, Object> initialState) {
-        PropagationContext childContext = parentCaseFile.getPropagationContext().createChild();
-        return createAndSolveInternal(caseType, initialState, childContext);
-    }
-
     public boolean cancel(CaseFile caseFile) {
         caseFile.setStatus(CaseStatus.CANCELLED);
-
         CasePlanModel casePlanModel = casePlanModels.get(caseFile.getId());
-        if (casePlanModel != null) {
-            casePlanModel.clearAgenda();
-        }
-
+        if (casePlanModel != null) casePlanModel.clearAgenda();
         CompletableFuture<CaseFile> future = caseFileFutures.get(caseFile.getId());
-        if (future != null) {
-            future.complete(caseFile);
-        }
-
+        if (future != null) future.complete(caseFile);
+        activeCaseFiles.remove(caseFile.getId());
+        casePlanModels.remove(caseFile.getId());
+        caseFileFutures.remove(caseFile.getId());
         return true;
     }
 
@@ -222,4 +203,8 @@ public class CaseEngine {
         return casePlanModels.get(caseFile.getId());
     }
 
+    @PreDestroy
+    public void shutdown() {
+        controlLoopExecutor.shutdownNow();
+    }
 }
