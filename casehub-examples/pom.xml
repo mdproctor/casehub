@@ -23,6 +23,12 @@
             <artifactId>casehub-core</artifactId>
         </dependency>
 
+        <!-- CaseHub Persistence - In-Memory (provides CaseFileRepository and TaskRepository) -->
+        <dependency>
+            <groupId>io.casehub</groupId>
+            <artifactId>casehub-persistence-memory</artifactId>
+        </dependency>
+
         <!-- Quarkus dependencies inherited from core -->
         <dependency>
             <groupId>io.quarkus</groupId>

@@ -3,7 +3,6 @@ package io.casehub.resilience;
 import io.casehub.coordination.CaseEngine;
 import io.casehub.core.CaseFile;
 import io.casehub.core.CaseStatus;
-import io.casehub.core.DefaultCaseFile;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -26,7 +25,7 @@ public class TimeoutEnforcer {
             if (caseFile.getStatus() == CaseStatus.RUNNING
                     && caseFile.getPropagationContext().isBudgetExhausted()) {
                 caseEngine.cancel(caseFile);
-                ((DefaultCaseFile) caseFile).setStatus(CaseStatus.FAULTED);
+                caseFile.setStatus(CaseStatus.FAULTED);
             }
         }
     }

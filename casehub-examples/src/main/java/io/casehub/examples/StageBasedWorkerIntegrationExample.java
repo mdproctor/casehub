@@ -7,6 +7,7 @@ import io.casehub.control.PlanItem;
 import io.casehub.control.Stage;
 import io.casehub.coordination.PropagationContext;
 import io.casehub.core.*;
+import io.casehub.persistence.memory.InMemoryCaseFileRepository;
 
 import java.util.*;
 
@@ -61,8 +62,7 @@ public class StageBasedWorkerIntegrationExample {
         // Create CaseFile and CasePlanModel
         PropagationContext propagationContext = PropagationContext.createRoot();
         Map<String, Object> initialState = Map.of("raw_document", "sample-document.pdf");
-        CaseFile caseFile = new DefaultCaseFile(
-                "stage-worker-001",
+        CaseFile caseFile = new InMemoryCaseFileRepository().create(
                 "staged-analysis",
                 new HashMap<>(initialState),
                 propagationContext

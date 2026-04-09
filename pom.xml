@@ -14,6 +14,8 @@
 
     <modules>
         <module>casehub-core</module>
+        <module>casehub-persistence-memory</module>
+        <module>casehub-persistence-hibernate</module>
         <module>casehub-examples</module>
         <module>casehub-flow-worker</module>
     </modules>
@@ -45,6 +47,18 @@
             <dependency>
                 <groupId>io.casehub</groupId>
                 <artifactId>casehub-core</artifactId>
+                <version>${casehub.version}</version>
+            </dependency>
+
+            <!-- CaseHub Persistence -->
+            <dependency>
+                <groupId>io.casehub</groupId>
+                <artifactId>casehub-persistence-memory</artifactId>
+                <version>${casehub.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.casehub</groupId>
+                <artifactId>casehub-persistence-hibernate</artifactId>
                 <version>${casehub.version}</version>
             </dependency>
 

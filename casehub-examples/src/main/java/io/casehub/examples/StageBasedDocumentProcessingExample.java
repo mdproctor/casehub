@@ -6,8 +6,8 @@ import io.casehub.control.Milestone;
 import io.casehub.control.Stage;
 import io.casehub.coordination.PropagationContext;
 import io.casehub.core.CaseFile;
-import io.casehub.core.DefaultCaseFile;
 import io.casehub.core.ListenerEvaluator;
+import io.casehub.persistence.memory.InMemoryCaseFileRepository;
 import io.casehub.core.TaskDefinition;
 import io.casehub.resilience.RetryPolicy;
 
@@ -55,8 +55,7 @@ public class StageBasedDocumentProcessingExample {
 
         // Create CaseFile and CasePlanModel
         PropagationContext propagationContext = PropagationContext.createRoot();
-        CaseFile caseFile = new DefaultCaseFile(
-                "doc-processing-001",
+        CaseFile caseFile = new InMemoryCaseFileRepository().create(
                 "document-processing",
                 new HashMap<>(),
                 propagationContext
