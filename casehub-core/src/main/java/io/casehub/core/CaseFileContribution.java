@@ -6,7 +6,7 @@ import java.util.Set;
 /**
  * Immutable record of a {@link TaskDefinition}'s execution against a {@link CaseFile} -- which
  * TaskDefinition produced which keys and when. Used for provenance tracking by the
- * {@link io.casehub.core.spi.CaseFileStorageProvider}.
+ * {@link io.casehub.core.spi.CaseFileRepository}.
  */
 public class CaseFileContribution {
     private final String caseFileId;

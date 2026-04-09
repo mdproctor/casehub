@@ -50,9 +50,6 @@ public class CaseEngine {
     ListenerEvaluator listenerEvaluator;
 
     @Inject
-    LineageService lineageService;
-
-    @Inject
     NotificationService notificationService;
 
     @Inject
@@ -225,7 +222,4 @@ public class CaseEngine {
         return casePlanModels.get(caseFile.getId());
     }
 
-    public LineageTree getLineage(CaseFile caseFile) {
-        return lineageService.getFullTree(caseFile.getPropagationContext().getTraceId());
-    }
 }
