@@ -42,18 +42,30 @@ CaseHub is organized as a multi-module Maven project to support modularity and d
 
 ```
 casehub/
-├── pom.xml                     # Parent POM (Quarkus 3.32.2)
-├── casehub-core/              # Core framework implementation
+├── pom.xml                         # Parent POM (Quarkus 3.17.5)
+├── casehub-core/                  # Core framework — interfaces + logic, zero persistence
 │   └── src/main/java/io/casehub/
-│       ├── core/              # CaseFile, TaskDefinition, ListenerEvaluator
-│       ├── control/           # CasePlanModel, PlanItem, PlanningStrategy
-│       ├── coordination/      # CaseEngine, PropagationContext, LineageService
-│       ├── worker/            # Task, Worker, TaskBroker, TaskScheduler
-│       ├── resilience/        # Retry, timeout, dead-letter, idempotency
-│       ├── error/             # Exception types and ErrorInfo
-│       ├── core/spi/          # Storage provider interfaces
-│       └── annotation/        # CaseType CDI qualifier
-├── casehub-examples/          # Examples demonstrating architecture
+│       ├── core/                  # CaseFile, TaskDefinition, ListenerEvaluator
+│       ├── core/spi/              # CaseFileRepository SPI
+│       ├── control/               # CasePlanModel, PlanItem, PlanningStrategy
+│       ├── coordination/          # CaseEngine, PropagationContext
+│       ├── worker/                # Task, Worker, TaskBroker, TaskScheduler, TaskRepository SPI
+│       ├── resilience/            # Retry, timeout, dead-letter, idempotency
+│       ├── error/                 # Exception types and ErrorInfo
+│       └── annotation/            # CaseType CDI qualifier
+├── casehub-persistence-memory/    # In-memory SPI implementations (zero external deps)
+│   └── src/main/java/io/casehub/persistence/memory/
+│       ├── InMemoryCaseFile.java
+│       ├── InMemoryTask.java
+│       ├── InMemoryCaseFileRepository.java
+│       └── InMemoryTaskRepository.java
+├── casehub-persistence-hibernate/  # JPA/Panache SPI implementations
+│   └── src/main/java/io/casehub/persistence/hibernate/
+│       ├── HibernateCaseFile.java
+│       ├── HibernateTask.java
+│       ├── HibernateCaseFileRepository.java
+│       └── HibernateTaskRepository.java
+├── casehub-examples/              # Examples (depends on casehub-persistence-memory)
 │   └── src/main/java/io/casehub/examples/
 │       ├── SimpleDocumentAnalysis.java
 │       ├── DocumentAnalysisApp.java
@@ -62,7 +74,7 @@ casehub/
 │           ├── LlmAnalysisTaskDefinition.java
 │           ├── DocumentAnalysisWithLlmApp.java
 │           └── AutonomousMonitoringWorker.java
-└── casehub-flow-worker/       # Optional: Quarkus Flow workflow integration
+└── casehub-flow-worker/           # Optional: Quarkus Flow workflow integration
     └── src/main/java/io/casehub/flow/
         ├── FlowWorker.java                    # Worker for executing workflows
         ├── FlowWorkflowDefinition.java        # Workflow interface
@@ -77,23 +89,27 @@ casehub/
 ### Module Dependencies
 
 ```
-casehub-core (no workflow dependencies)
+casehub-core (interfaces + logic; zero persistence deps)
     ↑
-    ├── casehub-examples (depends on core)
+    ├── casehub-persistence-memory (implements CaseFileRepository + TaskRepository, no external deps)
+    ├── casehub-persistence-hibernate (implements same SPIs via JPA/Panache; H2 for tests, PostgreSQL for prod)
+    ├── casehub-examples (depends on casehub-persistence-memory)
     └── casehub-flow-worker (depends on core + quarkus-flow 0.7.1)
 ```
 
 **Dependency Isolation Strategy:**
-- **casehub-core**: Contains all framework components with no workflow engine dependencies
-- **casehub-examples**: Demonstrates core functionality without workflow engines
+- **casehub-core**: All framework interfaces and logic; zero persistence or workflow engine dependencies
+- **casehub-persistence-memory**: Lightweight in-memory implementations; used for fast unit tests and local development
+- **casehub-persistence-hibernate**: Production-grade JPA/Panache implementations; workspace stored as JSON TEXT blob
+- **casehub-examples**: Demonstrates core functionality using the in-memory persistence module
 - **casehub-flow-worker**: Optional module with isolated Quarkus Flow dependencies
 - Future modules (e.g., `casehub-temporal-worker`, `casehub-camunda-worker`) can be added without affecting core
 
 **Benefits:**
-- Users can use CaseHub without workflow engines (just `casehub-core`)
+- Users can use CaseHub without workflow engines (just `casehub-core` + a persistence module)
 - Multiple workflow engines supported via separate modules
 - Core framework remains lightweight and dependency-free
-- Each workflow module maintains version compatibility independently
+- Each persistence and workflow module maintains version compatibility independently
 
 ---
 
@@ -158,10 +174,21 @@ Each task definition works independently. No task definition needs to know about
 #### CaseFile Interface
 
 ```java
+/**
+ * The shared workspace at the heart of the Blackboard Architecture.
+ * Each CaseFile has a Long primary key (for database storage and optimistic locking),
+ * a UUID for OpenTelemetry trace correlation, and direct references to its parent
+ * and children — forming the POJO object graph.
+ */
 public interface CaseFile {
-    String getCaseFileId();
 
-    // Read shared state
+    // Identity
+    Long getId();
+    Long getVersion();
+    UUID getOtelTraceId();
+    String getCaseType();
+
+    // Read shared workspace state
     <T> Optional<T> get(String key, Class<T> type);
     boolean contains(String key);
     Set<String> keys();
@@ -171,26 +198,32 @@ public interface CaseFile {
     void put(String key, Object value);
     void putIfAbsent(String key, Object value);
 
-    // React to changes
+    // Optimistic concurrency (fine-grained, per-key)
+    void putIfVersion(String key, Object value, long expectedVersion) throws StaleVersionException;
+    long getKeyVersion(String key);
+
+    // Change listeners (in-memory only; not persisted)
     void onChange(String key, Consumer<CaseFileItemEvent> listener);
     void onAnyChange(Consumer<CaseFileItemEvent> listener);
 
-    // Versioning (for optimistic concurrency — see §7.5)
-    long getVersion();
-    void putIfVersion(String key, Object value, long expectedVersion)
-        throws StaleVersionException;
-    long getKeyVersion(String key);
-
-    // Context (see §5.2)
+    // Context propagation (tracing + budget)
     PropagationContext getPropagationContext();
+
+    // Graph relationships — navigate parent/child hierarchy directly on the POJO
+    Optional<CaseFile> getParentCase();
+    List<CaseFile> getChildCases();
+    List<Task> getTasks();
 
     // Lifecycle
     CaseStatus getStatus();
+    void setStatus(CaseStatus status);
     Instant getCreatedAt();
     void complete();
     void fail(ErrorInfo error);
 }
 ```
+
+**Identity design note:** `getId()` returns a `Long` primary key used for database storage and keying internal maps. `getOtelTraceId()` returns a UUID shared across the entire parent/child hierarchy, enabling W3C-compatible distributed tracing without a separate `spanId` field — structural relationships are carried by the POJO graph (`getParentCase()` / `getChildCases()`) rather than embedded in the context.
 
 #### CaseStatus
 
@@ -359,90 +392,87 @@ public class ListenerEvaluator {
 
 ### 3.4 Storage SPI
 
-Pluggable storage abstractions for both CaseFile and Task models.
+Pluggable repository abstractions for both CaseFile and Task models. The SPIs are defined in `casehub-core`; implementations live in separate persistence modules.
 
-#### CaseFileStorageProvider
+#### CaseFileRepository
 
-Persists case file state and change history.
+Lifecycle management for CaseFile instances, in `casehub-core/src/main/java/io/casehub/core/spi/`.
 
 ```java
-public interface CaseFileStorageProvider {
-    // CaseFile CRUD
-    void createCaseFile(String caseFileId, Map<String, Object> initialState);
-    Optional<Map<String, Object>> retrieveCaseFile(String caseFileId);
-    void updateCaseFileStatus(String caseFileId, CaseStatus newStatus);
-    void deleteCaseFile(String caseFileId);
+/**
+ * SPI for creating and retrieving CaseFiles.
+ *
+ * Implementations:
+ * - casehub-persistence-memory: InMemoryCaseFileRepository (no external deps, fast tests)
+ * - casehub-persistence-hibernate: HibernateCaseFileRepository (JPA/Panache, production)
+ */
+public interface CaseFileRepository {
 
-    // Key-value operations (the case file's shared workspace)
-    void putKey(String caseFileId, String key, Object value);
-    Optional<Object> getKey(String caseFileId, String key);
-    Set<String> getKeys(String caseFileId);
-    Map<String, Object> getSnapshot(String caseFileId);
+    /** Create a root CaseFile (no parent). */
+    CaseFile create(String caseType, Map<String, Object> initialState,
+                    PropagationContext propagationContext);
 
-    // Provenance tracking
-    void recordContribution(String caseFileId, String tdId, Set<String> keys, Instant timestamp);
-    List<CaseFileContribution> getContributionHistory(String caseFileId);
+    /** Create a child CaseFile attached to a parent. */
+    CaseFile createChild(String caseType, Map<String, Object> initialState, CaseFile parent);
 
-    // Consistency extensions (see §7.5)
-    boolean putIfVersion(String caseFileId, String key, Object value, long expectedVersion);
-    Optional<CaseFileItem> getVersioned(String caseFileId, String key);
-    Optional<LockHandle> tryLock(String caseFileId, Duration ttl);
-    boolean renewLock(LockHandle handle, Duration ttl);
-    void releaseLock(LockHandle handle);
+    Optional<CaseFile> findById(Long id);
 
-    // Lifecycle
-    void cleanup(Predicate<BoardMetadata> shouldDelete);
+    List<CaseFile> findByStatus(CaseStatus status);
+
+    /** Persist any state changes to the CaseFile (no-op for in-memory). */
+    void save(CaseFile caseFile);
+
+    void delete(Long id);
 }
 ```
 
-#### TaskStorageProvider
+#### TaskRepository
 
-Persists task state for the request-response model.
+Lifecycle management for Task instances, in `casehub-core/src/main/java/io/casehub/worker/`.
 
 ```java
-public interface TaskStorageProvider {
-    // Task CRUD
-    void storeTask(String taskId, TaskData data);
-    Optional<TaskData> retrieveTask(String taskId);
-    void updateTaskStatus(String taskId, TaskStatus newStatus);
-    void delete(String taskId);
+/**
+ * SPI for creating and retrieving Tasks.
+ *
+ * Implementations:
+ * - casehub-persistence-memory: InMemoryTaskRepository
+ * - casehub-persistence-hibernate: HibernateTaskRepository
+ */
+public interface TaskRepository {
 
-    // Result management
-    void storeResult(String taskId, TaskResult result);
-    Optional<TaskResult> retrieveResult(String taskId);
+    Task create(String taskType, Map<String, Object> context,
+                Set<String> requiredCapabilities, PropagationContext propagationContext,
+                CaseFile owningCase);
 
-    // Queries
-    List<TaskData> findTasksByStatus(TaskStatus status);
-    List<TaskData> findTasksByWorker(String workerId);
+    Task createAutonomous(String taskType, Map<String, Object> context,
+                          String assignedWorkerId, CaseFile owningCase,
+                          PropagationContext propagationContext);
 
-    // Lifecycle
-    void cleanup(Predicate<TaskData> shouldDelete);
+    Optional<Task> findById(Long id);
+
+    List<Task> findByStatus(TaskStatus status);
+
+    List<Task> findByWorker(String workerId);
+
+    /** Persist state changes (no-op for in-memory). */
+    void save(Task task);
+
+    void delete(Long id);
 }
 ```
 
-#### PropagationStorageProvider
+#### Concurrency Model
 
-Persists context propagation and lineage data (see §5.2).
-
-```java
-public interface PropagationStorageProvider {
-    void storeContext(String spanId, PropagationContext context);
-    Optional<PropagationContext> retrieveContext(String spanId);
-    List<PropagationContext> findByTraceId(String traceId);
-    List<PropagationContext> findByParentSpanId(String parentSpanId);
-    void deleteByTraceId(String traceId);  // Cleanup entire hierarchy
-}
-```
-
-#### Concurrency Model (MVP)
-
-- Thread-safe using `ConcurrentHashMap`
+- Thread-safe using `ConcurrentHashMap` (in-memory implementation)
 - CaseFile key writes trigger CDI change events before returning
 - Atomic status transitions using synchronized blocks
 - Future implementations must provide equivalent concurrency guarantees
 
-**MVP Implementation**: `InMemoryCaseFileStorage`, `InMemoryTaskStorage`, `InMemoryPropagationStorage` with Quarkus CDI Event Bus
-**Future**: Redis, PostgreSQL, Cassandra backends
+**`casehub-persistence-memory`**: `InMemoryCaseFile`, `InMemoryTask`, `InMemoryCaseFileRepository`, `InMemoryTaskRepository`. Zero external dependencies; used for fast unit tests and local development.
+
+**`casehub-persistence-hibernate`**: `HibernateCaseFile`, `HibernateTask`, `HibernateCaseFileRepository`, `HibernateTaskRepository`. JPA/Panache entities; workspace stored as JSON TEXT blob; H2 for tests, PostgreSQL for production.
+
+**Future**: Redis, Cassandra backends via additional persistence modules.
 
 ### 3.5 Information Slots
 
@@ -572,16 +602,38 @@ public class TaskRequest {
     public static TaskRequestBuilder builder() { ... }
 }
 
-public class Task {
-    private String taskId;                        // UUID generated by TaskBroker
-    private String taskType;
-    private Map<String, Object> context;
-    private Set<String> requiredCapabilities;
-    private TaskStatus status;
-    private Instant submittedAt;
-    private Optional<String> assignedWorkerId;
-    private Optional<Instant> assignedAt;
-    private PropagationContext propagationContext;
+/**
+ * A concrete, executable work unit in the request-response model.
+ * Task is an interface; DefaultTask is the in-core interim implementation.
+ * Persistence modules provide HibernateTask (JPA entity) and InMemoryTask.
+ */
+public interface Task {
+
+    // Identity
+    Long getId();
+    Long getVersion();
+    UUID getOtelSpanId();
+
+    // Task data
+    String getTaskType();
+    Map<String, Object> getContext();
+    Set<String> getRequiredCapabilities();
+
+    // Lifecycle
+    TaskStatus getStatus();
+    void setStatus(TaskStatus status);
+    Instant getSubmittedAt();
+    Optional<String> getAssignedWorkerId();
+    void setAssignedWorkerId(String workerId);
+    Optional<Instant> getAssignedAt();
+    TaskOrigin getTaskOrigin();
+
+    // Context propagation
+    PropagationContext getPropagationContext();
+
+    // Graph relationships
+    Optional<CaseFile> getOwningCase();
+    List<Task> getChildTasks();
 }
 
 public class TaskResult {
@@ -702,11 +754,14 @@ public class WorkerRegistry {
 
 #### Extended Task Fields
 
+The `Task` interface carries `TaskOrigin` and a graph reference to its owning `CaseFile`:
+
 ```java
-public class Task {
-    // ... existing fields ...
-    private TaskOrigin taskOrigin;          // BROKER_ALLOCATED or AUTONOMOUS
-    private Optional<String> caseFileId;    // For autonomous tasks associated with a case
+public interface Task {
+    // ... other fields ...
+    TaskOrigin getTaskOrigin();             // BROKER_ALLOCATED or AUTONOMOUS
+    Optional<CaseFile> getOwningCase();     // Case associated with this task (if any)
+    List<Task> getChildTasks();             // Sub-tasks spawned during execution
 }
 ```
 
@@ -757,9 +812,10 @@ public class FraudMonitoringWorker implements Runnable {
                     // 4. Perform work
                     Map<String, Object> analysis = analyzeFraud(txn);
 
-                    // 5. Submit result
-                    TaskResult result = TaskResult.success(task.getTaskId(), analysis);
-                    workerRegistry.submitResult(workerId, task.getTaskId(), result);
+                    // 5. Submit result (task.getId() is Long; TaskResult takes String)
+                    String taskIdStr = task.getId().toString();
+                    TaskResult result = TaskResult.success(taskIdStr, analysis);
+                    workerRegistry.submitResult(workerId, taskIdStr, result);
                 }
             }
         }
@@ -862,9 +918,11 @@ public class CaseEngine {
 
     /**
      * Create a case file with initial state and begin solving.
+     * Injects CaseFileRepository to create the CaseFile (not DefaultCaseFile directly).
      * Case type determines which domain and planning strategies are eligible.
      * A paired CasePlanModel is created automatically.
-     * Returns immediately; solving is asynchronous.
+     * Returns immediately; solving runs asynchronously on an internal executor.
+     * Internal maps are keyed by Long (the CaseFile's database primary key).
      */
     public CaseFile createAndSolve(String caseType, Map<String, Object> initialState)
         throws CaseCreationException;
@@ -884,6 +942,7 @@ public class CaseEngine {
 
     /**
      * Create a child case file from within a TaskDefinition.
+     * Delegates to CaseFileRepository.createChild(), which sets the parent reference.
      * PropagationContext is automatically inherited from the parent case file.
      * Child deadline is capped at parent's remaining budget.
      */
@@ -907,12 +966,12 @@ public class CaseEngine {
      */
     public CasePlanModel getCasePlanModel(CaseFile caseFile);
 
-    /**
-     * Query the lineage of a case file — all ancestors and descendants.
-     */
-    public LineageTree getLineage(CaseFile caseFile);
+    /** @PreDestroy shuts down the internal executor cleanly. */
+    public void shutdown();
 }
 ```
+
+**Implementation notes:** The internal `activeCaseFiles`, `casePlanModels`, and `caseFileFutures` maps are all keyed by `Long` (the CaseFile's primary key, not a String UUID). After a case completes or is cancelled the maps are cleaned up to prevent memory accumulation in long-running deployments. Lineage traversal is done directly on the POJO graph (`caseFile.getParentCase()`, `caseFile.getChildCases()`) — there is no separate `LineageService` or `getLineage()` API on CaseEngine.
 
 ### 5.2 Context Propagation
 
@@ -940,38 +999,45 @@ Goal: "Analyze legal case #42"                          ← PropagationContext (
 ```
 
 The PropagationContext carries:
-- **Trace ID**: Single unique ID for the entire hierarchy (root to leaf), enabling distributed tracing
-- **Span ID**: Unique ID for the current node in the hierarchy
-- **Parent Span ID**: Link back to the parent (CaseFile or Task that spawned this one)
-- **Lineage Path**: Ordered list of ancestor IDs from root to current node
-- **Inherited Attributes**: Key-value pairs that flow from parent to child (e.g., security principal, tenant ID, deadline)
+- **Trace ID**: W3C-compatible trace ID shared across the entire hierarchy (root to leaf), enabling distributed tracing
+- **Inherited Attributes**: Key-value pairs that flow from parent to child (e.g., security principal, tenant ID)
 - **Resource Budget**: Remaining time/compute budget, decremented as it propagates down
 
+**Removed (POJO graph refactor):** `spanId`, `parentSpanId`, `lineagePath`, `isRoot()`, `getDepth()`, `getCreatedAt()`. Structural relationships are carried by the POJO graph (`CaseFile.getParentCase()` / `getChildCases()`, `Task.getOwningCase()` / `getChildTasks()`). The OTel trace ID for a CaseFile lives on `CaseFile.getOtelTraceId()` (UUID), and per-Task on `Task.getOtelSpanId()`.
+
 ```java
+/**
+ * Immutable tracing and budget context that flows from parent to child.
+ * Carries a W3C-compatible trace ID (shared across entire hierarchy),
+ * inherited attributes (tenantId, userId, etc.), and optional resource budget.
+ */
 public class PropagationContext {
-    // Tracing — correlates the entire hierarchy
-    private final String traceId;           // Single ID for root-to-leaf (UUID, set at root)
-    private final String spanId;            // Unique ID for this node (UUID, set per CaseFile/Task)
-    private final Optional<String> parentSpanId;  // Link to parent (empty for root)
-    private final List<String> lineagePath; // Ordered ancestor IDs: [root, ..., parent]
+
+    // Tracing — single ID shared root-to-leaf
+    private final String traceId;
 
     // Inherited attributes — flow from parent to child automatically
-    private final Map<String, String> inheritedAttributes;  // e.g., security principal, tenant ID
+    private final Map<String, String> inheritedAttributes;  // e.g., tenantId, userId
 
     // Resource budget — enforced down the hierarchy
-    private final Optional<Instant> deadline;        // Absolute deadline (inherited, never extended)
-    private final Optional<Duration> remainingBudget; // Remaining time (decremented per level)
+    private final Instant deadline;        // null = no deadline (absolute, inherited)
+    private final Duration remainingBudget; // null = no budget (decremented per level)
 
     // Factory methods
     public static PropagationContext createRoot();
     public static PropagationContext createRoot(Map<String, String> attributes);
+    public static PropagationContext createRoot(Map<String, String> attributes, Duration budget);
+
+    /**
+     * Reconstructs a PropagationContext from storage.
+     * Used by Hibernate persistence to restore context from entity fields.
+     */
+    public static PropagationContext fromStorage(String traceId, Map<String, String> attributes,
+                                                  Instant deadline, Duration remainingBudget);
 
     /**
      * Create a child context inheriting from this parent.
      * - traceId: inherited (same across entire hierarchy)
-     * - spanId: newly generated UUID
-     * - parentSpanId: set to this context's spanId
-     * - lineagePath: appended with this context's spanId
      * - inheritedAttributes: merged (child can add, not remove)
      * - deadline: inherited (never extended)
      * - remainingBudget: decremented by elapsed time since parent started
@@ -980,10 +1046,12 @@ public class PropagationContext {
     public PropagationContext createChild(Map<String, String> additionalAttributes);
 
     // Queries
-    public boolean isRoot();
-    public int getDepth();                     // 0 for root, 1 for first child, etc.
     public boolean isBudgetExhausted();        // True if deadline passed or budget <= 0
     public Optional<String> getAttribute(String key);
+    public String getTraceId();
+    public Map<String, String> getInheritedAttributes();
+    public Optional<Instant> getDeadline();
+    public Optional<Duration> getRemainingBudget();
 }
 ```
 
@@ -1000,8 +1068,9 @@ public class PropagationContext {
 When a requestor creates a top-level CaseFile, a root PropagationContext is created automatically:
 ```java
 CaseFile caseFile = caseEngine.createAndSolve("legal-case-analysis", initialState);
-// caseFile.getPropagationContext().isRoot() == true
+// caseFile.getParentCase().isEmpty() == true  (root — no parent in POJO graph)
 // caseFile.getPropagationContext().getTraceId() == "abc-123" (new UUID)
+// caseFile.getOtelTraceId() == UUID shared with all descendants
 ```
 
 **2. TaskDefinition → Child CaseFile**
@@ -1025,9 +1094,9 @@ public class EntityDisambiguationTD implements TaskDefinition {
         parentCaseFile.put("entities", resolved.snapshot().get("resolved_entities"));
     }
 }
-// childCaseFile.getPropagationContext().getParentSpanId() == parentCaseFile spanId
+// childCaseFile.getParentCase().get() == parentCaseFile  (POJO graph link)
 // childCaseFile.getPropagationContext().getTraceId() == parentCaseFile traceId (same!)
-// childCaseFile.getPropagationContext().getDepth() == 1
+// parentCaseFile.getChildCases().contains(childCaseFile) == true
 ```
 
 **3. TaskDefinition → Task**
@@ -1094,55 +1163,36 @@ CaseFile root = caseEngine.createAndSolve("analysis", state, Duration.ofMinutes(
 
 ### 5.3 Lineage & Hierarchy
 
-#### Lineage Query API
+#### POJO Graph Traversal
+
+The `LineageService`, `LineageNode`, and `LineageTree` classes have been removed. Lineage is now traversed directly on the POJO object graph:
 
 ```java
-@ApplicationScoped
-public class LineageService {
-
-    /**
-     * Get the full lineage of a CaseFile or Task — all ancestors from root to current.
-     */
-    public List<LineageNode> getLineage(String spanId);
-
-    /**
-     * Get all descendants of a CaseFile or Task.
-     */
-    public List<LineageNode> getDescendants(String spanId);
-
-    /**
-     * Get the full tree for a trace — root to all leaves.
-     */
-    public LineageTree getFullTree(String traceId);
-
-    /**
-     * Find all CaseFiles and Tasks sharing the same trace (part of the same hierarchy).
-     */
-    public List<LineageNode> findByTraceId(String traceId);
+// Navigate up — find the root of a hierarchy
+CaseFile current = childCaseFile;
+while (current.getParentCase().isPresent()) {
+    current = current.getParentCase().get();
 }
+CaseFile root = current;
 
-public class LineageNode {
-    private String spanId;
-    private Optional<String> parentSpanId;
-    private String traceId;
-    private LineageNodeType type;           // CASE_FILE, TASK
-    private String typeId;                  // caseFileId or taskId
-    private String typeName;               // caseType or taskType
-    private Instant createdAt;
-    private Optional<Instant> completedAt;
-    private Object status;                 // CaseStatus or TaskStatus
+// Navigate down — get all child cases
+List<CaseFile> children = parentCaseFile.getChildCases();
 
-    public enum LineageNodeType { CASE_FILE, TASK }
-}
+// Tasks associated with a case
+List<Task> tasks = caseFile.getTasks();
 
-public class LineageTree {
-    private LineageNode root;
-    private List<LineageTree> children;
-    public int getDepth();
-    public int getTotalNodes();
-    public List<LineageNode> getLeaves();
-}
+// Sub-tasks spawned during task execution
+List<Task> subTasks = task.getChildTasks();
+
+// The case that owns a task
+Optional<CaseFile> owningCase = task.getOwningCase();
+
+// Shared trace ID across entire hierarchy (for OTel correlation)
+UUID traceId = caseFile.getOtelTraceId();  // same UUID for all cases in hierarchy
+UUID spanId  = task.getOtelSpanId();       // unique per task
 ```
+
+This approach eliminates a separate storage layer for lineage data; the graph structure is maintained by the persistence module (`InMemoryCaseFileRepository` wires parent/child references in memory; `HibernateCaseFileRepository` uses JPA `@OneToMany`/`@ManyToOne` associations).
 
 #### Hierarchical Cancellation
 
@@ -1545,25 +1595,9 @@ public interface CasePlanModel {
 
 #### Persistence
 
-Stages and milestones are persisted via the CaseFileStorageProvider SPI:
+Stages and milestones are stored in-memory on the `CasePlanModel` (which is created per CaseFile at solve time by the CaseEngine). The `CaseFileRepository` SPI does not currently expose stage/milestone persistence methods; stages and milestones live in memory alongside their controlling CasePlanModel and are reconstructed when a case is reloaded.
 
-```java
-public interface CaseFileStorageProvider {
-    // Stage persistence
-    void saveStage(String caseFileId, Stage stage);
-    Optional<Stage> getStage(String caseFileId, String stageId);
-    List<Stage> getAllStages(String caseFileId);
-    void deleteStage(String caseFileId, String stageId);
-
-    // Milestone persistence
-    void saveMilestone(String caseFileId, Milestone milestone);
-    Optional<Milestone> getMilestone(String caseFileId, String milestoneId);
-    List<Milestone> getAllMilestones(String caseFileId);
-    void deleteMilestone(String caseFileId, String milestoneId);
-}
-```
-
-The `InMemoryCaseFileStorage` implementation uses `ConcurrentHashMap` to store stages and milestones indexed by case file ID.
+The in-memory implementation uses `ConcurrentHashMap` to store stages and milestones indexed by stage/milestone ID within the `DefaultCasePlanModel`.
 
 #### Example: Multi-Stage Document Processing
 
@@ -1624,7 +1658,7 @@ See `casehub-examples/src/main/java/io/casehub/examples/StageBasedDocumentProces
 ### 6.5 Logging Strategy
 
 - **Framework**: SLF4J with structured JSON output
-- **Correlation**: `trace_id`, `span_id`, `parent_span_id` from PropagationContext added to MDC for all logs; plus `case_file_id` or `task_id` and `td_id` during task definition execution. This enables tracing across the full Goal → CaseFile → TaskDefinition → Task → sub-Task hierarchy
+- **Correlation**: `trace_id` from PropagationContext plus `case_file_id` (Long) and `otel_trace_id` (UUID) for CaseFiles, or `task_id` (Long) and `otel_span_id` (UUID) for Tasks, added to MDC for all logs; plus `td_id` during task definition execution. This enables tracing across the full CaseFile → TaskDefinition → Task → sub-Task hierarchy
 - **Levels**:
   - INFO: CaseFile created/completed/faulted, task definition activated/contributed, task lifecycle events
   - DEBUG: Entry criteria evaluation results, case worker selection, routing decisions, heartbeats
@@ -2220,7 +2254,18 @@ Both models share the same case worker infrastructure, storage SPI, and observab
 - **Goal**: High-level objective or desired outcome (e.g., "analyze customer sentiment")
 - **Task**: Concrete, executable work unit derived from a goal (e.g., "classify sentiment of document X")
 
-**Design Decision**: MVP supports Tasks and CaseFiles. Goals-to-Tasks decomposition will be added in future iterations when patterns emerge from usage.
+**Current state**: CaseFiles complete by quiescence (no more task definitions can fire and none are in-flight) or by explicit `caseFile.complete()`. This is backward compatible and remains the default.
+
+#### Planned: Goal Model (Issue #7)
+
+A formal `CaseGoal` model is planned to provide a richer, explicit completion contract at `createAndSolve()` time:
+
+- **`CaseGoal`**: Carries a *satisfaction predicate* (conditions under which the case is successfully complete) and an *abandonment predicate* (conditions under which the case should be terminated as unsolvable). Named `Milestone` objects within the goal track sub-achievements.
+- **`GoalEvaluator`**: A new CaseEngine collaborator that evaluates the `CaseGoal` after each control cycle, transitioning the CaseFile to COMPLETED (satisfaction) or FAULTED (abandonment) as appropriate.
+- **Backward compatibility**: Cases created with no `CaseGoal` fall back to existing quiescence-based completion unchanged.
+- **Research basis**: Design research is captured in `docs/research/goal-model-research.md`.
+
+This will make the formal contract between a requestor and the system explicit, rather than relying on the implicit "no more task definitions can fire" heuristic.
 
 ### 8.3 Quarkus Integration
 
@@ -2402,7 +2447,7 @@ See `casehub-flow-worker/README.md` and `QUARKUS_FLOW_INTEGRATION.md` for comple
 - Define CaseFile model interfaces: `CaseFile`, `CaseEngine`, `TaskDefinition`, `CaseStatus`
 - Define Control interfaces: `CasePlanModel`, `PlanningStrategy`, `PlanItem`
 - Define Task model interfaces: `TaskBroker`, `TaskHandle`, `TaskStatus`
-- Define cross-cutting: `PropagationContext`, `LineageService`, `LineageNode`, `LineageTree`
+- Define cross-cutting: `PropagationContext` (traceId, inheritedAttributes, deadline, budget)
 - Define resilience: `RetryPolicy`, `DeadLetterQueue`, `DeadLetterEntry`, `PoisonPillDetector`, `TimeoutEnforcer`
 - Define consistency: `CaseFileItem`, `ConflictResolver`, `IdempotencyService`
 - Define shared interfaces: `WorkerRegistry`, `NotificationService`
@@ -2410,15 +2455,13 @@ See `casehub-flow-worker/README.md` and `QUARKUS_FLOW_INTEGRATION.md` for comple
 - Basic unit tests for models, PlanItems, PropagationContext, and RetryPolicy
 
 **Day 3-4: Storage Layer, CaseFile & CasePlanModel Implementation**
-- Implement `InMemoryCaseFileStorage` with `ConcurrentHashMap` and change listeners
-- Implement `InMemoryTaskStorage` with `ConcurrentHashMap`
-- Implement `CaseFile` with key-value operations, change events, thread safety, and versioning
+- Implement `InMemoryCaseFileRepository` + `InMemoryTaskRepository` in `casehub-persistence-memory`
+- Implement `HibernateCaseFileRepository` + `HibernateTaskRepository` in `casehub-persistence-hibernate` (JPA/Panache; workspace as JSON TEXT)
+- Implement `InMemoryCaseFile` and `InMemoryTask` (POJO graph with parent/child references)
 - Implement `CasePlanModel` with agenda management, focus, strategy, and resource tracking
 - Implement `PlanItem` with priority ordering and status lifecycle
-- Implement `CaseFileRegistry` and `TaskRegistry` with lifecycle management
-- Implement `InMemoryPropagationStorage` for context and lineage persistence
-- TTL-based cleanup scheduler (Quarkus Scheduler) — cleans up by traceId (entire hierarchy)
-- Unit tests for CaseFile, CasePlanModel, PlanItem, CaseFileRegistry, TaskRegistry, PropagationStorage
+- TTL-based cleanup scheduler (Quarkus Scheduler) — cleans up by CaseFile ID
+- Unit tests for CaseFile, CasePlanModel, PlanItem, CaseFileRepository, TaskRepository
 - Concurrency tests for CaseFile (multiple writers)
 
 **Day 5: TaskDefinition & Worker Management**
@@ -2438,15 +2481,15 @@ See `casehub-flow-worker/README.md` and `QUARKUS_FLOW_INTEGRATION.md` for comple
   - Invoke Planning Strategies to prioritize/filter PlanItems
   - Execute highest-priority PlanItem(s) from agenda
   - Domain task definition contributes to CaseFile → repeat
-- Implement `createChildCaseFile()` with automatic PropagationContext inheritance
-- Implement `LineageService` for hierarchy queries (getLineage, getDescendants, getFullTree)
+- Implement `createChildCaseFile()` with automatic PropagationContext inheritance (delegates to `CaseFileRepository.createChild()`)
+- Hierarchy queries done via POJO graph (`getParentCase()`, `getChildCases()`, `getOwningCase()`, `getChildTasks()`) — no separate LineageService
 - Implement `TaskScheduler` with round-robin selection
 - Wire `TaskBroker` orchestration (delegates to TaskRegistry + TaskScheduler)
 - Implement `NotificationService` with Quarkus Event Bus (case file changes + task lifecycle)
 - Implement hierarchical cancellation (cancel propagates to all child case files/tasks)
 - Budget enforcement: child deadline capped at parent's remaining budget
 - Unit tests for ListenerEvaluator, CaseEngine (with and without custom Planning Strategies)
-- Unit tests for context propagation (root → child case file → child task, budget inheritance)
+- Unit tests for context propagation (root → child case file → child task, budget inheritance, POJO graph)
 - Integration tests: end-to-end CaseFile solving with task definitions spawning child case files and tasks
 - Integration tests: end-to-end Task submission and result retrieval
 
@@ -2510,12 +2553,13 @@ Reserved for:
 ## 10. Future Enhancements
 
 ### Phase 2 (Weeks 3-4) — Persistence & Reliability
-- Redis storage implementation for both CaseFile and Task models
+- Redis persistence module for CaseFile, Task, and DLQ (additional module alongside Hibernate)
 - Task definition re-activation and retry on failure
 - Basic progress notifications
 - Configurable retry policies
 - CaseFile state snapshots and restoration on crash recovery
 - Timeout handling improvements
+- Goal model: `CaseGoal`, `GoalEvaluator` — explicit satisfaction/abandonment contracts at `createAndSolve()` time (issue #7)
 
 ### Phase 3 (Weeks 5-8) — Advanced Case Management & Control Features
 - **CaseFile hierarchies**: Nested case files for sub-problem decomposition
@@ -2523,7 +2567,7 @@ Reserved for:
 - **Meta-reasoning Planning Strategies**: Planning Strategies that learn from past case file solutions to improve strategy
 - **Adaptive resource management**: Planning Strategies that adjust strategy based on resource consumption
 - **Control plan persistence**: Save and replay successful control strategies
-- Goal → Task decomposition (goals create case files automatically)
+- Goal → Task decomposition (goals create case files automatically; builds on Phase 2 Goal model)
 - Partial result streaming
 - Advanced case worker selection (capability matching, load balancing)
 - Distributed tracing with OpenTelemetry
@@ -2542,9 +2586,10 @@ Reserved for:
 ## 11. Design Decisions (Answered Questions)
 
 ### 1. Goals vs Tasks
-**Decision**: Task-only for MVP
+**Decision**: Task-only for MVP; Goal model planned for Phase 2 (issue #7)
 - Rationale: Goal decomposition patterns will emerge from usage. Premature abstraction risk.
-- Future: Phase 3 will add goal-to-task decomposition based on real-world patterns.
+- Planned: `CaseGoal` with satisfaction/abandonment predicates and `GoalEvaluator`; backward compatible (no-goal falls back to quiescence completion).
+- Future: Phase 3 will add goal-to-task decomposition (goals that automatically create case files).
 
 ### 2. Notification Mechanism
 **Decision**: Quarkus CDI Event Bus
@@ -2606,12 +2651,14 @@ Reserved for:
 **Coordination (§5):**
 - **Control Loop**: CaseEngine runs Erman/Hayes-Roth cycle (detect → create PlanItems → invoke Planning Strategies → execute top PlanItems → repeat)
 - **Auto-Completion**: CaseFile automatically completes when agenda empty and no PlanItems in-flight
-- **PropagationContext**: Every CaseFile and Task carries trace ID, span ID, parent span ID, lineage path
+- **PropagationContext**: Every CaseFile and Task carries a shared trace ID and optional resource budget; structural hierarchy carried by POJO graph
+- **CaseFile identity**: `getId()` (Long primary key), `getOtelTraceId()` (UUID, shared with descendants), `getCaseType()`
+- **Task identity**: `getId()` (Long primary key), `getOtelSpanId()` (UUID unique per task)
 - **Automatic Inheritance**: Child case files/tasks inherit parent's PropagationContext (trace ID preserved)
 - **Child CaseFile Spawning**: TaskDefinition can spawn child case files via `createChildCaseFile()` with full context
 - **Budget Enforcement**: Child deadline capped at parent's remaining budget; never exceeds parent
 - **Hierarchical Cancellation**: Cancelling a parent propagates to all child case files and tasks
-- **Lineage Service**: Query full hierarchy tree by trace ID, ancestors, or descendants
+- **POJO Graph Navigation**: Hierarchy traversal via `getParentCase()`, `getChildCases()`, `getOwningCase()`, `getChildTasks()` — no separate LineageService
 
 **Observability & Control (§6):**
 - **Case Plan Model**: CasePlanModel holds scheduling agenda (PlanItems), focus, strategy
@@ -2639,13 +2686,14 @@ Reserved for:
 - **Documentation**: README, API docs, legal case analysis with child case files example, sentiment example
 
 ### Phase 2 (Weeks 3-4) - Persistence & Distributed
-- Redis storage provider for CaseFile, Task, DLQ, and PropagationContext
+- Redis storage provider for CaseFile, Task, and DLQ (additional persistence module)
 - Redis-backed distributed locking for leader election (CasePlanModel)
 - Optimistic locking via Redis WATCH/MULTI for case file writes
 - CaseFile crash recovery from persistent state
 - Progress notifications for long-running task definitions and tasks
 - Distributed IdempotencyService with Redis TTL
 - Multi-instance deployment support
+- Goal model (CaseGoal, GoalEvaluator) — see §8.2 Planned: Goal Model
 
 ### Phase 3 (Weeks 5-8) - Advanced Case Management & Control Features
 - CaseFile hierarchies (nested sub-case-files)
@@ -2739,7 +2787,7 @@ Reserved for:
 | Activation Record | PlanItem | KSAR (KS Activation Record) | Plan Item | — | — |
 | Scheduler | CaseEngine | Scheduler / Control Loop | Case Engine | — | — |
 | Context | PropagationContext | — (not in classic model) | — | — | — |
-| Hierarchy Trace | traceId / LineageTree | — | — | — | — |
+| Hierarchy Trace | traceId / POJO graph | — | — | — | — |
 | Work Unit | Task | — | Task | Job | Flow Step |
 | Work ID | TaskHandle | — | — | JobHandle | Flow ID |
 | Work State | TaskStatus / CaseStatus | — | — | JobStatus | Flow Status |
@@ -2750,6 +2798,52 @@ Reserved for:
 ---
 
 ## Appendix D: Design Refinement Changelog
+
+**Version 10.0 (2026-04-09)** - POJO Graph Refactor & Persistence Modules (Issue #6)
+
+### CaseFile Interface
+- **`getCaseFileId()` (String) → `getId()` (Long)**: Primary key is now a database-friendly Long
+- **Added `getOtelTraceId()` (UUID)**: OTel trace ID shared across parent/child hierarchy
+- **Added `getCaseType()`**: Case type now part of the CaseFile interface
+- **Added `setStatus()`**: Mutable status for engine-driven transitions
+- **Added graph relationships**: `getParentCase()`, `getChildCases()`, `getTasks()` — hierarchy is a direct POJO graph
+
+### Task Interface
+- **Task promoted to interface** (was a concrete class): `DefaultTask` is the in-core interim implementation
+- **`getTaskId()` (String) → `getId()` (Long)**: Primary key is now Long; `getOtelSpanId()` (UUID) added for OTel span tracking
+- **Added graph relationships**: `getOwningCase()`, `getChildTasks()` — tasks link back to owning CaseFile and child tasks
+
+### Lineage Classes Removed
+- **Deleted `LineageService`**: Lineage traversal now done via `caseFile.getParentCase()` / `getChildCases()` on the POJO graph
+- **Deleted `LineageNode`** and **`LineageTree`**: No longer needed; graph structure is on the objects themselves
+- **Removed `CaseEngine.getLineage()`**: Use `caseFile.getParentCase()` / `getChildCases()` directly
+
+### PropagationContext Slimmed Down
+- **Removed**: `spanId`, `parentSpanId`, `lineagePath`, `isRoot()`, `getDepth()`, `getCreatedAt()` (public)
+- **Keeps**: `traceId` (W3C OTel trace ID), `inheritedAttributes`, `deadline`, `remainingBudget`
+- **Added `fromStorage()` factory**: For Hibernate reconstruction of persisted PropagationContext fields
+
+### Storage SPIs Replaced
+- **Deleted `CaseFileStorageProvider`**, **`TaskStorageProvider`**, **`PropagationStorageProvider`**
+- **Added `CaseFileRepository`** (`casehub-core/src/main/java/io/casehub/core/spi/`): create, createChild, findById, findByStatus, save, delete
+- **Added `TaskRepository`** (`casehub-core/src/main/java/io/casehub/worker/`): create, createAutonomous, findById, findByStatus, findByWorker, save, delete
+
+### CaseEngine
+- **Injects `CaseFileRepository`** instead of instantiating `DefaultCaseFile` directly
+- **Internal maps keyed by `Long`** (not String UUID)
+- **`createChildCaseFile` delegates to `CaseFileRepository.createChild()`** which wires parent reference
+- **Added `@PreDestroy`** for executor shutdown
+- **Map cleanup** after case completes or is cancelled (prevents memory accumulation)
+
+### New Maven Modules
+- **`casehub-persistence-memory`**: In-memory implementations — `InMemoryCaseFile`, `InMemoryTask`, `InMemoryCaseFileRepository`, `InMemoryTaskRepository`. Zero external dependencies; used for fast tests and local dev.
+- **`casehub-persistence-hibernate`**: JPA/Panache implementations — `HibernateCaseFile`, `HibernateTask`, `HibernateCaseFileRepository`, `HibernateTaskRepository`. Workspace stored as JSON TEXT blob; H2 for tests, PostgreSQL for production.
+- **`casehub-examples`** now depends on `casehub-persistence-memory`
+
+### Planned
+- **Goal model (Issue #7)**: `CaseGoal` with satisfaction/abandonment predicates, `GoalEvaluator`, named `Milestone`s. Research in `docs/research/goal-model-research.md`. Cases with no Goal fall back to quiescence-based completion (backward compatible).
+
+---
 
 **Version 9.0 (2026-03-28)** - Multi-Module Architecture & Workflow Integration
 
