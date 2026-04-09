@@ -12,24 +12,12 @@ CaseHub is a multi-module Maven project:
 
 ```
 casehub/
-├── pom.xml                    # Parent POM
-├── casehub-core/             # Core framework implementation
-│   └── src/main/java/io/casehub/
-│       ├── core/             # CaseFile, TaskDefinition, etc.
-│       ├── control/          # CasePlanModel, PlanningStrategy
-│       ├── coordination/     # CaseEngine, PropagationContext
-│       ├── worker/           # Task, Worker, TaskBroker
-│       ├── resilience/       # Retry, timeout, dead-letter
-│       └── error/            # Exception types
-└── casehub-examples/         # Examples demonstrating architecture
-    └── src/main/java/io/casehub/examples/
-        ├── SimpleDocumentAnalysis.java
-        ├── DocumentAnalysisApp.java
-        └── workers/
-            ├── LlmReasoningWorker.java
-            ├── LlmAnalysisTaskDefinition.java
-            ├── DocumentAnalysisWithLlmApp.java
-            └── AutonomousMonitoringWorker.java
+├── pom.xml                          # Parent POM
+├── casehub-core/                    # Interfaces + framework logic only (no persistence)
+├── casehub-persistence-memory/      # In-memory SPI implementations (fast unit tests)
+├── casehub-persistence-hibernate/   # Hibernate/Panache JPA implementations (production)
+├── casehub-examples/                # Examples (depends on casehub-persistence-memory)
+└── casehub-flow-worker/             # Optional Quarkus Flow integration
 ```
 
 ## Build Commands
@@ -136,7 +124,7 @@ Config properties use the `casehub.` prefix (e.g., `casehub.timeout.check-interv
 
 ## Design Document
 
-`docs/DESIGN.md` contains the comprehensive architecture specification. Keep it consistent with code changes. `QuarkBoard_Design_Document.md` is the original document, used prior to the changes to introduce CMMN terminology
+`docs/DESIGN.md` contains the comprehensive architecture specification. Keep it consistent with code changes. `docs/adr/` contains Architecture Decision Records — append-only, numbered sequentially (`0001-title.md`). `docs/research/` contains design research documents. `QuarkBoard_Design_Document.md` is the legacy original.
 
 ## Work Tracking
 
