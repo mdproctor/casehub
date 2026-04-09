@@ -188,7 +188,7 @@ public class AutonomousMonitoringWorker implements Runnable {
                     task.getTaskOrigin(),
                     task.getContext().getOrDefault("caseFileId", "none"));
 
-            // Step 2: Update task to RUNNING (TaskRegistry already set to ASSIGNED)
+            // Step 2: Update task to RUNNING (TaskRepository already set to ASSIGNED)
             // No need to manually transition to RUNNING - just start working
 
             // Step 3: Perform the actual analysis work
@@ -342,7 +342,7 @@ public class AutonomousMonitoringWorker implements Runnable {
 
                 This is a conceptual example showing the autonomous worker pattern.
                 For a working implementation, integrate this into a Quarkus application
-                where WorkerRegistry, TaskRegistry, and NotificationService are properly
+                where WorkerRegistry, TaskRepository, and NotificationService are properly
                 injected via CDI.
 
                 Key Concepts Demonstrated:

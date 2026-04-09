@@ -14,7 +14,7 @@ import java.util.concurrent.TimeoutException;
 
 /**
  * The requestor-facing orchestration service for the Task model. Serves as the entry point
- * for task submission, cancellation, and result retrieval, delegating to {@link TaskRegistry}
+ * for task submission, cancellation, and result retrieval, delegating to {@link TaskRepository}
  * for storage and {@link TaskScheduler} for routing.
  *
  * @see TaskRequest
@@ -24,7 +24,7 @@ import java.util.concurrent.TimeoutException;
 public class TaskBroker {
 
     @Inject
-    TaskRegistry taskRegistry;
+    TaskRepository taskRepository;
 
     @Inject
     TaskScheduler taskScheduler;
@@ -54,18 +54,23 @@ public class TaskBroker {
         }
 
         // Create task from request and store it
-        Task task = new DefaultTask(request);
-        taskRegistry.store(task);
+        Task task = taskRepository.create(
+                request.getTaskType(),
+                request.getContext(),
+                request.getRequiredCapabilities(),
+                request.getPropagationContext(),
+                null);
 
         // Create and store the handle
-        DefaultTaskHandle handle = new DefaultTaskHandle(task, taskRegistry);
+        DefaultTaskHandle handle = new DefaultTaskHandle(task, taskRepository);
         handles.put(task.getId().toString(), handle);
 
         // Try to assign a worker
         Optional<Worker> worker = taskScheduler.selectWorker(task);
         if (worker.isPresent()) {
             task.setAssignedWorkerId(worker.get().getWorkerId());
-            taskRegistry.updateStatus(task.getId().toString(), TaskStatus.ASSIGNED);
+            task.setStatus(TaskStatus.ASSIGNED);
+            taskRepository.save(task);
         }
 
         // Cache handle for idempotency
@@ -80,7 +85,7 @@ public class TaskBroker {
     }
 
     public boolean cancelTask(TaskHandle handle) {
-        Optional<Task> taskOpt = taskRegistry.get(handle.getTaskId());
+        Optional<Task> taskOpt = taskRepository.findById(parseTaskId(handle.getTaskId()));
         if (taskOpt.isEmpty()) {
             return false;
         }
@@ -91,7 +96,8 @@ public class TaskBroker {
             return false;
         }
 
-        taskRegistry.updateStatus(task.getId().toString(), TaskStatus.CANCELLED);
+        task.setStatus(TaskStatus.CANCELLED);
+        taskRepository.save(task);
 
         // Complete the handle's future with a cancelled result
         if (handle instanceof DefaultTaskHandle defaultHandle) {
@@ -114,7 +120,14 @@ public class TaskBroker {
     private static boolean isTerminal(TaskStatus status) {
         return status == TaskStatus.COMPLETED
                 || status == TaskStatus.FAULTED
-                || status == TaskStatus.CANCELLED
-                || status == TaskStatus.FAULTED;
+                || status == TaskStatus.CANCELLED;
+    }
+
+    private static Long parseTaskId(String taskId) {
+        try {
+            return Long.parseLong(taskId);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid task ID: " + taskId, e);
+        }
     }
 }

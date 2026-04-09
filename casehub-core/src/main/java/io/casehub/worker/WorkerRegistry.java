@@ -28,7 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class WorkerRegistry {
 
     @Inject
-    TaskRegistry taskRegistry;
+    TaskRepository taskRepository;
 
     @Inject
     NotificationService notificationService;
@@ -63,12 +63,13 @@ public class WorkerRegistry {
         Worker worker = workers.get(workerId);
         Set<String> workerCapabilities = worker.getCapabilities();
 
-        List<Task> pendingTasks = taskRegistry.findByStatus(TaskStatus.PENDING);
+        List<Task> pendingTasks = taskRepository.findByStatus(TaskStatus.PENDING);
         for (Task task : pendingTasks) {
             Set<String> required = task.getRequiredCapabilities();
             if (required.isEmpty() || workerCapabilities.containsAll(required)) {
                 task.setAssignedWorkerId(workerId);
-                taskRegistry.updateStatus(task.getId().toString(), TaskStatus.ASSIGNED);
+                task.setStatus(TaskStatus.ASSIGNED);
+                taskRepository.save(task);
                 return Optional.of(task);
             }
         }
@@ -78,11 +79,12 @@ public class WorkerRegistry {
     public void submitResult(String workerId, String taskId, TaskResult result)
             throws UnauthorizedException {
         validateExecutor(workerId);
-        Task task = taskRegistry.get(taskId)
+        Task task = taskRepository.findById(parseTaskId(taskId))
                 .orElseThrow(() -> new IllegalArgumentException("Unknown task: " + taskId));
         TaskStatus previousStatus = task.getStatus();
         result.setWorkerId(workerId);
-        taskRegistry.storeResult(taskId, result);
+        task.setStatus(result.getStatus());
+        taskRepository.save(task);
         notificationService.publishTaskLifecycle(
                 new NotificationService.TaskLifecycleEvent(taskId, previousStatus, result.getStatus()));
     }
@@ -90,12 +92,11 @@ public class WorkerRegistry {
     public void reportFailure(String workerId, String taskId, ErrorInfo error)
             throws UnauthorizedException {
         validateExecutor(workerId);
-        Task task = taskRegistry.get(taskId)
+        Task task = taskRepository.findById(parseTaskId(taskId))
                 .orElseThrow(() -> new IllegalArgumentException("Unknown task: " + taskId));
         TaskStatus previousStatus = task.getStatus();
-        TaskResult failureResult = TaskResult.failure(taskId, error);
-        failureResult.setWorkerId(workerId);
-        taskRegistry.storeResult(taskId, failureResult);
+        task.setStatus(TaskStatus.FAULTED);
+        taskRepository.save(task);
         notificationService.publishTaskLifecycle(
                 new NotificationService.TaskLifecycleEvent(taskId, previousStatus, TaskStatus.FAULTED));
     }
@@ -141,36 +142,30 @@ public class WorkerRegistry {
             PropagationContext parentContext) throws UnauthorizedException {
         validateExecutor(workerId);
 
-        DefaultTask task = new DefaultTask();
-        task.setTaskType(taskType);
+        // Build context, injecting caseFileId if provided
         Map<String, Object> taskContext = new HashMap<>(context);
         if (caseFileId != null) {
             taskContext.put("caseFileId", caseFileId);
         }
-        task.setContext(taskContext);
-        task.setTaskOrigin(TaskOrigin.AUTONOMOUS);
-        task.setAssignedWorkerId(workerId);
-        task.setStatus(TaskStatus.ASSIGNED);
 
-        // Create or propagate PropagationContext for lineage tracking
+        // Resolve PropagationContext for lineage tracking
+        PropagationContext propagationContext;
         if (parentContext != null) {
-            // This is a sub-worker - create child context
-            task.setPropagationContext(parentContext.createChild(Map.of(
+            propagationContext = parentContext.createChild(Map.of(
                     "workerId", workerId,
                     "taskType", taskType,
                     "origin", "autonomous"
-            )));
+            ));
         } else {
-            // This is a root autonomous worker - create root context
-            task.setPropagationContext(PropagationContext.createRoot(Map.of(
+            propagationContext = PropagationContext.createRoot(Map.of(
                     "workerId", workerId,
                     "taskType", taskType,
                     "origin", "autonomous"
-            )));
+            ));
         }
 
-        // Store in TaskRegistry for tracking
-        taskRegistry.store(task);
+        // Delegate creation and storage to the repository
+        Task task = taskRepository.createAutonomous(taskType, taskContext, workerId, null, propagationContext);
 
         // Notify lifecycle listeners
         notificationService.publishTaskLifecycle(
@@ -208,6 +203,14 @@ public class WorkerRegistry {
     private void validateExecutor(String workerId) throws UnauthorizedException {
         if (!workers.containsKey(workerId)) {
             throw new UnauthorizedException("Unknown worker: " + workerId);
+        }
+    }
+
+    private static Long parseTaskId(String taskId) {
+        try {
+            return Long.parseLong(taskId);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid task ID: " + taskId, e);
         }
     }
 }

@@ -10,7 +10,7 @@ import java.util.concurrent.TimeoutException;
 
 /**
  * Default implementation of {@link TaskHandle} that wraps a submitted {@link Task} and
- * its owning {@link TaskRegistry}. Provides live status lookups, async result completion
+ * its owning {@link TaskRepository}. Provides live status lookups, async result completion
  * via a {@link CompletableFuture}, and cancellation support. The {@link #completeWith(TaskResult)}
  * method is used internally by the task execution pipeline to resolve the result future.
  *
@@ -20,12 +20,12 @@ import java.util.concurrent.TimeoutException;
 public class DefaultTaskHandle implements TaskHandle {
 
     private final Task task;
-    private final TaskRegistry taskRegistry;
+    private final TaskRepository taskRepository;
     private final CompletableFuture<TaskResult> resultFuture;
 
-    public DefaultTaskHandle(Task task, TaskRegistry taskRegistry) {
+    public DefaultTaskHandle(Task task, TaskRepository taskRepository) {
         this.task = task;
-        this.taskRegistry = taskRegistry;
+        this.taskRepository = taskRepository;
         this.resultFuture = new CompletableFuture<>();
     }
 
@@ -36,7 +36,7 @@ public class DefaultTaskHandle implements TaskHandle {
 
     @Override
     public TaskStatus getStatus() {
-        return taskRegistry.get(task.getId().toString())
+        return taskRepository.findById(task.getId())
                 .map(Task::getStatus)
                 .orElse(task.getStatus());
     }
@@ -64,7 +64,8 @@ public class DefaultTaskHandle implements TaskHandle {
         if (isTerminal(current)) {
             return false;
         }
-        taskRegistry.updateStatus(task.getId().toString(), TaskStatus.CANCELLED);
+        task.setStatus(TaskStatus.CANCELLED);
+        taskRepository.save(task);
         return true;
     }
 
@@ -96,7 +97,6 @@ public class DefaultTaskHandle implements TaskHandle {
     private static boolean isTerminal(TaskStatus status) {
         return status == TaskStatus.COMPLETED
                 || status == TaskStatus.FAULTED
-                || status == TaskStatus.CANCELLED
-                || status == TaskStatus.FAULTED;
+                || status == TaskStatus.CANCELLED;
     }
 }
