@@ -278,10 +278,9 @@ public class AutonomousMonitoringWorker implements Runnable {
                     childContext  // Parent context for lineage
             );
 
-            log.infof("    → Sub-worker task created: %s (depth: %d, parent: %s)",
+            log.infof("    → Sub-worker task created: %s (traceId: %s)",
                     subTask.getTaskId(),
-                    subTask.getPropagationContext().getDepth(),
-                    subTask.getPropagationContext().getParentSpanId().orElse("none"));
+                    subTask.getPropagationContext().getTraceId());
 
             // Simulate deep analysis
             Map<String, Object> deepResult = Map.of(

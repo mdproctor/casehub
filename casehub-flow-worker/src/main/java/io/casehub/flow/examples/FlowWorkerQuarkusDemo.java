@@ -143,7 +143,6 @@ public class FlowWorkerQuarkusDemo implements QuarkusApplication {
         System.out.println("  Workflow ID: " + workflow.getWorkflowId());
         System.out.println("  Worker ID: quarkus-flow-worker");
         System.out.println("  Trace ID: " + propContext.getTraceId());
-        System.out.println("  Span ID: " + propContext.getSpanId());
         System.out.println("  Processing time: " + duration + "ms");
         System.out.println();
 

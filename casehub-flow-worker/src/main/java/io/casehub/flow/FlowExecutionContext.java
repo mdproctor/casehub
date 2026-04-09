@@ -146,33 +146,6 @@ public class FlowExecutionContext {
     }
 
     /**
-     * Get the span ID for this execution.
-     *
-     * @return Span ID
-     */
-    public String getSpanId() {
-        return propagationContext.getSpanId();
-    }
-
-    /**
-     * Get parent span ID if this is a child workflow.
-     *
-     * @return Parent span ID if present
-     */
-    public Optional<String> getParentSpanId() {
-        return propagationContext.getParentSpanId();
-    }
-
-    /**
-     * Get execution depth (0 = root, 1 = first child, etc.).
-     *
-     * @return Execution depth
-     */
-    public int getDepth() {
-        return propagationContext.getDepth();
-    }
-
-    /**
      * Check if budget is exhausted (for timeout/deadline enforcement).
      *
      * @return True if budget exhausted
@@ -208,7 +181,6 @@ public class FlowExecutionContext {
                 ", taskType=" + task.getTaskType() +
                 ", workerId=" + workerId +
                 ", traceId=" + propagationContext.getTraceId() +
-                ", depth=" + propagationContext.getDepth() +
                 '}';
     }
 }
