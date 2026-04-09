@@ -115,7 +115,7 @@ public class LlmReasoningWorker implements Runnable {
 
                 if (taskOpt.isPresent()) {
                     Task task = taskOpt.get();
-                    LOG.infof("Claimed task: %s (type: %s)", task.getTaskId(), task.getTaskType());
+                    LOG.infof("Claimed task: %s (type: %s)", task.getId(), task.getTaskType());
 
                     processTask(task);
 
@@ -147,7 +147,7 @@ public class LlmReasoningWorker implements Runnable {
      * Process a claimed task by calling the Claude API and submitting results.
      */
     private void processTask(Task task) {
-        String taskId = task.getTaskId();
+        String taskId = task.getId().toString();
 
         try {
             // Extract task context

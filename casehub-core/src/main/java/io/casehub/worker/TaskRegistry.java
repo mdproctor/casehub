@@ -22,7 +22,7 @@ public class TaskRegistry {
     private final Map<String, TaskResult> results = new ConcurrentHashMap<>();
 
     public void store(Task task) {
-        tasks.put(task.getTaskId(), task);
+        tasks.put(task.getId().toString(), task);
     }
 
     public Optional<Task> get(String taskId) {

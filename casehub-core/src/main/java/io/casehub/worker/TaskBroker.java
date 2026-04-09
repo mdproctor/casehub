@@ -54,18 +54,18 @@ public class TaskBroker {
         }
 
         // Create task from request and store it
-        Task task = new Task(request);
+        Task task = new DefaultTask(request);
         taskRegistry.store(task);
 
         // Create and store the handle
         DefaultTaskHandle handle = new DefaultTaskHandle(task, taskRegistry);
-        handles.put(task.getTaskId(), handle);
+        handles.put(task.getId().toString(), handle);
 
         // Try to assign a worker
         Optional<Worker> worker = taskScheduler.selectWorker(task);
         if (worker.isPresent()) {
             task.setAssignedWorkerId(worker.get().getWorkerId());
-            taskRegistry.updateStatus(task.getTaskId(), TaskStatus.ASSIGNED);
+            taskRegistry.updateStatus(task.getId().toString(), TaskStatus.ASSIGNED);
         }
 
         // Cache handle for idempotency
@@ -91,11 +91,11 @@ public class TaskBroker {
             return false;
         }
 
-        taskRegistry.updateStatus(task.getTaskId(), TaskStatus.CANCELLED);
+        taskRegistry.updateStatus(task.getId().toString(), TaskStatus.CANCELLED);
 
         // Complete the handle's future with a cancelled result
         if (handle instanceof DefaultTaskHandle defaultHandle) {
-            TaskResult cancelledResult = new TaskResult(task.getTaskId(), TaskStatus.CANCELLED, Map.of());
+            TaskResult cancelledResult = new TaskResult(task.getId().toString(), TaskStatus.CANCELLED, Map.of());
             defaultHandle.completeWith(cancelledResult);
         }
 

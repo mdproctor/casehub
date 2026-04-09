@@ -3,7 +3,7 @@ package io.casehub.flow.examples;
 import io.casehub.coordination.PropagationContext;
 import io.casehub.flow.FlowExecutionContext;
 import io.casehub.flow.FlowWorkflowRegistry;
-import io.casehub.worker.Task;
+import io.casehub.worker.DefaultTask;
 
 import java.util.Map;
 
@@ -57,8 +57,7 @@ public class FlowWorkerDemo {
         // Create task with input
         PropagationContext propContext = PropagationContext.createRoot();
 
-        Task task = new Task();
-        task.setTaskId("demo-task-001");
+        DefaultTask task = new DefaultTask();
         task.setTaskType("document-processing-flow");
         task.setContext(Map.of(
                 "document_url", "https://example.com/contract.pdf",

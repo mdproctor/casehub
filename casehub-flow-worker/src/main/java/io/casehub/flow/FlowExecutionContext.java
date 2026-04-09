@@ -86,7 +86,7 @@ public class FlowExecutionContext {
      * @return Unique task identifier
      */
     public String getTaskId() {
-        return task.getTaskId();
+        return task.getId().toString();
     }
 
     /**
@@ -122,7 +122,7 @@ public class FlowExecutionContext {
      * @return CaseFile ID if present
      */
     public Optional<String> getCaseFileId() {
-        return task.getCaseFileId();
+        return task.getOwningCase().map(c -> c.getId().toString());
     }
 
     // ========== PropagationContext ==========
@@ -177,7 +177,7 @@ public class FlowExecutionContext {
     @Override
     public String toString() {
         return "FlowExecutionContext{" +
-                "taskId=" + task.getTaskId() +
+                "taskId=" + task.getId() +
                 ", taskType=" + task.getTaskType() +
                 ", workerId=" + workerId +
                 ", traceId=" + propagationContext.getTraceId() +

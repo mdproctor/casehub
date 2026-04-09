@@ -184,9 +184,9 @@ public class AutonomousMonitoringWorker implements Runnable {
             );
 
             log.infof("  → Task created: %s (origin: %s, caseFile: %s)",
-                    task.getTaskId(),
+                    task.getId(),
                     task.getTaskOrigin(),
-                    task.getCaseFileId().orElse("none"));
+                    task.getContext().getOrDefault("caseFileId", "none"));
 
             // Step 2: Update task to RUNNING (TaskRegistry already set to ASSIGNED)
             // No need to manually transition to RUNNING - just start working
@@ -195,11 +195,11 @@ public class AutonomousMonitoringWorker implements Runnable {
             Map<String, Object> analysisResult = performFraudAnalysis(event);
 
             // Step 4: Submit completion result
-            TaskResult result = TaskResult.success(task.getTaskId(), analysisResult);
-            workerRegistry.submitResult(workerId, task.getTaskId(), result);
+            TaskResult result = TaskResult.success(task.getId().toString(), analysisResult);
+            workerRegistry.submitResult(workerId, task.getId().toString(), result);
 
             log.infof("  ✓ Fraud analysis complete: %s (verdict: %s)",
-                    task.getTaskId(),
+                    task.getId(),
                     analysisResult.get("verdict"));
 
             // Step 5: Optionally spawn sub-workers for deeper analysis
@@ -260,26 +260,27 @@ public class AutonomousMonitoringWorker implements Runnable {
             // Create child PropagationContext from parent
             PropagationContext parentContext = parentTask.getPropagationContext();
             PropagationContext childContext = parentContext.createChild(Map.of(
-                    "parent_task", parentTask.getTaskId(),
+                    "parent_task", parentTask.getId().toString(),
                     "analysis_type", "deep"
             ));
 
             // Notify autonomous work with parent context
             // This links the sub-worker's task into the lineage tree
+            String parentCaseFileId = (String) parentTask.getContext().get("caseFileId");
             Task subTask = workerRegistry.notifyAutonomousWork(
                     workerId,
                     "deep-fraud-analysis",
                     Map.of(
                             "parent_event", event.eventId,
-                            "parent_task", parentTask.getTaskId(),
+                            "parent_task", parentTask.getId().toString(),
                             "depth", "deep"
                     ),
-                    parentTask.getCaseFileId().orElse(null),
+                    parentCaseFileId,
                     childContext  // Parent context for lineage
             );
 
             log.infof("    → Sub-worker task created: %s (traceId: %s)",
-                    subTask.getTaskId(),
+                    subTask.getId(),
                     subTask.getPropagationContext().getTraceId());
 
             // Simulate deep analysis
@@ -289,10 +290,10 @@ public class AutonomousMonitoringWorker implements Runnable {
                     "confidence", 0.95
             );
 
-            TaskResult result = TaskResult.success(subTask.getTaskId(), deepResult);
-            workerRegistry.submitResult(workerId, subTask.getTaskId(), result);
+            TaskResult result = TaskResult.success(subTask.getId().toString(), deepResult);
+            workerRegistry.submitResult(workerId, subTask.getId().toString(), result);
 
-            log.infof("    ✓ Deep analysis complete: %s", subTask.getTaskId());
+            log.infof("    ✓ Deep analysis complete: %s", subTask.getId());
 
         } catch (Exception e) {
             log.errorf(e, "Failed to spawn sub-worker");

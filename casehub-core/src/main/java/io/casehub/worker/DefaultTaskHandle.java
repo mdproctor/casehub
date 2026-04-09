@@ -31,12 +31,12 @@ public class DefaultTaskHandle implements TaskHandle {
 
     @Override
     public String getTaskId() {
-        return task.getTaskId();
+        return task.getId().toString();
     }
 
     @Override
     public TaskStatus getStatus() {
-        return taskRegistry.get(task.getTaskId())
+        return taskRegistry.get(task.getId().toString())
                 .map(Task::getStatus)
                 .orElse(task.getStatus());
     }
@@ -64,7 +64,7 @@ public class DefaultTaskHandle implements TaskHandle {
         if (isTerminal(current)) {
             return false;
         }
-        taskRegistry.updateStatus(task.getTaskId(), TaskStatus.CANCELLED);
+        taskRegistry.updateStatus(task.getId().toString(), TaskStatus.CANCELLED);
         return true;
     }
 

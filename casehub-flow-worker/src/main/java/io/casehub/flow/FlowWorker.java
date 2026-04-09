@@ -139,7 +139,7 @@ public class FlowWorker implements Runnable {
 
                 if (taskOpt.isPresent()) {
                     Task task = taskOpt.get();
-                    log.infof("📋 Claimed task: %s (type: %s)", task.getTaskId(), task.getTaskType());
+                    log.infof("📋 Claimed task: %s (type: %s)", task.getId(), task.getTaskType());
                     processTask(task);
                 } else {
                     // No tasks available - sleep before next poll
@@ -164,7 +164,7 @@ public class FlowWorker implements Runnable {
      * @param task Task to process
      */
     private void processTask(Task task) {
-        String taskId = task.getTaskId();
+        String taskId = task.getId().toString();
         String taskType = task.getTaskType();
 
         try {

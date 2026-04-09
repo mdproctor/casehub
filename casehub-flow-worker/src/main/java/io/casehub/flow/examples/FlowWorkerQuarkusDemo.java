@@ -2,7 +2,7 @@ package io.casehub.flow.examples;
 
 import io.casehub.coordination.PropagationContext;
 import io.casehub.flow.FlowExecutionContext;
-import io.casehub.worker.Task;
+import io.casehub.worker.DefaultTask;
 import io.quarkus.runtime.QuarkusApplication;
 import io.quarkus.runtime.annotations.QuarkusMain;
 import jakarta.inject.Inject;
@@ -69,8 +69,7 @@ public class FlowWorkerQuarkusDemo implements QuarkusApplication {
         // Create task with input
         PropagationContext propContext = PropagationContext.createRoot();
 
-        Task task = new Task();
-        task.setTaskId("quarkus-demo-001");
+        DefaultTask task = new DefaultTask();
         task.setTaskType("document-processing-flow");
         task.setContext(Map.of(
                 "document_url", "https://example.com/legal-contract.pdf",

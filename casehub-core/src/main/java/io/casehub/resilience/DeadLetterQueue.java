@@ -48,7 +48,7 @@ public class DeadLetterQueue {
                                              ErrorInfo finalError) {
         DeadLetterEntry entry = new DeadLetterEntry();
         entry.setType(DeadLetterEntry.DeadLetterType.TASK);
-        entry.setOriginalId(task.getTaskId());
+        entry.setOriginalId(task.getId().toString());
         entry.setTaskType(task.getTaskType());
         entry.setOriginalContext(task.getContext());
         entry.setPropagationContext(task.getPropagationContext());

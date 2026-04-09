@@ -68,7 +68,7 @@ public class WorkerRegistry {
             Set<String> required = task.getRequiredCapabilities();
             if (required.isEmpty() || workerCapabilities.containsAll(required)) {
                 task.setAssignedWorkerId(workerId);
-                taskRegistry.updateStatus(task.getTaskId(), TaskStatus.ASSIGNED);
+                taskRegistry.updateStatus(task.getId().toString(), TaskStatus.ASSIGNED);
                 return Optional.of(task);
             }
         }
@@ -128,7 +128,7 @@ public class WorkerRegistry {
      * @param workerId Worker's unique identifier
      * @param taskType Type of task being performed
      * @param context Task context/parameters
-     * @param caseFileId Optional CaseFile ID to associate this work with a case
+     * @param caseFileId Optional CaseFile ID to associate this work with a case (kept for API compatibility; stored in context)
      * @param parentContext Optional parent PropagationContext for lineage tracking
      * @return Created Task instance with AUTONOMOUS origin
      * @throws UnauthorizedException if worker is not registered
@@ -141,16 +141,16 @@ public class WorkerRegistry {
             PropagationContext parentContext) throws UnauthorizedException {
         validateExecutor(workerId);
 
-        Task task = new Task();
+        DefaultTask task = new DefaultTask();
         task.setTaskType(taskType);
-        task.setContext(new HashMap<>(context));
+        Map<String, Object> taskContext = new HashMap<>(context);
+        if (caseFileId != null) {
+            taskContext.put("caseFileId", caseFileId);
+        }
+        task.setContext(taskContext);
         task.setTaskOrigin(TaskOrigin.AUTONOMOUS);
         task.setAssignedWorkerId(workerId);
         task.setStatus(TaskStatus.ASSIGNED);
-
-        if (caseFileId != null) {
-            task.setCaseFileId(caseFileId);
-        }
 
         // Create or propagate PropagationContext for lineage tracking
         if (parentContext != null) {
@@ -175,7 +175,7 @@ public class WorkerRegistry {
         // Notify lifecycle listeners
         notificationService.publishTaskLifecycle(
                 new NotificationService.TaskLifecycleEvent(
-                        task.getTaskId(),
+                        task.getId().toString(),
                         TaskStatus.PENDING,
                         TaskStatus.ASSIGNED
                 )
