@@ -122,6 +122,12 @@ Do not introduce old Blackboard terminology into the codebase. Always use the CM
 
 Config properties use the `casehub.` prefix (e.g., `casehub.timeout.check-interval`, `casehub.retry.ks.default.max-attempts`). See `casehub/src/main/resources/application.properties` for all available properties.
 
+## Writing Style Guide
+
+**The writing style guide at `~/claude-workspace/writing-styles/blog-technical.md` is mandatory for all blog and diary entries.** Load it in full before drafting. Complete the pre-draft voice classification (I / we / Claude-named) before generating any prose. Do not show a draft without verifying it against the style guide.
+
+**Positive framing:** Avoid negative framings in all writing. Reword to be constructive and forward-looking (e.g. "how we improved from here" not "what was wrong"). Applies to blog entries, design docs, commit messages, and any other writing — unless explicitly told otherwise.
+
 ## Design Document
 
 `docs/DESIGN.md` contains the comprehensive architecture specification. Keep it consistent with code changes. `docs/adr/` contains Architecture Decision Records — append-only, numbered sequentially (`0001-title.md`). `docs/research/` contains design research documents. `QuarkBoard_Design_Document.md` is the legacy original.
