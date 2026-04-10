@@ -1,27 +1,25 @@
 # Session Handover — CaseHub
-**Date:** 2026-04-09
+**Date:** 2026-04-10
 **Branch:** main (all committed and pushed)
 
 ---
 
 ## Where We Are
 
-CaseHub is a 5-module Quarkus Blackboard Architecture framework. The POJO graph
-refactor (issue #6, closed) replaced the lineage model with direct parent/child
-references on `CaseFile` and `Task`. Two new persistence modules exist:
-`casehub-persistence-memory` (13 tests) and `casehub-persistence-hibernate`
-(6 @QuarkusTest tests with H2). `casehub-core` is now pure interfaces.
+A full brainstorming and design session produced the unified merge design for two CaseHub implementations. The co-worker's **casehub-engine** (`/Users/mdproctor/dev/casehub-engine`) was systematically analysed alongside casehub. All major architectural decisions are made and documented.
 
-The Goal model research phase is complete. ADR-0001 accepted. Implementation plan
-written. **One more research topic from the user is pending before implementation.**
+**Merge direction:** casehub as base. casehub-engine contributes reactive infrastructure, Goal model, EventLog, Quartz, YAML schema, Binding+Trigger model.
+
+**Execution model:** Async event cycle (always non-blocking). `notifyAutonomousWork()` workaround disappears — autonomous workers just write to CaseFile.
 
 ---
 
-## Immediate Next Step
+## Immediate Next Steps
 
-**Ask the user for their additional research topic.** They said at session end:
-*"I have one more research topic for you, before we progress."* — topic not yet
-disclosed. Get it, do the research, then implement issue #7 per the plan.
+1. **Create GitHub epic for the merge work** — CLAUDE.md requires an issue before implementation
+2. **Invoke `writing-plans`** on `docs/superpowers/specs/2026-04-09-casehub-unified-design.md` to produce a phased implementation plan
+3. **Start Phase 1** — unseal `ExpressionEvaluator`, add `LambdaExpressionEvaluator` (no naming decisions, safe to start now)
+4. **Update issue #7** plan to align with casehub-engine's Goal model (`GoalExpression`, `GoalKind`, `CaseCompletion`)
 
 ---
 
@@ -29,47 +27,26 @@ disclosed. Get it, do the research, then implement issue #7 per the plan.
 
 | File | What it is |
 |------|-----------|
-| `docs/adr/0001-goal-model-design.md` | Accepted ADR — Goal model design decision |
-| `docs/research/goal-model-research.md` | Full research: GOAP, BDI, HTN, DCR, CMMN, LangChain4j |
-| `docs/research/choreography-expected-flows.md` | Trajectory/violation/discovery model (future feature) |
-| `docs/superpowers/plans/2026-04-09-goal-model.md` | 5-task TDD implementation plan for issue #7 |
-| `docs/design-snapshots/2026-04-09-casehub-architecture.md` | Full architecture state snapshot |
-| `docs/DESIGN.md` | Living architecture document (synced this session) |
+| `docs/superpowers/specs/2026-04-09-casehub-unified-design.md` | **Primary** — full merge design: decisions, naming table, module structure, 9-phase plan |
+| `docs/design-snapshots/2026-04-10-casehub-merge-design.md` | Design snapshot — current state, open questions |
+| `docs/superpowers/specs/scratch-merge-design.md` | Working notes — deeper rationale behind decisions |
+| `docs/blog/` | 4-entry blog series (mdp01–mdp04) — narrative of CaseHub's development |
 
 ---
 
-## Open GitHub Issues
+## Open Naming Questions (deferred — not blocking Phase 1–4)
 
-| Issue | Title | Status |
-|-------|-------|--------|
-| #7 | Add Goal model: CaseGoal, Milestone enhancement, GoalEvaluator | Open — plan ready, awaiting research |
-
-Issues #1–#6 are closed.
+- `Milestone` clash — casehub's CMMN marker vs casehub-engine's JQ predicate. Proposed: `ProgressMarker`. Needs co-worker agreement.
+- `CaseState` alignment — casehub vs casehub-engine have different enum values
+- `ContextChangeTrigger` vs `StateChangeTrigger`
 
 ---
 
-## Goal Model Design (summary for context)
+## GitHub Issues
 
-- `CaseGoal.of(name, Milestone...)` — declared at `createAndSolve()` time
-- `Milestone.when(Predicate<CaseFile>).named(String)` — satisfaction predicate over CaseFile state
-- `GoalEvaluator` — runs in CaseEngine control loop, separate from task execution
-- Cases without a Goal → existing quiescence behaviour (no regression)
-- AND semantics only for now; OR/custom deferred
-- Terminology: `Milestone` (not "Goal") for intermediate states — avoids clash with LangChain4j's `outputKey`-based "Goal"
+| Issue | Status |
+|-------|--------|
+| #7 — Goal model | Open — plan needs updating to align with casehub-engine's model before implementation |
+| #1–#6 | Closed |
 
----
-
-## LangChain4j Agenticai (research complete, no implementation yet)
-
-`AgenticScope` ≈ `CaseFile`, `@Agent` method ≈ `TaskDefinition`, `Planner` ≈ `PlanningStrategy`.
-Neither LangChain4j nor CaseHub has a real Goal model yet — CaseHub can define the reference.
-Integration plan: `casehub-langchain4j` module (depends on Goal model being stable first).
-
----
-
-## Deferred
-
-- Trajectory/expected flows (choreography observation model) — design in `docs/research/choreography-expected-flows.md`
-- LangChain4j integration module
-- REST API layer
-- AND/OR Goal completion semantics
+casehub-engine is at `/Users/mdproctor/dev/casehub-engine` — open in IntelliJ (use `project_path` explicitly with MCP tools).
