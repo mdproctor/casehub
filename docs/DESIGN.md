@@ -2,27 +2,30 @@
 
 ## Executive Summary
 
-CaseHub is a lightweight case management architecture service for Quarkus-based agentic AI systems. It provides a **shared workspace** where autonomous task definitions collaboratively build solutions, combined with a **task coordination** layer for direct request-response work — all without requiring direct coupling between participants.
+CaseHub is a Quarkus-based Blackboard Architecture framework for agentic AI coordination using CMMN terminology. It provides a **shared workspace** (CaseFile) where autonomous task definitions collaboratively build solutions, combined with a **task coordination** layer for direct request-response work — all without requiring direct coupling between participants.
 
-**Project Duration (MVP):** 2 weeks (+ 1 week buffer for polish)
-**Target Platform:** Quarkus
-**Primary Use Case:** CaseHub and general AgenticAI task coordination
+**Target Platform:** Quarkus 3.17.5, Java 21
+**Primary Use Case:** Agentic AI task coordination with hybrid orchestration + choreography
+
+**Architecture status:** Two independent implementations (casehub + casehub-engine) are being merged. casehub is the base; casehub-engine contributes reactive infrastructure, Goal model, EventLog, Quartz, Binding/Trigger model, and YAML schema. See §9 for the 9-phase merge plan.
 
 ### Key Architectural Principles
 - **True Case Management Semantics**: Shared workspace (CaseFile) where multiple task definitions read from and contribute to an evolving solution
+- **Hybrid Orchestration + Choreography**: Workers can self-trigger (choreography) or be directed by a PlanningStrategy (orchestration) — both in the same case instance
+- **Async Event Cycle**: Always non-blocking; CaseFile changes emit events on Vert.x EventBus, replacing the synchronous control loop (Phase 5)
 - **Data-Driven Activation**: Task definitions fire when their preconditions are met on the case file, enabling opportunistic problem solving
 - **Dual Execution Model**: CaseFile model for collaborative multi-contributor problems; Task model for simple request-response work
-- **Modular Architecture**: Multi-module Maven structure with isolated dependencies; core framework has zero workflow engine dependencies
+- **Modular Architecture**: Multi-module Maven structure with isolated dependencies; core framework has zero persistence dependencies
 - **Separation of Concerns**: Specialized components (CaseEngine, TaskBroker, registries, schedulers)
-- **Observable by Default**: Built-in metrics, structured logging, and health checks
-- **Secure by Default**: API key authentication for case workers, RBAC for requestors
-- **Thread-Safe**: Concurrent reads and writes to the shared workspace without data races
-- **Pluggable Storage**: SPI-based abstraction for future Redis/PostgreSQL backends
+- **Observable by Default**: Built-in metrics, structured logging, and health checks via EventLog (Phase 4)
+- **Pluggable Expression Language**: Lambda (Java) and JQ (YAML) both first-class; unsealed ExpressionEvaluator (Phase 1)
+- **Pluggable CaseFile**: JsonCaseFile, JavaBeanCaseFile<T>, MapCaseFile implementations (Phase 6)
+- **Pluggable Storage**: SPI-based abstraction; in-memory + Hibernate blocking now; Hibernate Reactive (Phase 6)
 - **Workflow Integration**: Optional modules for Quarkus Flow, Temporal, Camunda, and other workflow engines
 
 ### Document Structure
 
-This document is organized around six conceptual pillars:
+This document is organized around seven conceptual pillars plus the merge design:
 
 | # | Pillar | What It Covers |
 |---|--------|---------------|
@@ -33,6 +36,7 @@ This document is organized around six conceptual pillars:
 | §6 | **Observability & Control** | CasePlanModel, PlanningStrategy, PlanItems, logging, metrics, health checks |
 | §7 | **Resilience** | Error handling, timeouts, retry, dead letter, distributed consistency |
 | §8 | **Agentic AI Specifics** | Dual execution model, Quarkus/CDI integration, security, workflow examples |
+| §9 | **Architecture Evolution** | casehub + casehub-engine merge decisions, 9-phase plan, open questions |
 
 ---
 
@@ -140,11 +144,13 @@ Current agentic AI platforms lack a standalone, lightweight case management arch
 ### Non-Goals (Deferred to Future Iterations)
 - Complex case worker selection strategies (beyond simple round-robin/random)
 - Job bidding/contract net protocols (FIPA)
-- Nested task hierarchies and sub-slots
 - Progress notifications and partial result streaming
 - Advanced merge strategies for multi-case-worker results
 - Policy governance and execution constraints
-- Sophisticated retry/timeout policies
+
+**Previously non-goals now in scope:**
+- Sub-cases / nested case file hierarchies — now Phase 7 of the merge plan (§9)
+- Sophisticated retry/timeout policies — RetryPolicy, TimeoutEnforcer, DLQ, PoisonPillDetector are implemented (§7)
 
 ---
 
@@ -698,6 +704,8 @@ public enum TaskStatus {
 
 ### 4.3 Autonomous Workers
 
+> **Phase 5 note:** `notifyAutonomousWork()` is a workaround that will be removed when the async event cycle (Phase 5) is introduced. In the async model, autonomous workers write directly to CaseFile — that write emits a `CaseFileChangedEvent` on the Vert.x EventBus, which drives evaluation automatically. The rest of this section describes the current (synchronous loop) implementation.
+
 In addition to the traditional **broker-allocated** pattern (TaskBroker creates task → TaskScheduler assigns worker), CaseHub supports **autonomous/decentralized** workers that work on their own agency.
 
 #### Autonomous Worker Pattern
@@ -972,6 +980,21 @@ public class CaseEngine {
 ```
 
 **Implementation notes:** The internal `activeCaseFiles`, `casePlanModels`, and `caseFileFutures` maps are all keyed by `Long` (the CaseFile's primary key, not a String UUID). After a case completes or is cancelled the maps are cleaned up to prevent memory accumulation in long-running deployments. Lineage traversal is done directly on the POJO graph (`caseFile.getParentCase()`, `caseFile.getChildCases()`) — there is no separate `LineageService` or `getLineage()` API on CaseEngine.
+
+#### Planned: Async Event Cycle (Phase 5 of merge plan)
+
+The synchronous control loop above will be replaced by a Vert.x EventBus-driven async event cycle:
+
+```
+CaseFile changes (any source: orchestrated worker, autonomous worker,
+                  CloudEvent, schedule trigger, sub-case completion)
+  → CaseFileChangedEvent on Vert.x event bus
+    → PlanningStrategy evaluates eligible Bindings (optional deliberative step)
+      → Eligible workers dispatched (async, non-blocking)
+        → Worker writes to CaseFile → CaseFileChangedEvent again
+```
+
+This is architecturally necessary — not just a performance improvement. The synchronous loop has no clean way to receive external stimuli (CloudEvents, schedule triggers, sub-case completions, autonomous workers). The `notifyAutonomousWork()` workaround disappears: autonomous workers simply write to CaseFile directly. The existing CaseEngine API (`createAndSolve`, `awaitCompletion`, `cancel`) is preserved.
 
 ### 5.2 Context Propagation
 
@@ -2256,16 +2279,17 @@ Both models share the same case worker infrastructure, storage SPI, and observab
 
 **Current state**: CaseFiles complete by quiescence (no more task definitions can fire and none are in-flight) or by explicit `caseFile.complete()`. This is backward compatible and remains the default.
 
-#### Planned: Goal Model (Issue #7)
+#### Goal Model (Phase 3 of merge plan — adopting casehub-engine's design)
 
-A formal `CaseGoal` model is planned to provide a richer, explicit completion contract at `createAndSolve()` time:
+The Goal model adopts casehub-engine's `GoalExpression`/`GoalKind`/`CaseCompletion` design (supersedes the simpler `CaseGoal`/`Predicate<CaseFile>` design from ADR-0001):
 
-- **`CaseGoal`**: Carries a *satisfaction predicate* (conditions under which the case is successfully complete) and an *abandonment predicate* (conditions under which the case should be terminated as unsolvable). Named `Milestone` objects within the goal track sub-achievements.
-- **`GoalEvaluator`**: A new CaseEngine collaborator that evaluates the `CaseGoal` after each control cycle, transitioning the CaseFile to COMPLETED (satisfaction) or FAULTED (abandonment) as appropriate.
-- **Backward compatibility**: Cases created with no `CaseGoal` fall back to existing quiescence-based completion unchanged.
-- **Research basis**: Design research is captured in `docs/research/goal-model-research.md`.
+- **`Goal`**: Composed of a `GoalExpression` (allOf/anyOf tree of sub-goals) and a `GoalKind` (SUCCESS or FAILURE). Named `ProgressMarker` objects (formerly `Milestone` in casehub-engine — renamed to avoid clash with CMMN `Milestone`) track intermediate states.
+- **`GoalEvaluator`**: Evaluates the `GoalExpression` after each event cycle; transitions CaseFile to COMPLETED (SUCCESS) or FAULTED (FAILURE) as appropriate.
+- **`CaseCompletion`**: Pluggable completion strategy — goal-based or predicate-based (JQ string).
+- **Backward compatibility**: Cases with no Goal fall back to quiescence-based completion unchanged.
+- **Research basis**: `docs/research/goal-model-research.md` (GOAP, BDI, HTN, DCR, CMMN synthesis).
 
-This will make the formal contract between a requestor and the system explicit, rather than relying on the implicit "no more task definitions can fire" heuristic.
+**Note on naming:** `ProgressMarker` replaces casehub-engine's `Milestone` to avoid collision with CMMN `Milestone` (achievement marker with PENDING/ACHIEVED lifecycle). This rename requires co-worker agreement — see Open Questions in §9.
 
 ### 8.3 Quarkus Integration
 
@@ -2439,157 +2463,119 @@ See `casehub-flow-worker/README.md` and `QUARKUS_FLOW_INTEGRATION.md` for comple
 
 ---
 
-## 9. Implementation Plan (2-Week Sprint)
+## 9. Architecture Evolution — casehub + casehub-engine Merge
 
-### Week 1: Core Framework — CaseFile, Control & Task Models
-**Day 1-2: Project Setup & Core Interfaces**
-- Quarkus project initialization (Maven, dependencies)
-- Define CaseFile model interfaces: `CaseFile`, `CaseEngine`, `TaskDefinition`, `CaseStatus`
-- Define Control interfaces: `CasePlanModel`, `PlanningStrategy`, `PlanItem`
-- Define Task model interfaces: `TaskBroker`, `TaskHandle`, `TaskStatus`
-- Define cross-cutting: `PropagationContext` (traceId, inheritedAttributes, deadline, budget)
-- Define resilience: `RetryPolicy`, `DeadLetterQueue`, `DeadLetterEntry`, `PoisonPillDetector`, `TimeoutEnforcer`
-- Define consistency: `CaseFileItem`, `ConflictResolver`, `IdempotencyService`
-- Define shared interfaces: `WorkerRegistry`, `NotificationService`
-- Define data models: `TaskRequest`, `Task`, `TaskResult`, `ErrorInfo`, `CaseFileItemEvent`
-- Basic unit tests for models, PlanItems, PropagationContext, and RetryPolicy
+Two independent implementations are being unified. This section captures the merge design decisions and the 9-phase implementation plan.
 
-**Day 3-4: Storage Layer, CaseFile & CasePlanModel Implementation**
-- Implement `InMemoryCaseFileRepository` + `InMemoryTaskRepository` in `casehub-persistence-memory`
-- Implement `HibernateCaseFileRepository` + `HibernateTaskRepository` in `casehub-persistence-hibernate` (JPA/Panache; workspace as JSON TEXT)
-- Implement `InMemoryCaseFile` and `InMemoryTask` (POJO graph with parent/child references)
-- Implement `CasePlanModel` with agenda management, focus, strategy, and resource tracking
-- Implement `PlanItem` with priority ordering and status lifecycle
-- TTL-based cleanup scheduler (Quarkus Scheduler) — cleans up by CaseFile ID
-- Unit tests for CaseFile, CasePlanModel, PlanItem, CaseFileRepository, TaskRepository
-- Concurrency tests for CaseFile (multiple writers)
+### casehub vs casehub-engine — Comparison
 
-**Day 5: TaskDefinition & Worker Management**
-- Implement `WorkerRegistry` with heartbeat tracking
-- Implement `TaskDefinitionRegistry` for both domain task definitions and planning strategies
-- Circular dependency detection for domain task definitions
-- CDI-based `@CaseType` annotation scanning for auto-registration (domain task definitions + planning strategies)
-- Implement `DefaultPlanningStrategy` (equal-priority baseline)
-- Worker timeout detection (30s)
-- Unit tests for all registries
+| Dimension | casehub | casehub-engine |
+|---|---|---|
+| Architecture | Blackboard (Hayes-Roth 1985) / CMMN | Reactive event-driven choreography |
+| Execution model | Synchronous control loop, 1 task at a time | Async reactive — Vert.x EventBus + Mutiny + Quartz |
+| Task dispatch | `TaskDefinition` — entry criteria + `canActivate()` | `Worker` (lambda/SWF/File) + `DispatchRule` + `Trigger` |
+| Expression language | Java lambda only | JQ strings + Java lambda |
+| Persistence | SPI: InMemory + Hibernate (blocking JPA) | Hibernate Reactive only |
+| Resilience | RetryPolicy, DLQ, PoisonPillDetector, Idempotency, ConflictResolver, TimeoutEnforcer | RetryPolicy only |
+| Goal model | Not yet (ADR-0001 designed, not implemented) | `Goal` + `GoalExpression` (allOf/anyOf) + `GoalKind` |
+| Event history | None | `EventLog` — full ordered sequence, `seq` DB identity column |
+| Durable execution | None | Quartz — persisted jobs survive restarts |
+| Schema format | None | YAML/JSON schema + codegen (jsonschema2pojo) |
+| Triggers | Entry criteria only | `contextChange`, `cloudEvent`, `schedule` |
+| Lineage | `PropagationContext` + POJO object graph | None |
+| Control reasoning | `PlanningStrategy` — pluggable, 4 activation conditions | None — pure choreography |
+| Stage lifecycle | Full CMMN stages | None |
 
-### Week 2: Control Loop, Coordination & Testing
-**Day 6-7: CaseEngine Control Loop & TaskBroker**
-- Implement `ListenerEvaluator` — entry criteria evaluation, PlanItem creation, quiescence detection
-- Implement `CaseEngine` control loop:
-  - CaseFile change → ListenerEvaluator creates PlanItems on CasePlanModel
-  - Invoke Planning Strategies to prioritize/filter PlanItems
-  - Execute highest-priority PlanItem(s) from agenda
-  - Domain task definition contributes to CaseFile → repeat
-- Implement `createChildCaseFile()` with automatic PropagationContext inheritance (delegates to `CaseFileRepository.createChild()`)
-- Hierarchy queries done via POJO graph (`getParentCase()`, `getChildCases()`, `getOwningCase()`, `getChildTasks()`) — no separate LineageService
-- Implement `TaskScheduler` with round-robin selection
-- Wire `TaskBroker` orchestration (delegates to TaskRegistry + TaskScheduler)
-- Implement `NotificationService` with Quarkus Event Bus (case file changes + task lifecycle)
-- Implement hierarchical cancellation (cancel propagates to all child case files/tasks)
-- Budget enforcement: child deadline capped at parent's remaining budget
-- Unit tests for ListenerEvaluator, CaseEngine (with and without custom Planning Strategies)
-- Unit tests for context propagation (root → child case file → child task, budget inheritance, POJO graph)
-- Integration tests: end-to-end CaseFile solving with task definitions spawning child case files and tasks
-- Integration tests: end-to-end Task submission and result retrieval
+### Merge Decisions
 
-**Day 8: Resilience, Observability & Error Handling**
-- Implement `TimeoutEnforcer` (Quarkus Scheduler, checks every 1s)
-- Implement `RetryPolicy` with backoff strategies (fixed, exponential, exponential+jitter)
-- Implement PlanItem and Task retry flow (WAITING state, backoff delay, re-queue)
-- Implement `DeadLetterQueue` with DLQ entries, replay, and discard
-- Implement `PoisonPillDetector` with failure counting, quarantine, and cool-down
-- Implement `IdempotencyService` for duplicate detection
-- Add Micrometer metrics for CaseFile, Control, Task, DLQ, and poison pill models
-- Structured logging with MDC (trace_id/span_id/parent_span_id + case_file_id/task_id/td_id)
-- Quarkus health checks (readiness, liveness)
-- Error handling: task definition failures with retry, case worker crashes, case file timeouts
-- Task definition failure rollback (contributed keys not written on exception)
-- Planning Strategy failure handling (fall back to DefaultPlanningStrategy)
-- Unit tests for: timeout enforcement, retry with backoff, dead letter flow, poison pill quarantine
+| Decision | Chosen | Why | Alternatives Rejected |
+|---|---|---|---|
+| Merge direction | casehub as base | Blackboard loop, CMMN stages, resilience are architectural — can't retrofit onto casehub-engine | casehub-engine as base (would require rebuilding everything casehub has) |
+| Migration approach | Evolve casehub in-place | Existing test coverage + module structure; each phase shippable | Big bang rewrite; new unified repo |
+| Execution model | Async event cycle — always non-blocking | Architecturally necessary for hybrid model; `notifyAutonomousWork()` workaround disappears | Keep synchronous loop (fights the hybrid orchestration+choreography model) |
+| TaskDefinition vs Worker | Option C — `TaskDefinition` sugar over Worker+Binding | Ergonomic Java DSL + clean internal model | Keep TaskDefinition only; pure Worker+Binding |
+| Schema vs code | Both first-class | Validated by `DiscoveredWorkflowBuildItem.fromSpec/fromSource` | Schema-first only; code-first only |
+| Expression language | Pluggable — JQ + Lambda both valid | YAML needs JQ; Java devs want lambdas | JQ only (sealed, casehub-engine's current state) |
+| Context model | Pluggable `CaseFile` impls | `JsonCaseFile`, `JavaBeanCaseFile<T>`, `MapCaseFile` | Rename to StateContext (loses CMMN correctness) |
+| Quarkus Flow depth | One backend among several | All-Flow is a usage pattern, not a constraint | Mandating Quarkus Flow for all workers |
+| Naming | `bindings` | Evolved naturally | `rules`, `dispatch-rules` |
+| Worker role | Pure executor + indirect influencer via CaseFile | PlanningStrategy retains authority | CMMN-style direct worker authority |
 
-**Day 9: Quarkus Integration & Security**
-- CDI integration and dependency injection for all components
-- Configuration via `application.properties`
-- Security: API key validation for case workers
-- Basic authentication/authorization with `@RolesAllowed`
-- Integration tests with Quarkus Test framework
+### Completed Milestones (pre-merge)
 
-**Day 10: Documentation & Examples**
-- API documentation (Javadoc)
-- Example: Legal case analysis case file (multi-task-definition with custom Planning Strategy for priority)
-- Example: Simple sentiment analysis task (request-response)
-- README with quickstart guide for CaseFile model (with/without custom control) and Task model
-- End-to-end acceptance tests for both models
+| Decision | Chosen | Why | Alternatives Rejected |
+|---|---|---|---|
+| Blackboard Architecture + CMMN terminology | Shared CaseFile workspace, TaskDefinitions, CaseEngine control loop | Data-driven activation without coupling between agents | Traditional workflow engines (rigid sequencing) |
+| Multi-module Maven structure | casehub-core + casehub-persistence-* + casehub-examples + casehub-flow-worker | Isolates persistence dependencies; core stays lean | Single-module (examples and impls mixed with core) |
+| POJO graph model | CaseFile/Task hold direct parent/child references; Long ids | Fluent traversal, type safety, lays groundwork for OOPath queries | Lineage-as-backbone (LineageTree reconstructed from PropagationContext storage) |
+| Long id + UUID otelTraceId | Long for DB keys/optimistic locking; UUID for OTel only | Integer ids are efficient for B-tree indexes and @Version; UUIDs only needed for distributed tracing | UUID as primary key (poor DB performance) |
+| PropagationContext slimmed | Keep traceId, inheritedAttributes, deadline, remainingBudget | Graph structure now in POJO; PropagationContext is a tracing/budget value object | Keeping PropagationContext as graph backbone |
+| Module-per-persistence | casehub-persistence-memory + casehub-persistence-hibernate | Consistent with Quarkus Flow pattern | Single persistence module |
+| Goal model design (ADR-0001) | CaseGoal with named Milestones (`Predicate<CaseFile>`), GoalEvaluator separate from task execution | Path-independent satisfaction; BDI opportunistic achievement; CMMN-aligned | Goal as final Milestone only |
 
-### Testing Strategy
-- **Unit Tests**: JUnit 5, Mockito for component isolation
-- **Integration Tests**: Quarkus Test with `@QuarkusTest`
-- **Concurrency Tests**: Multiple task definitions contributing to same case file; multiple task submissions
-- **CaseFile-specific Tests**: Entry criteria evaluation, quiescence detection, auto-completion
-- **Control-specific Tests**: PlanItem priority ordering, Planning Strategy agenda manipulation, focus changes
-- **Propagation Tests**: Context inheritance across CaseFile → child CaseFile → Task hierarchy, budget enforcement, hierarchical cancellation, lineage queries
-- **Resilience Tests**: Timeout enforcement (case file, task definition, task), retry with backoff, dead letter flow, poison pill detection and quarantine, idempotency, case file versioning and conflict resolution
-- **Coverage Target**: 80% line coverage minimum
+### 9-Phase Implementation Plan
 
-### Out of Scope for MVP
-- Redis storage provider (Phase 2, Week 3+)
-- Progress notifications (Phase 2, Week 4+)
-- Task definition re-activation and retry on failure (Phase 2)
-- Nested tasks/sub-slots (Phase 3)
-- Advanced control strategies (meta-reasoning, learning from past case files) (Phase 3)
-- Merge strategies (Phase 3)
-- Distributed deployment (Phase 4)
+Each phase is independently shippable. Ordered by dependency and naming-safety.
 
-### Phase 1.5 Buffer (Week 3)
-Reserved for:
-- Bug fixes from testing
-- Performance optimization for CaseFile control loop
-- Documentation improvements
-- Integration with CaseHub (if ready)
+| Phase | Work | Scope |
+|---|---|---|
+| 1 | **Expression abstraction** | Unseal `ExpressionEvaluator`, add `LambdaExpressionEvaluator`. No naming decisions needed. |
+| 2 | **Binding + Trigger model** | Replace entry criteria with `Binding`/`Trigger`. `TaskDefinition` sugar over Worker+Binding. `Capability`. `evalObjectTemplate`. |
+| 3 | **Goal + ProgressMarker** | Adopt casehub-engine's Goal/GoalExpression/GoalKind. Rename casehub-engine Milestone → ProgressMarker. Supersedes issue #7 plan. |
+| 4 | **EventLog + Quartz** | Adopt EventLog entity. Wire Quartz for durable worker execution. Idempotency hash. |
+| 5 | **Async event cycle** | Replace synchronous control loop with Vert.x EventBus cycle. `CaseFileChangedEvent`. Autonomous workers write to CaseFile directly — `notifyAutonomousWork()` removed. |
+| 6 | **Pluggable CaseFile** | `JsonCaseFile`, `JavaBeanCaseFile<T>`. `evalObjectTemplate` on interface. Hibernate Reactive. |
+| 7 | **Sub-cases** | Wire sub-case spawning and completion propagation. `SubCaseBinding`. |
+| 8 | **YAML schema + codegen** | Adopt and extend casehub-engine's schema. Build-time discovery. `casehub-quarkus` extension. |
+| 9 | **Fluent Java DSL** | `casehub-quarkus` developer experience layer. |
+
+Full implementation plan: `docs/superpowers/specs/2026-04-09-casehub-unified-design.md`
+
+### Open Questions
+
+- **`ProgressMarker` naming** — confirm with co-worker. Alternatives: `ObservabilityMarker`, `Signal`, `Indicator`.
+- **`ContextChangeTrigger` naming** — keep or rename to `StateChangeTrigger`?
+- **`CaseState` alignment** — casehub (PENDING/RUNNING/WAITING/SUSPENDED/COMPLETED/FAULTED/CANCELLED) vs casehub-engine (ACTIVE/COMPLETED/FAILED/SUSPENDED/TERMINATED/WAITING). Which wins?
+- **`CaseDefinitionRegistry` shim** — how do YAML-defined cases (no Java lambdas) and Java-defined cases (with lambdas) coexist cleanly in the same registry?
+- **Nested stage lifecycle** — `ListenerEvaluator` has evaluation methods but not fully wired into the async event cycle. Must publish `StageActivatedEvent` and `StageExitedEvent`. Blocking dependency for stage-scoped long-lived workers.
+- **Long-lived worker lifecycle** — new concept. Needs: lifecycle scope (`CASE`, `STAGE`, `BINDING`), start/stop event subscription, internal state management across CaseFile interactions.
+- **`ConflictResolver`** — interface defined, not integrated. Does it belong in the async model?
+- **Dead letter replay** — marked TODO. Needs design.
+- **Java DSL finalisation** — user has refinements coming.
 
 ---
 
 ## 10. Future Enhancements
 
-### Phase 2 (Weeks 3-4) — Persistence & Reliability
-- Redis persistence module for CaseFile, Task, and DLQ (additional module alongside Hibernate)
-- Task definition re-activation and retry on failure
-- Basic progress notifications
-- Configurable retry policies
-- CaseFile state snapshots and restoration on crash recovery
-- Timeout handling improvements
-- Goal model: `CaseGoal`, `GoalEvaluator` — explicit satisfaction/abandonment contracts at `createAndSolve()` time (issue #7)
+**Note:** Items previously listed here that are now in the 9-phase merge plan (§9) have been moved there: Goal model (Phase 3), EventLog + Quartz (Phase 4), async event cycle (Phase 5), pluggable CaseFile (Phase 6), Binding/Trigger model (Phase 2), YAML schema (Phase 8).
 
-### Phase 3 (Weeks 5-8) — Advanced Case Management & Control Features
-- **CaseFile hierarchies**: Nested case files for sub-problem decomposition
-- **Conditional re-activation**: Task definitions can re-fire when keys they've already read are updated
-- **Meta-reasoning Planning Strategies**: Planning Strategies that learn from past case file solutions to improve strategy
-- **Adaptive resource management**: Planning Strategies that adjust strategy based on resource consumption
-- **Control plan persistence**: Save and replay successful control strategies
-- Goal → Task decomposition (goals create case files automatically; builds on Phase 2 Goal model)
-- Partial result streaming
+### Near-term (post-merge plan)
+- Redis persistence module for CaseFile, Task, and DLQ (additional module alongside Hibernate)
+- Task definition conditional re-activation (re-fire when already-read keys are updated)
+- Basic progress notifications / partial result streaming
+- Goal → Task decomposition (goals that automatically create case files; builds on Phase 3 Goal model)
 - Advanced case worker selection (capability matching, load balancing)
 - Distributed tracing with OpenTelemetry
+- Control plan persistence (save and replay successful control strategies)
 
-### Phase 4 (Long-term) — Distributed & Enterprise
+### Long-term — Distributed & Enterprise
 - FIPA contract net protocols
 - Policy governance framework
 - Merge strategy SPI for conflicting task definition contributions
 - Multi-instance CaseEngine (distributed control loop with distributed CasePlanModel)
-- Distributed deployment support
 - CaseFile templates (predefined case types with standard task definition + Planning Strategy pipelines)
 - Planning Strategy marketplace (pluggable control strategies)
+- Meta-reasoning Planning Strategies (learn from past case file solutions)
 
 ---
 
 ## 11. Design Decisions (Answered Questions)
 
 ### 1. Goals vs Tasks
-**Decision**: Task-only for MVP; Goal model planned for Phase 2 (issue #7)
-- Rationale: Goal decomposition patterns will emerge from usage. Premature abstraction risk.
-- Planned: `CaseGoal` with satisfaction/abandonment predicates and `GoalEvaluator`; backward compatible (no-goal falls back to quiescence completion).
-- Future: Phase 3 will add goal-to-task decomposition (goals that automatically create case files).
+**Decision**: Goal model adopts casehub-engine's `GoalExpression`/`GoalKind`/`CaseCompletion` design (Phase 3 of merge plan). Supersedes the simpler `Predicate<CaseFile>`-based design from ADR-0001.
+- Rationale: casehub-engine's Goal model is more expressive (allOf/anyOf composition, explicit SUCCESS/FAILURE kinds, pluggable CaseCompletion strategy). ADR-0001's design was a good intermediate step; the merge provides a stronger foundation.
+- Backward compatibility: Cases with no Goal fall back to quiescence completion unchanged.
+- Future: Goal → task decomposition (goals that automatically create case files) remains long-term.
 
 ### 2. Notification Mechanism
 **Decision**: Quarkus CDI Event Bus
@@ -2632,7 +2618,7 @@ Reserved for:
 
 ## 12. Success Criteria
 
-### MVP (2 weeks) - Core Case Management + Task Functionality
+### Current Implementation — Core Case Management + Task Functionality
 
 **Case Management Core (§3):**
 - **CaseFile Creation**: Requestor can create a case file with initial state and paired CasePlanModel
@@ -2685,24 +2671,9 @@ Reserved for:
 - **Testing**: 80%+ coverage with unit, integration, concurrency, propagation, and resilience tests
 - **Documentation**: README, API docs, legal case analysis with child case files example, sentiment example
 
-### Phase 2 (Weeks 3-4) - Persistence & Distributed
-- Redis storage provider for CaseFile, Task, and DLQ (additional persistence module)
-- Redis-backed distributed locking for leader election (CasePlanModel)
-- Optimistic locking via Redis WATCH/MULTI for case file writes
-- CaseFile crash recovery from persistent state
-- Progress notifications for long-running task definitions and tasks
-- Distributed IdempotencyService with Redis TTL
-- Multi-instance deployment support
-- Goal model (CaseGoal, GoalEvaluator) — see §8.2 Planned: Goal Model
+### Merge Plan Success Criteria
 
-### Phase 3 (Weeks 5-8) - Advanced Case Management & Control Features
-- CaseFile hierarchies (nested sub-case-files)
-- Conditional task definition re-activation on key updates
-- Goal-to-case-file decomposition framework
-- Advanced control strategies (meta-reasoning, learning from past case file solutions)
-- Planning Strategies that adapt strategy mid-solve based on resource consumption
-- Advanced case worker selection (capability matching, load balancing)
-- Distributed tracing with OpenTelemetry
+See §9 (Architecture Evolution) for the 9-phase merge plan. Success criteria for each phase are tracked in `docs/superpowers/specs/2026-04-09-casehub-unified-design.md`.
 
 ---
 
@@ -2840,8 +2811,8 @@ Reserved for:
 - **`casehub-persistence-hibernate`**: JPA/Panache implementations — `HibernateCaseFile`, `HibernateTask`, `HibernateCaseFileRepository`, `HibernateTaskRepository`. Workspace stored as JSON TEXT blob; H2 for tests, PostgreSQL for production.
 - **`casehub-examples`** now depends on `casehub-persistence-memory`
 
-### Planned
-- **Goal model (Issue #7)**: `CaseGoal` with satisfaction/abandonment predicates, `GoalEvaluator`, named `Milestone`s. Research in `docs/research/goal-model-research.md`. Cases with no Goal fall back to quiescence-based completion (backward compatible).
+### Planned (Phase 3 of merge plan)
+- **Goal model**: Adopts casehub-engine's `GoalExpression`/`GoalKind`/`CaseCompletion` design (supersedes `CaseGoal`/`Predicate<CaseFile>` from ADR-0001). `ProgressMarker` replaces casehub-engine's `Milestone` (naming TBD — see Open Questions in §9). Cases with no Goal fall back to quiescence-based completion (backward compatible).
 
 ---
 
