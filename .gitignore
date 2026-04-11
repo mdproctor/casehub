@@ -9,3 +9,13 @@
 # Maven
 log/
 target/
+
+# Worktrees
+.worktrees/
+
+# Jekyll build output
+docs/_site/
+docs/.jekyll-cache/
+
+# Brainstorming sessions
+.superpowers/
