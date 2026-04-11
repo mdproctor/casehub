@@ -1,0 +1,91 @@
+---
+layout: default
+---
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <p class="hero-eyebrow">Open Source Framework</p>
+    <h1 class="hero-title">Collaborative AI problem&#8209;solving,<br>built for <span>Quarkus</span></h1>
+    <p class="hero-sub">Blending Blackboard Architecture with CMMN, where orchestration meets choreography for Agentic AI.</p>
+    <div class="hero-btns">
+      <a href="https://github.com/mdproctor/casehub" class="btn-primary" target="_blank" rel="noopener">View on GitHub &#x2197;</a>
+      <a href="{{ '/blog/' | relative_url }}" class="btn-ghost">Read the blog &rarr;</a>
+    </div>
+  </div>
+</section>
+
+<div class="stats-strip">
+  <div class="stat"><span class="stat-num">Java 21</span><span class="stat-label">Runtime</span></div>
+  <div class="stat"><span class="stat-num">Quarkus 3.17</span><span class="stat-label">Platform</span></div>
+  <div class="stat"><span class="stat-num">5</span><span class="stat-label">Modules</span></div>
+  <div class="stat"><span class="stat-num">CMMN</span><span class="stat-label">Semantics</span></div>
+</div>
+
+<section class="features">
+  <div class="features-header">
+    <h2>A framework that reasons, plans, and executes.</h2>
+    <p>Two execution models. One shared workspace. Infinite agents.</p>
+  </div>
+
+  <div class="feature-row">
+    <div class="feature-text">
+      <div class="feature-icon">⬡</div>
+      <h3>CaseFile — the shared workspace.</h3>
+      <p>A structured key-value blackboard where agents declare what they need and what they produce. The CaseEngine runs the control loop — evaluating, planning, executing — until the case reaches quiescence or completion.</p>
+    </div>
+    <div class="feature-box">
+      <span class="cm">// TaskDefinition declares its contract</span><br>
+      <span class="kw">entry</span>: [<span class="str">"document.text"</span>, <span class="str">"doc.language"</span>]<br>
+      <span class="kw">produces</span>: [<span class="str">"summary"</span>, <span class="str">"sentiment"</span>]<br><br>
+      <span class="cm">// CaseEngine resolves the graph</span><br>
+      engine.<span class="kw">createAndSolve</span>(caseType, init)<br>
+      &nbsp;&nbsp;&rarr; evaluate &rarr; plan &rarr; execute &rarr; repeat
+    </div>
+  </div>
+
+  <div class="feature-row reverse">
+    <div class="feature-text">
+      <div class="feature-icon">⇄</div>
+      <h3>Dual execution model.</h3>
+      <p>Run collaborative cases through the CaseFile model, or dispatch targeted requests through the TaskBroker. Autonomous workers monitor external systems and self-initiate — all tracked with full propagation lineage.</p>
+    </div>
+    <div class="feature-box">
+      <span class="cm">// Orchestrated — CaseEngine drives</span><br>
+      CaseEngine.<span class="kw">createAndSolve</span>(...)<br><br>
+      <span class="cm">// Choreographed — Workers self-initiate</span><br>
+      registry.<span class="kw">notifyAutonomousWork</span>(<br>
+      &nbsp;&nbsp;TaskOrigin.<span class="kw">AUTONOMOUS</span>, payload<br>
+      )
+    </div>
+  </div>
+
+  <div class="feature-row">
+    <div class="feature-text">
+      <div class="feature-icon">⟳</div>
+      <h3>Resilience built in.</h3>
+      <p>RetryPolicy, TimeoutEnforcer, PoisonPillDetector, DeadLetterQueue, and IdempotencyService ship with the core module. Your agents fail gracefully without writing a single line of retry logic.</p>
+    </div>
+    <div class="feature-box">
+      <span class="kw">casehub</span>.retry.max-attempts=3<br>
+      <span class="kw">casehub</span>.timeout.check-interval=5s<br>
+      <span class="kw">casehub</span>.dlq.enabled=true<br><br>
+      <span class="cm">// Idempotency built into execution</span><br>
+      IdempotencyService.<span class="kw">guard</span>(taskId, fn)
+    </div>
+  </div>
+</section>
+
+<section class="blog-preview">
+  <h2>Development diary.</h2>
+  <div class="blog-cards">
+    {% for post in site.posts limit: 3 %}
+    <a href="{{ post.url | relative_url }}" class="blog-card">
+      <span class="card-date">{{ post.date | date: "%-d %b %Y" }}</span>
+      <h3>{{ post.title }}</h3>
+      <p>{{ post.excerpt | strip_html | truncate: 110 }}</p>
+      {% if post.tags.first %}<span class="card-tag">{{ post.tags.first }}</span>{% endif %}
+    </a>
+    {% endfor %}
+  </div>
+  <a href="{{ '/blog/' | relative_url }}" class="read-all">Read all posts &rarr;</a>
+</section>
