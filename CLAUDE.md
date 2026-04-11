@@ -20,6 +20,26 @@ casehub/
 └── casehub-flow-worker/             # Optional Quarkus Flow integration
 ```
 
+## Website
+
+The project site is published at `https://mdproctor.github.io/casehub` via GitHub Pages.
+
+Jekyll source lives in `docs/`. Build locally: `cd docs && bundle exec jekyll serve` (requires Ruby 3+).
+
+**Blog posts are authored in `docs/_posts/`** (not `docs/blog/`). Filename format: `YYYY-MM-DD-slug.md`. Every post needs frontmatter:
+
+```yaml
+---
+layout: post
+title: "Post Title"
+date: YYYY-MM-DD
+tags: [tag1, tag2]
+excerpt: "One sentence summary shown in listings and cards."
+---
+```
+
+Do not add files to `docs/` without also adding them to the `exclude:` list in `docs/_config.yml` if they should not be published.
+
 ## Build Commands
 
 ```bash
