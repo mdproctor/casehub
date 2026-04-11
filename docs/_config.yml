@@ -1,0 +1,39 @@
+title: CaseHub
+description: "Collaborative AI problem-solving, built for Quarkus."
+baseurl: "/casehub"
+url: "https://mdproctor.github.io"
+author: Mark Proctor
+
+permalink: pretty
+
+markdown: kramdown
+kramdown:
+  input: GFM
+
+plugins:
+  - jekyll-feed
+
+exclude:
+  - superpowers/
+  - adr/
+  - research/
+  - summaries/
+  - design-snapshots/
+  - blog/mockups/
+  - DESIGN.md
+  - retro-issues.md
+  - Gemfile
+  - Gemfile.lock
+
+defaults:
+  - scope:
+      path: ""
+      type: "posts"
+    values:
+      layout: post
+      permalink: /blog/:year/:month/:day/:title/
+  - scope:
+      path: "docs-site"
+      type: "pages"
+    values:
+      layout: doc
