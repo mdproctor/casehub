@@ -1,3 +1,11 @@
+---
+layout: post
+title: "Session 3: Getting the Architecture Right"
+date: 2026-04-09
+tags: [architecture, design]
+excerpt: "Collapsing the lineage graph, redesigning the persistence layer, and researching goal models across BDI, GOAP, CMMN, and HTN."
+---
+
 # Session 3: Getting the Architecture Right
 
 **Date:** 2026-04-09
