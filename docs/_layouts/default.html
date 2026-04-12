@@ -36,5 +36,18 @@
       <span class="footer-tagline">Apache 2.0</span>
     </div>
   </footer>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+      document.querySelectorAll('pre code.language-mermaid').forEach(function(el) {
+        var container = document.createElement('div');
+        container.className = 'mermaid';
+        container.textContent = el.textContent;
+        el.closest('pre').replaceWith(container);
+      });
+      mermaid.run();
+    });
+  </script>
 </body>
 </html>
