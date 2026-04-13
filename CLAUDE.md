@@ -152,6 +152,12 @@ Config properties use the `casehub.` prefix (e.g., `casehub.timeout.check-interv
 
 `docs/DESIGN.md` contains the comprehensive architecture specification. Keep it consistent with code changes. `docs/adr/` contains Architecture Decision Records — append-only, numbered sequentially (`0001-title.md`). `docs/research/` contains design research documents. `QuarkBoard_Design_Document.md` is the legacy original.
 
+## Ecosystem Context
+
+CaseHub is the orchestration/choreography engine in a three-project Quarkus Native AI Agent Ecosystem. Load the ecosystem design only when working on SPI interfaces, the `casehub-mcp` module, Goal/Transition data model, or CaseEngine extension points:
+
+@/Users/mdproctor/claude/cross-claude-mcp/docs/superpowers/specs/2026-04-13-quarkus-ai-ecosystem-design.md
+
 ## Work Tracking
 
 **Issue tracking:** enabled
