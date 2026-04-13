@@ -2569,6 +2569,50 @@ Full implementation plan: `docs/superpowers/specs/2026-04-09-casehub-unified-des
 
 ---
 
+## 10.x Planned Evolution — Quarkus Native AI Agent Ecosystem
+
+> **Context:** CaseHub is the orchestration/choreography engine in a three-project Quarkus Native AI Agent Ecosystem alongside **Qhorus** (agent communication mesh) and **Claudony** (session management and integration layer). Full ecosystem design: `~/claude/cross-claude-mcp/docs/superpowers/specs/2026-04-13-quarkus-ai-ecosystem-design.md`
+
+This section describes what CaseHub needs to prepare for. These are not immediate work items — they are design constraints to keep in mind so current decisions don't require painful rework later.
+
+### Four SPIs coming to `casehub-core`
+
+CaseHub will define four provider interfaces that external systems implement. CaseHub calls them; it does not implement them. **No Quarkus or Claudony or Qhorus dependencies should enter `casehub-core`** — these are pure Java interfaces.
+
+| Interface | Purpose |
+|---|---|
+| `WorkerProvisioner` | `provision(capabilities, context) → Worker` / `terminate(workerId)` — called by CaseEngine when no eligible workers are available for an eligible PlanItem |
+| `CaseChannelProvider` | `openChannel(caseId, purpose)` / `postToChannel()` / `closeChannel()` — creates a communication channel (backed by Qhorus) for workers on a case |
+| `WorkerContextProvider` | `buildContext(workerId, task) → WorkerContext` / `surfaceLineage(caseId, depth) → LineageGraph` — constructs the startup context injected into a new worker |
+| `WorkerStatusListener` | `onWorkerStarted()` / `onWorkerCompleted()` / `onWorkerStalled()` — lifecycle callbacks so the integration layer can keep worker state in sync |
+
+**Design constraint:** `CaseEngine`'s control loop needs an extension point where it can call `WorkerProvisioner.provision()` when PlanItems are eligible but no workers are available. Plan for this in the control loop architecture — it should be a pluggable hook, not a conditional block.
+
+### New `casehub-mcp` module
+
+A new module (parallel to `casehub-flow-worker`) that exposes CaseHub's capabilities as MCP tools for Claude agents. It depends on `casehub-core` and the `quarkus-mcp-server-http` extension — nothing else. The module must be independently deployable as a standalone Quarkus app or embeddable as a library.
+
+MCP tools it will expose: `register_worker`, `record_goal`, `pick_up_task`, `record_transition`, `complete_task`, `get_lineage`, `create_case_channel`, `notify_worker`, `list_case_workers`.
+
+**Design constraint:** `casehub-core` must not gain Quarkus dependencies. `casehub-mcp` is where Quarkus lives. The same SPI approach used in `casehub-flow-worker` applies here.
+
+### New data concepts for `casehub-core`
+
+**`Goal`** — a worker's recorded intent mid-task. Not a task description (that's set externally). This is what the Claude *decides* it is doing: `{ text: "Map auth flow to find entry points", why: "Precondition for the refactor", expectedOutput: "auth-map artefact" }`. Goals are recorded multiple times per assignment — a worker can update its goal as understanding develops.
+
+**Enriched `Transition`** — currently transitions are implicit (PlanItem lifecycle). They need to become explicit records capturing: `from`, `to`, `reason` (text from the worker explaining why), `channelRef` (the Qhorus channel where the handoff conversation happened), `artefactRefs` (what was produced). This is the primary data the lineage system uses for pattern learning.
+
+**Lineage surfacing** — `WorkerContextProvider.surfaceLineage()` must return a structured graph (not a log) of prior workers, their goals, their transitions, and human decisions. This is what gets injected into a new worker's startup context. The existing `PropagationContext` + `LineageService` are the foundation — they need enrichment, not replacement.
+
+### Guard Rails
+
+- Do **not** add Qhorus or Claudony imports to `casehub-core` or `casehub-persistence-*`
+- Do **not** couple `CaseEngine`'s control loop directly to provisioning — use the SPI
+- The Goal and Transition data concepts should extend the existing lineage model, not replace it
+- `casehub-mcp` module is the only place Quarkus MCP server extension is a dependency
+
+---
+
 ## 11. Design Decisions (Answered Questions)
 
 ### 1. Goals vs Tasks
