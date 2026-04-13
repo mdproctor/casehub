@@ -2571,7 +2571,7 @@ Full implementation plan: `docs/superpowers/specs/2026-04-09-casehub-unified-des
 
 ## 10.x Planned Evolution — Quarkus Native AI Agent Ecosystem
 
-> **Context:** CaseHub is the orchestration/choreography engine in a three-project Quarkus Native AI Agent Ecosystem alongside **Qhorus** (agent communication mesh) and **Claudony** (session management and integration layer). Full ecosystem design: `~/claude/cross-claude-mcp/docs/superpowers/specs/2026-04-13-quarkus-ai-ecosystem-design.md`
+> **Context:** CaseHub is the orchestration/choreography engine in a three-project Quarkus Native AI Agent Ecosystem alongside **Qhorus** (agent communication mesh) and **Claudony** (session management and integration layer). Full ecosystem design: `~/claude/claudony/docs/superpowers/specs/2026-04-13-quarkus-ai-ecosystem-design.md`
 
 This section describes what CaseHub needs to prepare for. These are not immediate work items — they are design constraints to keep in mind so current decisions don't require painful rework later.
 

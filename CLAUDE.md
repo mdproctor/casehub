@@ -156,7 +156,7 @@ Config properties use the `casehub.` prefix (e.g., `casehub.timeout.check-interv
 
 CaseHub is the orchestration/choreography engine in a three-project Quarkus Native AI Agent Ecosystem. Load the ecosystem design only when working on SPI interfaces, the `casehub-mcp` module, Goal/Transition data model, or CaseEngine extension points:
 
-@/Users/mdproctor/claude/cross-claude-mcp/docs/superpowers/specs/2026-04-13-quarkus-ai-ecosystem-design.md
+@/Users/mdproctor/claude/claudony/docs/superpowers/specs/2026-04-13-quarkus-ai-ecosystem-design.md
 
 ## Work Tracking
 
