@@ -1,25 +1,55 @@
 # Session Handover — CaseHub
-**Date:** 2026-04-10
-**Branch:** main (all committed and pushed)
+**Date:** 2026-04-14 (session 2)
+**Branch:** main (casehub repo); `feat/rename-binding-casedefinition` (casehub-engine)
 
 ---
 
 ## Where We Are
 
-A full brainstorming and design session produced the unified merge design for two CaseHub implementations. The co-worker's **casehub-engine** (`/Users/mdproctor/dev/casehub-engine`) was systematically analysed alongside casehub. All major architectural decisions are made and documented.
+Phase 2 is underway. `casehub-blackboard` is scaffolded, designed, and implemented with 390 tests passing. PR #49 against `casehubio/engine` carries 19 commits across three workstreams.
 
-**Merge direction:** casehub as base. casehub-engine contributes reactive infrastructure, Goal model, EventLog, Quartz, YAML schema, Binding+Trigger model.
+**Awaiting:** co-owner review of 5 open PRs before Phase 2 modules can merge.
 
-**Execution model:** Async event cycle (always non-blocking). `notifyAutonomousWork()` workaround disappears — autonomous workers just write to CaseFile.
+---
+
+## What Was Done This Session
+
+**Naming decisions resolved:**
+- `ConflictResolver` dropped (async model makes it unnecessary — issue #45 closed)
+- `ContextChangeTrigger` kept (consistent with `CaseContext` naming)
+- `StateContext` → `CaseContext` renamed throughout via IntelliJ MCP (26 files)
+- `CaseStatus` aligned with CNCF Serverless Workflow (Quarkus Flow source confirmed it): ACTIVE→RUNNING, FAILED→FAULTED, TERMINATED→CANCELLED. Flyway V1.2.0 migration written.
+
+**Bug found and fixed:**
+- `WorkerRetriesExhaustedEventHandler` was calling `persist()` on a detached Panache entity — silent transaction rollback, EventLog never written. Fixed to `session.merge()`. Invisible to 327 tests; found by the 328th (FAULTED lifecycle test). Submitted to Hortora/garden as GE-20260414-9ada73.
+
+**casehub-blackboard:** brainstorm → design spec → implementation plan → 13 tasks via subagent-driven development → 59 new tests. `PlanningStrategyLoopControl` (@Alternative @Priority(10)) is the LoopControl bridge; pure choreography when no `CasePlanModel` registered.
+
+---
+
+## Open PRs in casehubio/engine (all waiting review)
+
+| PR | What |
+|---|---|
+| #32 | LoopControl SPI |
+| #34 | ExpressionEngine SPI + LambdaExpressionEvaluator |
+| #35 | Pre-validation |
+| #38 | Renames + 181 tests |
+| #49 | CaseStatus alignment + bug fix + 17 tests + StateContext→CaseContext + casehub-blackboard (59 tests) |
+
+---
+
+## Open Decisions
+
+All resolved this session. Nothing blocking.
 
 ---
 
 ## Immediate Next Steps
 
-1. **Create GitHub epic for the merge work** — CLAUDE.md requires an issue before implementation
-2. **Invoke `writing-plans`** on `docs/superpowers/specs/2026-04-09-casehub-unified-design.md` to produce a phased implementation plan
-3. **Start Phase 1** — unseal `ExpressionEvaluator`, add `LambdaExpressionEvaluator` (no naming decisions, safe to start now)
-4. **Update issue #7** plan to align with casehub-engine's Goal model (`GoalExpression`, `GoalKind`, `CaseCompletion`)
+1. **Wait for co-owner PR feedback** — nothing to implement until those merge
+2. **Phase 2 modules** (once PRs merged): `casehub-resilience`, `casehub-persistence-memory`, `casehub-persistence-hibernate`, `casehub-quarkus`
+3. **casehub#8** (retirement tracking): write Phase 2 blog entry when next phase completes
 
 ---
 
@@ -27,26 +57,14 @@ A full brainstorming and design session produced the unified merge design for tw
 
 | File | What it is |
 |------|-----------|
-| `docs/superpowers/specs/2026-04-09-casehub-unified-design.md` | **Primary** — full merge design: decisions, naming table, module structure, 9-phase plan |
-| `docs/design-snapshots/2026-04-10-casehub-merge-design.md` | Design snapshot — current state, open questions |
-| `docs/superpowers/specs/scratch-merge-design.md` | Working notes — deeper rationale behind decisions |
-| `docs/blog/` | 4-entry blog series (mdp01–mdp04) — narrative of CaseHub's development |
-
----
-
-## Open Naming Questions (deferred — not blocking Phase 1–4)
-
-- `Milestone` clash — casehub's CMMN marker vs casehub-engine's JQ predicate. Proposed: `ProgressMarker`. Needs co-worker agreement.
-- `CaseState` alignment — casehub vs casehub-engine have different enum values
-- `ContextChangeTrigger` vs `StateChangeTrigger`
-
----
+| `docs/superpowers/specs/2026-04-14-casehub-blackboard-design.md` | casehub-blackboard design spec |
+| `docs/superpowers/plans/2026-04-14-casehub-blackboard.md` | Implementation plan (13 tasks, all done) |
+| `docs/superpowers/specs/2026-04-14-casehub-engine-migration-plan.md` | Migration plan (casehub-engine as home) |
 
 ## GitHub Issues
 
-| Issue | Status |
-|-------|--------|
-| #7 — Goal model | Open — plan needs updating to align with casehub-engine's model before implementation |
-| #1–#6 | Closed |
-
-casehub-engine is at `/Users/mdproctor/dev/casehub-engine` — open in IntelliJ (use `project_path` explicitly with MCP tools).
+| Repo | Issue | Status |
+|------|-------|--------|
+| casehubio/engine | #30 (epic) | Open — Phase 2 pending |
+| casehubio/engine | #43, #46, #47, #48, #50 | Closed (this session) |
+| mdproctor/casehub | #8 | Open — retirement tracking |

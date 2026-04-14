@@ -7,3 +7,4 @@
 | [2026-04-09-mdp03-pojo-graph-and-goals.md](2026-04-09-mdp03-pojo-graph-and-goals.md) | 2026-04-09 | POJO graph and Goals |
 | [2026-04-09-mdp04-two-casehubs-one-design.md](2026-04-09-mdp04-two-casehubs-one-design.md) | 2026-04-09 | Two CaseHubs, One Design |
 | [2026-04-14-mdp01-phase1-into-casehub-engine.md](2026-04-14-mdp01-phase1-into-casehub-engine.md) | 2026-04-14 | Phase 1: Into casehub-engine — direction reversed, 4 PRs landed, 284 tests |
+| [2026-04-14-mdp02-phase2-naming-and-blackboard.md](2026-04-14-mdp02-phase2-naming-and-blackboard.md) | 2026-04-14 | Phase 2: CaseStatus alignment, StateContext→CaseContext rename, casehub-blackboard brainstorm to 390 tests |
