@@ -8,6 +8,12 @@ type: java
 
 ## Project Structure
 
+**Status: migrating.** Active development has moved to `casehub-engine`
+(fork: `mdproctor/engine`, upstream: `casehubio/engine`). This repo is
+being retired once the migration completes. New feature work goes to
+casehub-engine, not here. See `docs/superpowers/specs/2026-04-14-casehub-engine-migration-plan.md`
+for the migration plan.
+
 CaseHub is a multi-module Maven project:
 
 ```
