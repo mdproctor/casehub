@@ -8,3 +8,4 @@
 | [2026-04-09-mdp04-two-casehubs-one-design.md](2026-04-09-mdp04-two-casehubs-one-design.md) | 2026-04-09 | Two CaseHubs, One Design |
 | [2026-04-14-mdp01-phase1-into-casehub-engine.md](2026-04-14-mdp01-phase1-into-casehub-engine.md) | 2026-04-14 | Phase 1: Into casehub-engine — direction reversed, 4 PRs landed, 284 tests |
 | [2026-04-14-mdp02-phase2-naming-and-blackboard.md](2026-04-14-mdp02-phase2-naming-and-blackboard.md) | 2026-04-14 | Phase 2: CaseStatus alignment, StateContext→CaseContext rename, casehub-blackboard brainstorm to 390 tests |
+| [2026-04-15-mdp01-resilience-diff-provenance-persistence.md](2026-04-15-mdp01-resilience-diff-provenance-persistence.md) | 2026-04-15 | Phase 2: Resilience, Diff Provenance, and a Persistence Rethink |
