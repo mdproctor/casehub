@@ -1,70 +1,78 @@
 # Session Handover — CaseHub
-**Date:** 2026-04-14 (session 2)
-**Branch:** main (casehub repo); `feat/rename-binding-casedefinition` (casehub-engine)
+**Date:** 2026-04-15
+**Branch (casehub):** main
+**Branch (casehub-engine):** multiple — see Open PRs below
 
 ---
 
 ## Where We Are
 
-Phase 2 is underway. `casehub-blackboard` is scaffolded, designed, and implemented with 390 tests passing. PR #49 against `casehubio/engine` carries 19 commits across three workstreams.
+Phase 2 in progress. `casehub-resilience` (PRs #52–54) and EventLog enrichment (PR #56) shipped. Persistence decoupling designed but not yet implemented — implementation plan not yet written.
 
-**Awaiting:** co-owner review of 5 open PRs before Phase 2 modules can merge.
+**Awaiting:** co-owner review on PRs #32, #34, #35, #38, #49. All new PRs stack on top of #49.
 
 ---
 
 ## What Was Done This Session
 
-**Naming decisions resolved:**
-- `ConflictResolver` dropped (async model makes it unnecessary — issue #45 closed)
-- `ContextChangeTrigger` kept (consistent with `CaseContext` naming)
-- `StateContext` → `CaseContext` renamed throughout via IntelliJ MCP (26 files)
-- `CaseStatus` aligned with CNCF Serverless Workflow (Quarkus Flow source confirmed it): ACTIVE→RUNNING, FAILED→FAULTED, TERMINATED→CANCELLED. Flyway V1.2.0 migration written.
+**casehub-resilience** — 3 stacked PRs (#52, #53, #54), 38 tests:
+- Backoff strategies: `BackoffStrategy` enum added to `RetryPolicy`; `BackoffDelayCalculator` in resilience module; `WorkerExecutionJobListener` now computes backoff-aware delay
+- Dead Letter Queue: `DeadLetterQueue` (in-memory), `DeadLetterEventHandler` (@ConsumeEvent on WORKER_RETRIES_EXHAUSTED), unit + integration + E2E tests
+- PoisonPill: `PoisonPillDetector` (sliding window), `WorkerExecutionGuard` SPI, `PoisonPillWorkerExecutionGuard` (@Alternative)
+- CDI gotcha: `@Alternative @Priority(n)` globally activates in CDI 4.0 — causes AmbiguousResolutionException; removed @Priority from alternatives
 
-**Bug found and fixed:**
-- `WorkerRetriesExhaustedEventHandler` was calling `persist()` on a detached Panache entity — silent transaction rollback, EventLog never written. Fixed to `session.merge()`. Invisible to 327 tests; found by the 328th (FAULTED lifecycle test). Submitted to Hortora/garden as GE-20260414-9ada73.
+**EventLog enrichment** — PR #56, 354 total engine tests:
+- `ContextDiffStrategy` SPI + `TopLevelContextDiffStrategy` (default) + `JsonPatchContextDiffStrategy` (@Alternative) + `NoOpContextDiffStrategy` (@Alternative)
+- `WorkflowExecutionCompletedHandler` now snapshots CaseContext before/after worker output; stores diff as `contextChanges` in metadata
 
-**casehub-blackboard:** brainstorm → design spec → implementation plan → 13 tasks via subagent-driven development → 59 new tests. `PlanningStrategyLoopControl` (@Alternative @Priority(10)) is the LoopControl bridge; pure choreography when no `CasePlanModel` registered.
+**Persistence decoupling** — design only, no code:
+- Key input: Francisco Javier Tirado Sarti (quarkus-flow co-creator) — orm.xml approach wrong because detached entity problem persists regardless; separate JPA entity classes required
+- Design: 3 repository SPI interfaces in engine (`CaseInstanceRepository`, `EventLogRepository`, `CaseMetaModelRepository`); domain POJOs in engine (no JPA); `casehub-persistence-memory` (in-memory, no Docker); `casehub-persistence-hibernate` (JPA entities with JPA annotations, separate from domain objects, Flyway migrations)
 
 ---
 
 ## Open PRs in casehubio/engine (all waiting review)
 
-| PR | What |
-|---|---|
-| #32 | LoopControl SPI |
-| #34 | ExpressionEngine SPI + LambdaExpressionEvaluator |
-| #35 | Pre-validation |
-| #38 | Renames + 181 tests |
-| #49 | CaseStatus alignment + bug fix + 17 tests + StateContext→CaseContext + casehub-blackboard (59 tests) |
-
----
-
-## Open Decisions
-
-All resolved this session. Nothing blocking.
+| PR | What | Base |
+|---|---|---|
+| #32 | LoopControl SPI | main |
+| #34 | ExpressionEngine SPI | main |
+| #35 | Pre-validation | main |
+| #38 | Renames + 181 tests | main |
+| #49 | CaseStatus alignment + bug fix + casehub-blackboard | main |
+| #52 | casehub-resilience: backoff + SPI scaffold | feat/rename-binding-casedefinition |
+| #53 | casehub-resilience: DLQ | feat/casehub-resilience/backoff |
+| #54 | casehub-resilience: PoisonPill | feat/casehub-resilience/dlq |
+| #56 | EventLog enrichment (ContextDiffStrategy) | feat/rename-binding-casedefinition |
 
 ---
 
 ## Immediate Next Steps
 
-1. **Wait for co-owner PR feedback** — nothing to implement until those merge
-2. **Phase 2 modules** (once PRs merged): `casehub-resilience`, `casehub-persistence-memory`, `casehub-persistence-hibernate`, `casehub-quarkus`
-3. **casehub#8** (retirement tracking): write Phase 2 blog entry when next phase completes
+1. **Write implementation plan** for persistence decoupling (`writing-plans` on spec at `docs/superpowers/specs/2026-04-15-persistence-decoupling-design.md`)
+2. **Execute plan** — issue-workflow Phase 1 first, then TDD implementation of:
+   - Repository SPI interfaces in engine
+   - Strip JPA from `CaseInstance`, `EventLog`, `CaseMetaModel`
+   - Refactor handlers to use repositories
+   - `casehub-persistence-memory` module
+   - `casehub-persistence-hibernate` module
+3. **Wait for co-owner feedback** on open PRs before further engine work beyond persistence
 
 ---
 
-## Key Files (read if task requires it)
+## Key Files
 
-| File | What it is |
-|------|-----------|
-| `docs/superpowers/specs/2026-04-14-casehub-blackboard-design.md` | casehub-blackboard design spec |
-| `docs/superpowers/plans/2026-04-14-casehub-blackboard.md` | Implementation plan (13 tasks, all done) |
-| `docs/superpowers/specs/2026-04-14-casehub-engine-migration-plan.md` | Migration plan (casehub-engine as home) |
+| File | What |
+|------|-------|
+| `docs/superpowers/specs/2026-04-15-persistence-decoupling-design.md` | Persistence decoupling design spec (approved) |
+| `docs/superpowers/specs/2026-04-15-eventlog-enrichment-design.md` | EventLog enrichment design spec |
+| `docs/superpowers/plans/2026-04-15-eventlog-enrichment.md` | EventLog enrichment implementation plan (completed) |
 
 ## GitHub Issues
 
 | Repo | Issue | Status |
 |------|-------|--------|
-| casehubio/engine | #30 (epic) | Open — Phase 2 pending |
-| casehubio/engine | #43, #46, #47, #48, #50 | Closed (this session) |
+| casehubio/engine | #30 (epic) | Open — Phase 2 in progress |
+| casehubio/engine | #51 | Open — casehub-resilience + EventLog enrichment tracking |
+| casehubio/engine | #55 | Open — persistence decoupling tracking |
 | mdproctor/casehub | #8 | Open — retirement tracking |
