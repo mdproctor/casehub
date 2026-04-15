@@ -13,7 +13,7 @@ and `CaseMetaModel` all extend `PanacheEntity`, and every event handler calls
 Consequences:
 - Every `@QuarkusTest` requires a real PostgreSQL container via TestContainers — slow, Docker-dependent
 - There is no lightweight deployment option without a database
-- Adding a second storage backend (e.g. Redis, in-memory) requires modifying the engine core
+- Adding a second storage backend requires modifying the engine core
 
 ---
 
@@ -24,9 +24,33 @@ Make persistence fully pluggable via three repository SPI interfaces. Provide tw
 | Module | Storage | Use case |
 |---|---|---|
 | `casehub-persistence-memory` | `ConcurrentHashMap` + `AtomicLong` | Fast tests, no Docker |
-| `casehub-persistence-hibernate` | Hibernate Reactive + PostgreSQL | Production |
+| `casehub-persistence-hibernate` | Separate JPA entities + Hibernate Reactive | Production |
 
 The engine core has **no** Hibernate, Panache, or PostgreSQL dependency after this change.
+
+---
+
+## Design Rationale: Separate Entity Classes
+
+The `orm.xml` approach (externalising JPA annotations on domain objects) was considered and
+rejected on the advice of Francisco Javier Tirado Sarti (quarkus-flow co-creator), who has
+implemented this pattern across multiple projects.
+
+**The core issue:** Even with `orm.xml`, domain objects used as JPA entities are subject to
+the Hibernate session lifecycle. Accessing lazy-loaded relationships after the session closes
+throws `LazyInitializationException`. In casehub, `CaseInstance` objects live in
+`CaseInstanceCache` indefinitely — well outside any transaction boundary — making this a
+real production risk, not a theoretical one.
+
+**The solution (following quarkus-flow conventions):** Define separate JPA entity classes
+(`CaseInstanceEntity`, `EventLogEntity`, `CaseMetaModelEntity`) in `casehub-persistence-hibernate`.
+These classes own the JPA annotations and `PanacheEntity` inheritance. The repository
+implementations convert between entity objects and domain POJOs via private `from()` methods.
+Domain objects in `engine` are completely clean — no JPA, no Panache, no session concerns.
+
+This is exactly the pattern used by:
+- quarkus-flow: `ProcessInstanceEntity` / `TaskInfoEntity` + `JpaInstanceOperations` with `from()` converters
+- serverlessworkflow sdk-java: `PersistenceInstanceInfo` (domain) separate from JPA entities
 
 ---
 
@@ -39,21 +63,25 @@ engine/                            ← depends on api + Quartz; NO Hibernate/Pan
     CaseMetaModelRepository        ← NEW: interface
     CaseInstanceRepository         ← NEW: interface
     EventLogRepository             ← NEW: interface
-  internal/model/CaseInstance      ← POJO (remove PanacheEntity + JPA annotations)
-  internal/model/CaseMetaModel     ← POJO (remove PanacheEntity + JPA annotations)
-  internal/history/EventLog        ← POJO (remove PanacheEntity + JPA annotations)
+  internal/model/CaseInstance      ← POJO (remove PanacheEntity + all JPA annotations)
+  internal/model/CaseMetaModel     ← POJO (remove PanacheEntity + all JPA annotations)
+  internal/history/EventLog        ← POJO (remove PanacheEntity + all JPA annotations)
   internal/engine/handlers/*       ← refactored to inject repositories
 
 casehub-persistence-memory/        ← NEW module; depends on engine; no DB deps
+  package: io.casehub.persistence.memory
   InMemoryCaseMetaModelRepository  ← @Alternative @ApplicationScoped
   InMemoryCaseInstanceRepository   ← @Alternative @ApplicationScoped
   InMemoryEventLogRepository       ← @Alternative @ApplicationScoped
 
 casehub-persistence-hibernate/     ← NEW module; depends on engine; Hibernate Reactive + Flyway
-  HibernateCaseMetaModelRepository ← @ApplicationScoped (default)
-  HibernateCaseInstanceRepository  ← @ApplicationScoped (default)
-  HibernateEventLogRepository      ← @ApplicationScoped (default)
-  META-INF/orm.xml                 ← external JPA mapping (no annotations on domain objects)
+  package: io.casehub.persistence.jpa
+  JpaCaseMetaModelRepository       ← @ApplicationScoped (default)
+  JpaCaseInstanceRepository        ← @ApplicationScoped (default)
+  JpaEventLogRepository            ← @ApplicationScoped (default)
+  CaseMetaModelEntity              ← @Entity, extends PanacheEntity
+  CaseInstanceEntity               ← @Entity, @DynamicUpdate, extends PanacheEntity
+  EventLogEntity                   ← @Entity, extends PanacheEntity
   db/migration/                    ← Flyway migrations (moved from engine)
 
 casehub-blackboard/                ← unchanged
@@ -74,7 +102,7 @@ package io.casehub.engine.spi;
 
 public interface CaseMetaModelRepository {
 
-    /** Find by the unique (namespace, name, version) key. Returns empty if not registered. */
+    /** Find by the unique (namespace, name, version) key. Returns null if not registered. */
     Uni<CaseMetaModel> findByKey(String namespace, String name, String version);
 
     /** Persist a new case meta model. Returns the saved instance with id populated. */
@@ -158,8 +186,8 @@ public interface EventLogRepository {
 - Remove `extends PanacheEntity`
 - Add `public Long id` field (was inherited)
 - Remove: `@Entity`, `@Table`, `@Column`, `@OneToMany`, `@ManyToOne`, `@JoinColumn`, all JPA imports
-- Keep: `uuid`, `state`, `caseMetaModel`, `parentPlanItemId`, `caseContext` (transient), all business logic
-- The `caseMetaModel` reference stays — it's a domain relationship, not a JPA one
+- Keep: `uuid`, `state`, `caseMetaModel`, `parentPlanItemId`, `caseContext`, all business logic
+- `caseMetaModel` remains as a plain Java reference — set by the repository after loading
 
 ### EventLog
 
@@ -176,17 +204,16 @@ public interface EventLogRepository {
 - Remove `extends PanacheEntity`
 - Add `public Long id` field
 - Remove: `@Entity`, `@Table`, `@Column`, `@OneToMany`, `@PrePersist`, `@UniqueConstraint`, all JPA imports
+- Remove: `List<CaseInstance> caseInstance` back-reference — JPA bidirectional concern only
 - Keep: `name`, `namespace`, `version`, `title`, `dsl`, `definition`, `createdAt`, all getters/setters
 - `createdAt` is set by the repository on save, not by a JPA lifecycle callback
-- Remove `List<CaseInstance> caseInstance` back-reference — this was a JPA bidirectional mapping concern only; the domain model doesn't need it
 
 ---
 
 ## Engine Handler Refactoring
 
 Each handler that currently calls Panache injects the relevant repository instead.
-`Panache.withTransaction()` calls are removed — transaction management moves into the
-Hibernate repository implementations.
+Transaction management moves into the JPA repository implementations.
 
 | Handler / Service | Current Panache call | Becomes |
 |---|---|---|
@@ -202,7 +229,7 @@ Hibernate repository implementations.
 | `WorkerExecutionManager` | `EventLog.findById(eventLogId)` | `eventLogRepository.findById(eventLogId)` |
 | `WorkerExecutionJobListener` | `PanacheEntityBase.persist(eventLog)` + `EventLog.find(...)` | `eventLogRepository.append(...)` + `eventLogRepository.findByCaseAndWorkerAndType(...)` |
 | `WorkerExecutionTask` | `EventLog.findById(eventLogId)` | `eventLogRepository.findById(eventLogId)` |
-| `WorkerExecutionRecoveryService` | `sessionFactory.withSession(...)` queries for CaseInstance + EventLog | `caseInstanceRepository.findByUuid(...)` + `eventLogRepository.findByTypes(...)` + `eventLogRepository.findByCaseAndTypes(...)` |
+| `WorkerExecutionRecoveryService` | `sessionFactory.withSession(...)` queries | `caseInstanceRepository.findByUuid(...)` + `eventLogRepository.findByTypes(...)` + `eventLogRepository.findByCaseAndTypes(...)` |
 | `CaseDefinitionRegistry` | `CaseMetaModel.find(...).firstResult()` + `definition.persistAndFlush()` | `caseMetaModelRepository.findByKey(...)` + `caseMetaModelRepository.save(...)` |
 
 ---
@@ -234,102 +261,191 @@ quarkus.arc.selected-alternatives=\
 quarkus.quartz.store-type=ram
 ```
 
-And omit `casehub-persistence-hibernate` from their dependencies (and therefore have no
-datasource, no Flyway, no PostgreSQL).
+No `casehub-persistence-hibernate` dependency → no datasource, no Flyway, no PostgreSQL.
 
 ### In-Memory Design
 
 - IDs generated by `AtomicLong` counters (one per repository)
-- `EventLog.seq` set from a separate `AtomicLong` — monotonically increasing, same semantics as PostgreSQL `GENERATED ALWAYS AS IDENTITY`
+- `EventLog.seq` set from a shared `AtomicLong` — monotonically increasing, same semantics
+  as PostgreSQL `GENERATED ALWAYS AS IDENTITY`
 - `CaseMetaModel.createdAt` set on save to `Instant.now()`
 - All operations return `Uni.createFrom().item(result)` — synchronous, no I/O
-- Thread-safe: `ConcurrentHashMap` for stores, `CopyOnWriteArrayList` where ordered sequences needed
+- Thread-safe: `ConcurrentHashMap` for stores
 - No transaction management needed
 
 ---
 
 ## casehub-persistence-hibernate
 
+Follows the conventions established by quarkus-flow's JPA persistence module
+(`io.quarkiverse.flow.persistence.jpa`):
+- Separate `*Entity` classes own JPA annotations and extend `PanacheEntity`
+- Repository implementations hold private `from(entity)` converter methods
+- Writes create entity objects from domain data; reads convert entities back to domain POJOs
+- `@DynamicUpdate` on entities where partial updates occur (status changes)
+
 ### Structure
 
 ```
 casehub-persistence-hibernate/
   pom.xml                                          ← depends on engine + Hibernate Reactive + Flyway
-  src/main/java/io/casehub/persistence/hibernate/
-    HibernateCaseMetaModelRepository.java          ← @ApplicationScoped (default)
-    HibernateCaseInstanceRepository.java           ← @ApplicationScoped (default)
-    HibernateEventLogRepository.java               ← @ApplicationScoped (default)
-  src/main/resources/
-    META-INF/orm.xml                               ← external JPA mapping for engine domain objects
-    db/migration/                                  ← Flyway SQL migrations (moved from engine)
+  src/main/java/io/casehub/persistence/jpa/
+    CaseMetaModelEntity.java                       ← @Entity, extends PanacheEntity
+    CaseInstanceEntity.java                        ← @Entity, @DynamicUpdate, extends PanacheEntity
+    EventLogEntity.java                            ← @Entity, extends PanacheEntity
+    JpaCaseMetaModelRepository.java                ← @ApplicationScoped (default)
+    JpaCaseInstanceRepository.java                 ← @ApplicationScoped (default)
+    JpaEventLogRepository.java                     ← @ApplicationScoped (default)
+  src/main/resources/db/migration/                 ← Flyway migrations (moved from engine)
 ```
 
-### orm.xml approach
+### Entity classes
 
-`casehub-persistence-hibernate` provides `META-INF/orm.xml` that maps the engine's plain Java
-classes to database tables. No JPA annotations on domain objects. Example structure:
+Each entity class mirrors the database schema and owns all JPA/Panache concerns.
+The domain POJO fields that make no sense in the DB (e.g. `caseContext` which is
+transient/in-memory) are simply absent from the entity.
 
-```xml
-<entity-mappings>
-  <entity class="io.casehub.engine.internal.model.CaseInstance">
-    <table name="case_instance"/>
-    <attributes>
-      <id name="id"><generated-value strategy="IDENTITY"/></id>
-      <basic name="uuid"><column name="uuid" nullable="false" unique="true" updatable="false"/></basic>
-      <basic name="state"><column name="state" length="50"/>
-        <enumerated>STRING</enumerated>
-      </basic>
-      <basic name="parentPlanItemId"><column name="parent_plan_item_id" nullable="true"/></basic>
-      <many-to-one name="caseMetaModel" fetch="LAZY">
-        <join-column name="case_meta_model_id"/>
-      </many-to-one>
-    </attributes>
-  </entity>
+**`CaseInstanceEntity`** — maps to `case_instance` table:
+```java
+@Entity
+@DynamicUpdate  // only changed columns sent on UPDATE (e.g. state transitions)
+@Table(name = "case_instance")
+class CaseInstanceEntity extends PanacheEntity {
+    @Column(name = "uuid", nullable = false, unique = true, updatable = false)
+    UUID uuid;
 
-  <entity class="io.casehub.engine.internal.history.EventLog">
-    <table name="event_log"/>
-    <attributes>
-      <id name="id"><generated-value strategy="IDENTITY"/></id>
-      <!-- seq: GENERATED ALWAYS AS IDENTITY in DDL, insertable=false -->
-      <basic name="seq"><column name="seq" insertable="false" updatable="false"/></basic>
-      <basic name="caseId"><column name="case_id" nullable="false" updatable="false"/></basic>
-      <basic name="eventType"><column name="event_type" length="255"/>
-        <enumerated>STRING</enumerated>
-      </basic>
-      <basic name="streamType"><column name="stream_type" length="255"/>
-        <enumerated>STRING</enumerated>
-      </basic>
-      <basic name="workerId"><column name="worker_id" length="255" nullable="true"/></basic>
-      <basic name="timestamp"><column name="timestamp" nullable="false"/></basic>
-      <!-- payload and metadata: JSONB — handled via column definition in Flyway DDL -->
-      <basic name="payload"><column name="payload" column-definition="jsonb"/></basic>
-      <basic name="metadata"><column name="metadata" column-definition="jsonb"/></basic>
-    </attributes>
-  </entity>
+    @Enumerated(EnumType.STRING)
+    @Column(name = "state", nullable = false)
+    CaseStatus state;
 
-  <entity class="io.casehub.engine.internal.model.CaseMetaModel">
-    <table name="case_meta_model">
-      <unique-constraint><column-name>namespace</column-name><column-name>name</column-name><column-name>version</column-name></unique-constraint>
-    </table>
-    <attributes>
-      <id name="id"><generated-value strategy="IDENTITY"/></id>
-      <basic name="name"><column name="name" nullable="false" length="255"/></basic>
-      <basic name="namespace"><column name="namespace" length="255"/></basic>
-      <basic name="version"><column name="version" nullable="false" length="50"/></basic>
-      <basic name="title"><column name="title" length="500"/></basic>
-      <basic name="dsl"><column name="dsl" length="50"/></basic>
-      <basic name="definition"><column name="definition" column-definition="jsonb"/></basic>
-      <basic name="createdAt"><column name="created_at" nullable="false" updatable="false"/></basic>
-    </attributes>
-  </entity>
-</entity-mappings>
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "case_meta_model_id")
+    CaseMetaModelEntity caseMetaModel;
+
+    @Column(name = "parent_plan_item_id", nullable = true)
+    Long parentPlanItemId;
+}
 ```
 
-### Hibernate implementations
+**`EventLogEntity`** — maps to `event_log` table:
+```java
+@Entity
+@Table(name = "event_log")
+class EventLogEntity extends PanacheEntity {
+    @Column(name = "seq", insertable = false, updatable = false)
+    @Generated(event = EventType.INSERT)
+    Long seq;
 
-Use `Mutiny.SessionFactory` injected directly — Panache active record pattern is not available
-since the domain objects are no longer `PanacheEntity`. Each repository wraps operations in
-`sessionFactory.withTransaction()` or `sessionFactory.withSession()` as appropriate.
+    @Column(name = "case_id", nullable = false, updatable = false)
+    UUID caseId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "event_type", nullable = false, length = 255)
+    CaseHubEventType eventType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "stream_type", nullable = false, length = 255)
+    EventStreamType streamType;
+
+    @Column(name = "worker_id", nullable = true, length = 255)
+    String workerId;
+
+    @Column(name = "timestamp", nullable = false)
+    Instant timestamp;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "payload", columnDefinition = "jsonb")
+    JsonNode payload;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "metadata", columnDefinition = "jsonb")
+    JsonNode metadata;
+}
+```
+
+**`CaseMetaModelEntity`** — maps to `case_meta_model` table:
+```java
+@Entity
+@Table(name = "case_meta_model",
+    uniqueConstraints = @UniqueConstraint(columnNames = {"namespace", "name", "version"}))
+class CaseMetaModelEntity extends PanacheEntity {
+    @Column(nullable = false, length = 255)  String name;
+    @Column(length = 255)                    String namespace;
+    @Column(nullable = false, length = 50)   String version;
+    @Column(length = 500)                    String title;
+    @Column(length = 50)                     String dsl;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    JsonNode definition;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    Instant createdAt;
+}
+```
+
+### Repository implementations
+
+Each repository uses `Panache.withTransaction()` / `Panache.withSession()` for reactive
+transaction management, converts entity ↔ domain POJO via private `from()` methods.
+
+```java
+@ApplicationScoped
+class JpaCaseInstanceRepository implements CaseInstanceRepository {
+
+    @Override
+    public Uni<CaseInstance> save(CaseInstance instance) {
+        CaseInstanceEntity entity = toEntity(instance);
+        return Panache.withTransaction(() -> entity.persist())
+                      .map(v -> fromEntity(entity, instance));
+    }
+
+    @Override
+    public Uni<CaseInstance> update(CaseInstance instance) {
+        return Panache.withTransaction(() ->
+            CaseInstanceEntity.<CaseInstanceEntity>findById(instance.id)
+                .chain(entity -> {
+                    entity.state = instance.getState();
+                    return Panache.getSession().chain(s -> s.merge(entity));
+                })
+        ).map(e -> instance);
+    }
+
+    @Override
+    public Uni<CaseInstance> findByUuid(UUID uuid) {
+        return Panache.withSession(() ->
+            CaseInstanceEntity.<CaseInstanceEntity>find(
+                "uuid = ?1 join fetch caseMetaModel", uuid).firstResult()
+        ).map(entity -> entity == null ? null : fromEntity(entity, null));
+    }
+
+    private CaseInstance fromEntity(CaseInstanceEntity e, CaseInstance existing) {
+        CaseInstance instance = existing != null ? existing : new CaseInstance();
+        instance.id = e.id;
+        instance.setUuid(e.uuid);
+        instance.setState(e.state);
+        instance.setParentPlanItemId(e.parentPlanItemId);
+        if (e.caseMetaModel != null) {
+            instance.setCaseMetaModel(fromEntity(e.caseMetaModel));
+        }
+        return instance;
+    }
+
+    private CaseInstanceEntity toEntity(CaseInstance instance) {
+        CaseInstanceEntity e = new CaseInstanceEntity();
+        e.uuid = instance.getUuid();
+        e.state = instance.getState();
+        e.parentPlanItemId = instance.getParentPlanItemId();
+        if (instance.getCaseMetaModel() != null) {
+            CaseMetaModelEntity meta = new CaseMetaModelEntity();
+            meta.id = instance.getCaseMetaModel().getId();
+            e.caseMetaModel = meta;
+        }
+        return e;
+    }
+    // fromEntity(CaseMetaModelEntity) defined similarly
+}
+```
 
 ---
 
@@ -337,11 +453,8 @@ since the domain objects are no longer `PanacheEntity`. Each repository wraps op
 
 Quartz is in the `engine` module. The store type is configurable:
 
-- `casehub-persistence-hibernate` sets default: `quarkus.quartz.store-type=jdbc` (persisted)
+- `casehub-persistence-hibernate` ships with: `quarkus.quartz.store-type=jdbc` (persisted)
 - `casehub-persistence-memory` users set: `quarkus.quartz.store-type=ram` (in-memory)
-
-Engine tests that use `casehub-persistence-memory` include `quarkus.quartz.store-type=ram`
-in their `application.properties`.
 
 ---
 
@@ -357,19 +470,18 @@ migration files after this change.
 
 ### Engine module tests
 
-After this change, `engine` tests use `casehub-persistence-memory` as a test-scoped dependency.
-The test `application.properties` selects the in-memory alternatives and sets
-`quarkus.quartz.store-type=ram`. No TestContainers, no Docker.
+After this change, engine tests add `casehub-persistence-memory` as a test-scoped dependency
+and select in-memory alternatives via `application.properties`. No TestContainers, no Docker.
 
 ### casehub-persistence-hibernate module tests
 
-Integration tests in `casehub-persistence-hibernate` exercise the Hibernate implementations
-against a real PostgreSQL container (TestContainers). These are the only tests that need Docker.
+Integration tests exercise the JPA entity ↔ domain conversion and full SQL queries against
+a real PostgreSQL container (TestContainers). These are the only tests that need Docker.
 
 ### casehub-persistence-memory module tests
 
-Pure unit tests verifying the in-memory behaviour: correct ID generation, ordering guarantees
-on EventLog (seq monotonically increasing), query filtering. No Quarkus required for these.
+Pure unit tests: ID generation, `seq` monotonicity, query filtering by type/status/workerId.
+No Quarkus required.
 
 ---
 
@@ -377,11 +489,11 @@ on EventLog (seq monotonically increasing), query filtering. No Quarkus required
 
 **Files modified in `engine`:**
 - `CaseInstance.java` — remove PanacheEntity + JPA annotations, add `Long id`
-- `EventLog.java` — remove PanacheEntity + JPA annotations, add `Long id`, remove static query methods
+- `EventLog.java` — remove PanacheEntity + JPA annotations, add `Long id`, remove static methods
 - `CaseMetaModel.java` — remove PanacheEntity + JPA annotations, add `Long id`
 - All 8+ handler/service classes — replace Panache calls with repository injection
 - `engine/pom.xml` — remove Hibernate Reactive, PostgreSQL, Flyway dependencies
-- `engine/src/test` — switch to `casehub-persistence-memory` for tests
+- `engine/src/test` — switch to `casehub-persistence-memory`; remove TestContainers
 
 **New files in `engine`:**
 - `spi/CaseMetaModelRepository.java`
@@ -393,15 +505,12 @@ on EventLog (seq monotonically increasing), query filtering. No Quarkus required
 - `InMemoryCaseMetaModelRepository.java`
 - `InMemoryCaseInstanceRepository.java`
 - `InMemoryEventLogRepository.java`
-- `src/test/resources/application.properties`
-- Unit tests for each implementation
+- Unit tests for each
 
 **New module: `casehub-persistence-hibernate`**
 - `pom.xml`
-- `HibernateCaseMetaModelRepository.java`
-- `HibernateCaseInstanceRepository.java`
-- `HibernateEventLogRepository.java`
-- `META-INF/orm.xml`
+- `CaseMetaModelEntity.java`, `CaseInstanceEntity.java`, `EventLogEntity.java`
+- `JpaCaseMetaModelRepository.java`, `JpaCaseInstanceRepository.java`, `JpaEventLogRepository.java`
 - `db/migration/` (Flyway migrations moved from engine)
 - Integration tests against PostgreSQL
 
@@ -411,8 +520,8 @@ on EventLog (seq monotonically increasing), query filtering. No Quarkus required
 
 ## Out of Scope
 
-- `CaseInstanceCache` — already in-memory, no change
-- `CaseDefinitionRegistry` in-memory cache — already exists, no change
-- Quartz job data — Quartz persists its own job data separately from our domain objects
-- `WorkerExecutionKeys` utility — no change
+- `CaseInstanceCache` — already in-memory, unchanged
+- `CaseDefinitionRegistry` in-memory cache — unchanged
+- Quartz job data — managed by Quartz independently
+- `WorkerExecutionKeys` utility — unchanged
 - Any changes to `api`, `casehub-blackboard`, or `casehub-resilience`
