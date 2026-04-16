@@ -10,3 +10,4 @@
 | [2026-04-14-mdp02-phase2-naming-and-blackboard.md](2026-04-14-mdp02-phase2-naming-and-blackboard.md) | 2026-04-14 | Phase 2: CaseStatus alignment, StateContext→CaseContext rename, casehub-blackboard brainstorm to 390 tests |
 | [2026-04-15-mdp01-resilience-diff-provenance-persistence.md](2026-04-15-mdp01-resilience-diff-provenance-persistence.md) | 2026-04-15 | Phase 2: Resilience, Diff Provenance, and a Persistence Rethink |
 | [2026-04-16-mdp01-persistence-decoupling-pr1.md](2026-04-16-mdp01-persistence-decoupling-pr1.md) | 2026-04-16 | Persistence PR 1: Container Chaos and a Quarkus Context Trick |
+| [2026-04-16-mdp02-the-dedup-wasnt-broken.md](2026-04-16-mdp02-the-dedup-wasnt-broken.md) | 2026-04-16 | The Dedup Wasn't Broken. The Test Was. |
