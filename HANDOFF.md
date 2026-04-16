@@ -7,50 +7,56 @@
 
 ## Where We Are
 
-Phase 2 in progress. PR 1 of persistence decoupling is complete — 3 stacked PRs open on casehubio/engine, awaiting review. PRs 2 and 3 not yet started.
+Persistence decoupling PRs 1 and 2 complete and open for review. PR 3 (engine decoupling — strip JPA) not yet started.
 
-**Awaiting:** co-owner review on PRs #32, #34, #35, #38, #65, #66, #67. All previous PRs (#49, #52–54, #56, #62) merged into main today.
+**Awaiting upstream maintainer review on:** #65, #66, #67, #70.
 
 ---
 
 ## What Was Done This Session
 
-**Persistence decoupling PR 1** — 3 stacked PRs, 17 tests:
-- Wrote implementation plan at `docs/superpowers/plans/2026-04-15-persistence-hibernate.md`
-- Executed via subagent-driven development (8 tasks)
-- SPI interfaces: `CaseMetaModelRepository`, `CaseInstanceRepository`, `EventLogRepository` in `engine/spi/`
-- `casehub-persistence-hibernate` module: 3 JPA entity classes + 3 `@ApplicationScoped` Hibernate Reactive repositories
-- 17 integration tests (4 + 4 + 9) — passing with Podman via Dev Services
-- Split into 3 stacked PRs for piecemeal review; rebased onto `upstream/main`
+**Persistence decoupling PR 2** (`casehub-persistence-memory`, PR #70):
+- Wrote plan at `docs/superpowers/plans/2026-04-16-persistence-memory.md`
+- Executed via subagent-driven development (5 tasks, 2-stage review each)
+- 30 unit tests across 3 repositories — no Docker, no PostgreSQL, no Quarkus runtime
+- Key quality fixes from review: id-idempotency guard in save(), update() throws for unknown UUID
+- PR #70 open, targeting `feat/persistence/hibernate`
 
-**Key discoveries:**
-- `VertxContextSupport.subscribeAndAwait()` — correct way to call reactive Panache from JUnit test threads in Quarkus 3.x (classpath already has it via `quarkus-vertx`; no extra dep)
-- `TESTCONTAINERS_RYUK_DISABLED=true` written to `~/.mavenrc` (Podman doesn't support Ryuk)
-- Always run `mvn install -DskipTests -q` from engine root before `mvn test -pl casehub-persistence-hibernate` when upstream modules changed (memory entry saved)
+**PR #67 review fixes:**
+- Removed all Flyway migration tooling — 4 SQL files deleted, `quarkus-flyway`, `quarkus-jdbc-postgresql`, `quarkus-agroal` removed from engine pom
+- Switched Quartz from `jdbc-cmt` to `ram` store (no DB tables needed)
+- Schema strategy: `drop-and-create` (Hibernate manages DDL from entity definitions)
+- Created `CLAUDE.md` in casehub-engine documenting the no-migration rule
+- Fixed CI failure: `JpaCaseMetaModelRepositoryTest.save_thenFindByKey_roundTrip` — `Instant.now()` truncated to microseconds (PostgreSQL precision)
+- Fixed unstable test: `SignalTest.workerRunsOnceOnDuplicateSignal` — added per-orderId run counter; dedup test now uses unique orderId per run, immune to async contamination from other tests
 
-**PR #49 cleanup:** removed 3 stray files (`beans.xml`, 2 migration files) from the branch.
+**Issue housekeeping:**
+- Closed #55 (ContextDiffStrategy — delivered by upstream via PR #61)
+- Created #68 (persistence-memory module) — now Closed by PR #70
+- Created #69 (engine decoupling, PR 3) — still open
+
+**Blog and language:**
+- Published blog post for April 16 session: `docs/_posts/2026-04-16-mdp01-persistence-decoupling-pr1.md`
+- Fixed "co-owner" → "upstream maintainer" language throughout
 
 ---
 
 ## Open PRs in casehubio/engine
 
-| PR | What | Base |
-|---|---|---|
-| #32 | LoopControl SPI | main |
-| #34 | ExpressionEngine SPI | main |
-| #35 | Pre-validation | main |
-| #38 | Renames + 181 tests | main |
-| #65 | SPI interfaces (125 lines) | main |
-| #66 | casehub-persistence-hibernate scaffold + entities (292 lines) | feat/persistence/spi |
-| #67 | JPA repositories + 17 tests (733 lines) | feat/persistence/hibernate-entities |
+| PR | What | Base | Status |
+|---|---|---|---|
+| #65 | SPI interfaces (125 lines) | main | MERGED |
+| #66 | casehub-persistence-hibernate scaffold + entities | feat/persistence/spi | Open |
+| #67 | JPA repositories + 17 tests + Flyway removal + test fixes | feat/persistence/hibernate-entities | Open |
+| #70 | casehub-persistence-memory — 30 unit tests, no Docker | feat/persistence/hibernate | Open |
 
 ---
 
 ## Immediate Next Steps
 
-1. **Write plan for PR 2** — run `writing-plans` using `docs/superpowers/specs/2026-04-15-persistence-plan-notes.md` § "PR 2" section. Module: `casehub-persistence-memory`, in-memory implementations, unit tests, no Docker.
-2. **Execute PR 2** — branch `feat/persistence/memory` from `feat/persistence/hibernate` (or rebase to main if #65–67 merged)
-3. **Write plan for PR 3** — engine decoupling (strip JPA from domain objects, refactor 14 handlers)
+1. **PR 3** — engine decoupling: strip JPA from `CaseInstance`, `EventLog`, `CaseMetaModel`; refactor 14 handlers to inject repositories; engine tests run without Docker. Issue: casehubio/engine#69. Plan notes: `docs/superpowers/specs/2026-04-15-persistence-plan-notes.md` § "PR 3" section.
+
+2. **Rebase `feat/persistence/memory`** onto upstream/main once #65–67 are merged (stacked PR chain).
 
 ---
 
@@ -58,14 +64,22 @@ Phase 2 in progress. PR 1 of persistence decoupling is complete — 3 stacked PR
 
 | File | What |
 |------|-------|
-| `docs/superpowers/specs/2026-04-15-persistence-plan-notes.md` | Full PR 2 and PR 3 pre-plan notes (detailed code for in-memory impls and handler refactoring map) |
+| `docs/superpowers/specs/2026-04-15-persistence-plan-notes.md` | PR 3 pre-plan notes (handler refactoring map, domain POJO changes, engine pom changes) |
+| `docs/superpowers/plans/2026-04-16-persistence-memory.md` | PR 2 implementation plan (completed) |
 | `docs/superpowers/plans/2026-04-15-persistence-hibernate.md` | PR 1 implementation plan (completed) |
-| `docs/superpowers/specs/2026-04-15-persistence-decoupling-design.md` | Approved design spec |
+| `/Users/mdproctor/dev/casehub-engine/CLAUDE.md` | casehub-engine project rules (no migration tooling, RAM Quartz) |
 
 ## GitHub Issues
 
 | Repo | Issue | Status |
 |------|-------|--------|
 | casehubio/engine | #30 (epic) | Open — Phase 2 in progress |
-| casehubio/engine | #55 | Open — persistence decoupling tracking |
+| casehubio/engine | #68 | Closed by PR #70 |
+| casehubio/engine | #69 | Open — PR 3 (engine decoupling) |
 | mdproctor/casehub | #8 | Open — retirement tracking |
+
+## Active Worktrees
+
+| Worktree | Branch | PR |
+|----------|--------|-----|
+| `/Users/mdproctor/dev/casehub-engine/.worktrees/feat-persistence-memory` | `feat/persistence/memory` | #70 (open) |
