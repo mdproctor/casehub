@@ -159,7 +159,8 @@
       "Bash(rm /Users/mdproctor/dev/casehub-engine/engine/src/main/resources/db/migration/V1.0.0__Create_Quartz_Tables.sql /Users/mdproctor/dev/casehub-engine/engine/src/main/resources/db/migration/V1.1.0__Create_Application_Tables.sql /Users/mdproctor/dev/casehub-engine/engine/src/main/resources/db/migration/V1.2.0__Align_CaseStatus_With_Serverless_Workflow.sql /Users/mdproctor/dev/casehub-engine/engine/src/main/resources/db/migration/V1.3.0__Add_Parent_Plan_Item_Id.sql)",
       "Bash(rmdir /Users/mdproctor/dev/casehub-engine/engine/src/main/resources/db/migration)",
       "Bash(rmdir /Users/mdproctor/dev/casehub-engine/engine/src/main/resources/db)",
-      "Bash(TESTCONTAINERS_RYUK_DISABLED=true /opt/homebrew/bin/mvn test -pl casehub-persistence-hibernate -am)"
+      "Bash(TESTCONTAINERS_RYUK_DISABLED=true /opt/homebrew/bin/mvn test -pl casehub-persistence-hibernate -am)",
+      "Bash(TESTCONTAINERS_RYUK_DISABLED=true /opt/homebrew/bin/mvn test -pl casehub-persistence-hibernate)"
     ]
   }
 }
