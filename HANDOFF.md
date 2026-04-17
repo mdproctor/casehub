@@ -1,35 +1,34 @@
 # Session Handover — CaseHub
-**Date:** 2026-04-16
+**Date:** 2026-04-17
 **Branch (casehub):** main
-**Branch (casehub-engine):** multiple — see Open PRs below
+**Branch (casehub-engine):** feat/persistence/engine-decoupling (PR3 work branch)
 
 ---
 
 ## Where We Are
 
-Persistence decoupling PRs 1 and 2 open for review. PR 3 (engine decoupling — strip JPA) not yet started.
+PR3 branch created and building clean. Ready to execute the implementation plan next session.
 
-**Awaiting upstream maintainer review on:** #66, #67, #70.
+Treblereel merged our PR #67 content as PR #71 directly to upstream main — the branch topology changed mid-session. PR #70 was closed, replaced with PR #72 (clean branch).
+
+**Awaiting upstream review on:** PR #72 (persistence-memory, open, Java 17 CI green, ubuntu-latest has one flaky test — leave for coworker to handle).
 
 ---
 
 ## What Was Done This Session
 
-**PR #67 review fixes (three rounds):**
+**PR3 plan written:**
+- 27-task implementation plan at `docs/superpowers/plans/2026-04-16-pr3-engine-decoupling.md`
+- Covers: SPI extension, domain POJO conversion (3 classes), 11 handler refactors, pom changes, E2E validation, docs
 
-Round 1 — upstream maintainer asked to merge SQL files and remove migration code:
-- Misread the request: deleted all SQL files, switched Quartz to RAM, set drop-and-create. This broke Quartz persistence and removed the explicit schema.
+**CI triage on PRs #67 and #70:**
+- Fixed `JpaCaseMetaModelRepository.save()` — missing `truncatedTo(ChronoUnit.MICROS)` (same Instant precision bug as CaseInstance)
+- Fixed `BlackboardIntegrationTest` — `casehub-blackboard` runs before `casehub-persistence-hibernate` in Maven reactor; schema tables missing without Flyway. Fix: `%test.quarkus.hibernate-orm.schema-management.strategy=create` + `%test.quarkus.quartz.store-type=ram` in blackboard test properties
+- Multiple rounds of test isolation fixes for `SignalPersistenceAndDedupTest` and `SignalTest` — settled on `findWorkerEvents(caseId, ...)` (DB query by case UUID, immune to global counter pollution)
 
-Round 2 — corrected:
-- Restored Quartz to `jdbc-cmt` (RAM only in engine tests via `%test.quarkus.quartz.store-type=ram`)
-- Merged 4 SQL files into single `V1__schema.sql` in `casehub-persistence-hibernate` (Quartz + application tables, final state, no incremental migrations)
-- Moved Flyway + JDBC URL to `casehub-persistence-hibernate`; engine keeps JDBC pool deps for Quartz
-- Engine tests use `%test.quarkus.hibernate-orm.schema-management.strategy=create` (no Flyway in engine)
-- Updated `CLAUDE.md` in casehub-engine: single SQL schema file, no versioned migrations
-- Fixed CI test: `Instant.now().truncatedTo(ChronoUnit.MICROS)` in `JpaCaseMetaModelRepository.save()`
-- Reverted unnecessary `SignalTest.java` changes (dedup was already fixed by treblereel's 2e66a8d)
-
-**Blog post published:** "The Dedup Wasn't Broken. The Test Was." — covers Flyway removal rationale, Instant precision gotcha, signal dedup test analysis.
+**Branch cleanup after treblereel merge:**
+- PR #72: `mdproctor:feat/persistence/memory-clean` → `casehubio/engine:main`
+- PR3 branch: `feat/persistence/engine-decoupling` off `feat/persistence/memory-clean`
 
 ---
 
@@ -38,16 +37,16 @@ Round 2 — corrected:
 | PR | What | Base | Status |
 |---|---|---|---|
 | #65 | SPI interfaces | main | MERGED |
-| #66 | casehub-persistence-hibernate scaffold + entities | feat/persistence/spi | Open |
-| #67 | JPA repositories + 17 tests + schema rework | feat/persistence/hibernate-entities | Open |
-| #70 | casehub-persistence-memory — 30 unit tests, no Docker | feat/persistence/hibernate | Open |
+| #66 | casehub-persistence-hibernate scaffold + entities | feat/persistence/spi | MERGED |
+| #71 | JPA repositories + schema (treblereel's rework of #67) | main | MERGED |
+| #72 | casehub-persistence-memory — 30 unit tests, no Docker | main | Open — Java 17 ✅, ubuntu flaky |
 
 ---
 
 ## Immediate Next Steps
 
-1. **PR 3** — engine decoupling: strip JPA from `CaseInstance`, `EventLog`, `CaseMetaModel`; refactor 14 handlers to inject repositories; engine tests run without Docker. Issue: casehubio/engine#69. Plan notes: `docs/superpowers/specs/2026-04-15-persistence-plan-notes.md` § "PR 3".
-2. **Rebase `feat/persistence/memory`** onto upstream/main once #65–67 merge.
+1. **PR3** — execute plan via subagent-driven development. Resume with: "resume handover, start PR3 subagent-driven". Branch `feat/persistence/engine-decoupling` is clean and building. Issue: `casehubio/engine#69` (epic: `casehubio/engine#30`). Plan: `docs/superpowers/plans/2026-04-16-pr3-engine-decoupling.md`.
+2. **Leave PR #72 CI alone** — coworker is active in the repo; don't push more fixes to casehubio/engine until PR #72 is merged or treblereel comments.
 
 ---
 
@@ -55,16 +54,14 @@ Round 2 — corrected:
 
 | File | What |
 |------|-------|
-| `docs/superpowers/specs/2026-04-15-persistence-plan-notes.md` | PR 3 pre-plan notes (handler refactoring map, domain POJO changes) |
-| `docs/superpowers/plans/2026-04-16-persistence-memory.md` | PR 2 implementation plan (completed) |
-| `/Users/mdproctor/dev/casehub-engine/CLAUDE.md` | casehub-engine rules (single SQL schema file, no versioned migrations, RAM Quartz in tests) |
-| `casehub-persistence-hibernate/src/main/resources/db/migration/V1__schema.sql` | Single merged schema file (Quartz + application tables) |
+| `docs/superpowers/plans/2026-04-16-pr3-engine-decoupling.md` | PR3 full implementation plan (27 tasks) |
+| `/Users/mdproctor/dev/casehub-engine/CLAUDE.md` | casehub-engine conventions |
+| `/Users/mdproctor/dev/casehub-engine/engine/src/main/java/io/casehub/engine/spi/` | SPI interfaces (CaseInstanceRepository needs `updateStateAndAppendEvent` added in Task 2) |
 
 ## GitHub Issues
 
 | Repo | Issue | Status |
 |------|-------|--------|
 | casehubio/engine | #30 (epic) | Open — Phase 2 in progress |
-| casehubio/engine | #68 | Closed by PR #70 |
-| casehubio/engine | #69 | Open — PR 3 (engine decoupling) |
+| casehubio/engine | #69 | Open — PR3 (engine decoupling) |
 | mdproctor/casehub | #8 | Open — retirement tracking |
