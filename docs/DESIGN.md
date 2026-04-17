@@ -2475,7 +2475,7 @@ Two independent implementations are being unified. This section captures the mer
 | Execution model | Synchronous control loop, 1 task at a time | Async reactive — Vert.x EventBus + Mutiny + Quartz |
 | Task dispatch | `TaskDefinition` — entry criteria + `canActivate()` | `Worker` (lambda/SWF/File) + `DispatchRule` + `Trigger` |
 | Expression language | Java lambda only | JQ strings + Java lambda |
-| Persistence | SPI: InMemory + Hibernate (blocking JPA) | Hibernate Reactive only |
+| Persistence | SPI: InMemory + Hibernate (blocking JPA) | SPI-based: three interfaces (`CaseMetaModelRepository`, `CaseInstanceRepository`, `EventLogRepository`); production impl in `casehub-persistence-hibernate` (JPA/Panache, reactive); test impl in engine test sources (in-memory, no Docker) |
 | Resilience | RetryPolicy, DLQ, PoisonPillDetector, Idempotency, ConflictResolver, TimeoutEnforcer | RetryPolicy only |
 | Goal model | Not yet (ADR-0001 designed, not implemented) | `Goal` + `GoalExpression` (allOf/anyOf) + `GoalKind` |
 | Event history | None | `EventLog` — full ordered sequence, `seq` DB identity column |
@@ -2512,6 +2512,7 @@ Two independent implementations are being unified. This section captures the mer
 | PropagationContext slimmed | Keep traceId, inheritedAttributes, deadline, remainingBudget | Graph structure now in POJO; PropagationContext is a tracing/budget value object | Keeping PropagationContext as graph backbone |
 | Module-per-persistence | casehub-persistence-memory + casehub-persistence-hibernate | Consistent with Quarkus Flow pattern | Single persistence module |
 | Goal model design (ADR-0001) | CaseGoal with named Milestones (`Predicate<CaseFile>`), GoalEvaluator separate from task execution | Path-independent satisfaction; BDI opportunistic achievement; CMMN-aligned | Goal as final Milestone only |
+| casehub-engine persistence decoupling | Domain objects (`CaseMetaModel`, `CaseInstance`, `EventLog`) as plain POJOs; three SPI interfaces in `engine/spi/`; JPA confined to `casehub-persistence-hibernate` | Engine module has no JPA dependency; tests run without Docker via in-memory impls activated via `quarkus.arc.selected-alternatives` | Keeping JPA on domain objects (couples engine to Hibernate Reactive) |
 
 ### 9-Phase Implementation Plan
 
