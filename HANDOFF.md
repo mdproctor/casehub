@@ -17,8 +17,13 @@ rebased version) are both open. PR #75 depends on one of them merging first.
 Once merged, rebase #75 on new main before review.
 
 **Watch:** PR #74 (treblereel — concurrent signal processing) touches
-`SignalReceivedEventHandler`, which we rewrote in PR3. Check for conflicts
-before either PR merges.
+`SignalReceivedEventHandler`, which we rewrote in PR3. **Conflict analysed
+2026-04-18:** Both changes are orthogonal — treblereel adds a Vert.x
+SharedData lock around `applyAndDiff`; we add SPI injection. When #74 merges
+before #75, manually resolve `applySignal`: wrap our `EventLogRepository`
+persistence path with treblereel's lock pattern. `WorkerScheduleEventHandler`
+was also heavily changed in #74 but we didn't touch it in PR3 — no conflict
+there.
 
 ---
 
