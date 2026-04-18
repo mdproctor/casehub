@@ -12,3 +12,4 @@
 | [2026-04-16-mdp01-persistence-decoupling-pr1.md](2026-04-16-mdp01-persistence-decoupling-pr1.md) | 2026-04-16 | Persistence PR 1: Container Chaos and a Quarkus Context Trick |
 | [2026-04-16-mdp02-the-dedup-wasnt-broken.md](2026-04-16-mdp02-the-dedup-wasnt-broken.md) | 2026-04-16 | The Dedup Wasn't Broken. The Test Was. |
 | [2026-04-18-mdp01-cutting-the-jpa-wire.md](2026-04-18-mdp01-cutting-the-jpa-wire.md) | 2026-04-18 | PR3 complete: domain objects to plain Java, new atomic SPI method, Maven cycle solved |
+| [2026-04-18-mdp02-reactive-blackboard-control-shell.md](2026-04-18-mdp02-reactive-blackboard-control-shell.md) | 2026-04-18 | Article: four concrete improvements the async reactive control shell enables over classical synchronous blackboard architectures |
