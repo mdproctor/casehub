@@ -1,0 +1,150 @@
+<svg width="820" height="520" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, -apple-system, sans-serif">
+  <defs>
+    <marker id="a" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#475569"/>
+    </marker>
+    <marker id="a-orange" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#d97706"/>
+    </marker>
+    <marker id="a-purple" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#7c3aed"/>
+    </marker>
+    <marker id="a-blue" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#1d4ed8"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="820" height="520" fill="#f8fafc" rx="12"/>
+
+  <!-- Title -->
+  <text x="410" y="28" text-anchor="middle" font-size="15" font-weight="700" fill="#0f172a">casehub-blackboard: Full Architecture</text>
+  <text x="410" y="46" text-anchor="middle" font-size="11" fill="#64748b">How the blackboard layer integrates with the engine on every CONTEXT_CHANGED cycle</text>
+
+  <!-- ═══ ENGINE ZONE (grey background) ═══ -->
+  <rect x="20" y="60" width="780" height="80" rx="8" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1"/>
+  <text x="30" y="78" font-size="10" font-weight="700" fill="#475569" text-transform="uppercase">ENGINE (casehub-engine)</text>
+
+  <!-- Engine: CONTEXT_CHANGED -->
+  <ellipse cx="100" cy="105" rx="72" ry="22" fill="#dbeafe" stroke="#1d4ed8" stroke-width="1.5"/>
+  <text x="100" y="101" text-anchor="middle" font-size="10" font-weight="600" fill="#1e3a8a">CONTEXT</text>
+  <text x="100" y="115" text-anchor="middle" font-size="10" font-weight="600" fill="#1e3a8a">_CHANGED</text>
+
+  <line x1="173" y1="105" x2="215" y2="105" stroke="#475569" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <!-- Engine: CaseContextChangedEventHandler -->
+  <rect x="217" y="87" width="160" height="36" rx="5" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="297" y="103" text-anchor="middle" font-size="9.5" fill="#334155">CaseContextChanged</text>
+  <text x="297" y="116" text-anchor="middle" font-size="9.5" fill="#334155">EventHandler</text>
+
+  <line x1="377" y1="105" x2="419" y2="105" stroke="#475569" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <!-- ENGINE HOOK POINT -->
+  <rect x="421" y="83" width="152" height="44" rx="6" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+  <text x="497" y="101" text-anchor="middle" font-size="10" font-weight="700" fill="#14532d">loopControl.select()</text>
+  <text x="497" y="116" text-anchor="middle" font-size="9" fill="#166534">← PlanningStrategyLoopControl</text>
+  <text x="497" y="127" text-anchor="middle" font-size="9" fill="#166534">   takes over here</text>
+
+  <line x1="573" y1="105" x2="615" y2="105" stroke="#475569" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <!-- Engine: WorkerScheduleEvent -->
+  <ellipse cx="685" cy="105" rx="72" ry="22" fill="#dbeafe" stroke="#1d4ed8" stroke-width="1.5"/>
+  <text x="685" y="101" text-anchor="middle" font-size="10" font-weight="600" fill="#1e3a8a">Worker</text>
+  <text x="685" y="115" text-anchor="middle" font-size="10" font-weight="600" fill="#1e3a8a">ScheduleEvent</text>
+
+  <!-- ═══ BLACKBOARD ZONE ═══ -->
+  <rect x="20" y="158" width="780" height="280" rx="8" fill="#fff7ed" stroke="#d97706" stroke-width="1.5"/>
+  <text x="30" y="176" font-size="10" font-weight="700" fill="#92400e">CASEHUB-BLACKBOARD (optional module)</text>
+
+  <!-- PlanningStrategyLoopControl (central box) -->
+  <rect x="290" y="188" width="240" height="60" rx="7" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+  <text x="410" y="209" text-anchor="middle" font-size="11" font-weight="700" fill="#92400e">PlanningStrategyLoopControl</text>
+  <text x="410" y="225" text-anchor="middle" font-size="9.5" fill="#78350f">@Alternative @Priority(10)</text>
+  <text x="410" y="239" text-anchor="middle" font-size="9.5" fill="#78350f">CDI replaces ChoreographyLoopControl</text>
+
+  <!-- Connection from hook point down to PlanningStrategyLoopControl -->
+  <line x1="497" y1="127" x2="497" y2="188" stroke="#16a34a" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#a)"/>
+
+  <!-- BlackboardRegistry (left) -->
+  <rect x="40" y="200" width="200" height="56" rx="6" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.5"/>
+  <text x="140" y="220" text-anchor="middle" font-size="10" font-weight="700" fill="#4c1d95">BlackboardRegistry</text>
+  <text x="140" y="234" text-anchor="middle" font-size="9" fill="#5b21b6">caseId → CasePlanModel</text>
+  <text x="140" y="247" text-anchor="middle" font-size="9" fill="#5b21b6">(workerName → planItemId)</text>
+
+  <!-- Arrow: PlanningStrategyLoopControl → BlackboardRegistry -->
+  <line x1="290" y1="215" x2="242" y2="225" stroke="#d97706" stroke-width="1.5" marker-end="url(#a-orange)"/>
+  <text x="260" y="210" font-size="9" fill="#92400e">getOrCreate</text>
+
+  <!-- CasePlanModel (far left, below registry) -->
+  <rect x="40" y="285" width="200" height="80" rx="6" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.5"/>
+  <text x="140" y="305" text-anchor="middle" font-size="10" font-weight="700" fill="#4c1d95">CasePlanModel</text>
+  <text x="140" y="319" text-anchor="middle" font-size="9" fill="#5b21b6">• agenda (PlanItems)</text>
+  <text x="140" y="333" text-anchor="middle" font-size="9" fill="#5b21b6">• stages (Stage lifecycle)</text>
+  <text x="140" y="347" text-anchor="middle" font-size="9" fill="#5b21b6">• milestones, focus, budget</text>
+  <text x="140" y="361" text-anchor="middle" font-size="9" fill="#5b21b6">• extensible kv</text>
+
+  <!-- Arrow: Registry → CasePlanModel -->
+  <line x1="140" y1="256" x2="140" y2="285" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#a-purple)"/>
+
+  <!-- StageLifecycleEvaluator (right of registry) -->
+  <rect x="580" y="200" width="200" height="56" rx="6" fill="#ecfdf5" stroke="#059669" stroke-width="1.5"/>
+  <text x="680" y="220" text-anchor="middle" font-size="10" font-weight="700" fill="#064e3b">StageLifecycleEvaluator</text>
+  <text x="680" y="234" text-anchor="middle" font-size="9" fill="#065f46">evaluates entry/exit</text>
+  <text x="680" y="247" text-anchor="middle" font-size="9" fill="#065f46">conditions per Stage</text>
+
+  <!-- Arrow: PlanningStrategyLoopControl → StageLifecycleEvaluator -->
+  <line x1="530" y1="218" x2="580" y2="226" stroke="#d97706" stroke-width="1.5" marker-end="url(#a-orange)"/>
+  <text x="535" y="212" font-size="9" fill="#92400e">evaluate()</text>
+
+  <!-- Stage events (below StageLifecycleEvaluator) -->
+  <rect x="580" y="285" width="200" height="80" rx="6" fill="#ecfdf5" stroke="#059669" stroke-width="1.5"/>
+  <text x="680" y="305" text-anchor="middle" font-size="10" font-weight="700" fill="#064e3b">Stage Events (EventBus)</text>
+  <text x="680" y="321" text-anchor="middle" font-size="9" fill="#065f46">• StageActivatedEvent</text>
+  <text x="680" y="335" text-anchor="middle" font-size="9" fill="#065f46">• StageCompletedEvent</text>
+  <text x="680" y="349" text-anchor="middle" font-size="9" fill="#065f46">• StageTerminatedEvent</text>
+  <text x="680" y="363" text-anchor="middle" font-size="9" fill="#065f46">  (fan-out, observable)</text>
+
+  <!-- Arrow: StageLifecycleEvaluator → Stage Events -->
+  <line x1="680" y1="256" x2="680" y2="285" stroke="#059669" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <!-- PlanningStrategy (centre, below PlanningStrategyLoopControl) -->
+  <rect x="290" y="285" width="240" height="56" rx="6" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+  <text x="410" y="305" text-anchor="middle" font-size="10" font-weight="700" fill="#92400e">PlanningStrategy</text>
+  <text x="410" y="319" text-anchor="middle" font-size="9" fill="#78350f">Uni&lt;List&lt;Binding&gt;&gt; select(plan, ctx, eligible)</text>
+  <text x="410" y="333" text-anchor="middle" font-size="9" fill="#78350f">can query EventLog, call LLMs (non-blocking)</text>
+
+  <!-- Arrow: PlanningStrategyLoopControl → PlanningStrategy -->
+  <line x1="410" y1="248" x2="410" y2="285" stroke="#d97706" stroke-width="1.5" marker-end="url(#a-orange)"/>
+
+  <!-- Arrow: PlanningStrategy reads CasePlanModel -->
+  <line x1="290" y1="313" x2="242" y2="325" stroke="#d97706" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#a-orange)"/>
+  <text x="248" y="308" font-size="9" fill="#92400e">reads/writes</text>
+
+  <!-- ═══ EVENT CONSUMERS ZONE ═══ -->
+  <rect x="20" y="455" width="780" height="54" rx="8" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1"/>
+  <text x="30" y="473" font-size="10" font-weight="700" fill="#475569">BLACKBOARD EVENT CONSUMERS (fan-out @ConsumeEvent)</text>
+
+  <!-- PlanItemCompletionHandler -->
+  <rect x="40" y="480" width="220" height="22" rx="4" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1"/>
+  <text x="150" y="495" text-anchor="middle" font-size="9" fill="#4c1d95">PlanItemCompletionHandler → marks COMPLETED, autocomplete</text>
+
+  <!-- MilestoneAchievementHandler -->
+  <rect x="290" y="480" width="220" height="22" rx="4" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1"/>
+  <text x="400" y="495" text-anchor="middle" font-size="9" fill="#4c1d95">MilestoneAchievementHandler → achieves milestone in plan</text>
+
+  <!-- Observability note -->
+  <rect x="540" y="480" width="260" height="22" rx="4" fill="#ecfdf5" stroke="#059669" stroke-width="1"/>
+  <text x="670" y="495" text-anchor="middle" font-size="9" fill="#064e3b">StageEvent consumers → observability / lineage / dashboards</text>
+
+  <!-- Arrow: WORKER_EXECUTION_FINISHED fans out to PlanItemCompletionHandler -->
+  <line x1="140" y1="438" x2="140" y2="480" stroke="#7c3aed" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#a-purple)"/>
+
+  <!-- Invisible node for arrow from WORKER_EXECUTION_FINISHED (engine) down -->
+  <!-- We show it coming from the stage events area -->
+  <line x1="400" y1="438" x2="400" y2="480" stroke="#7c3aed" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#a-purple)"/>
+  <line x1="680" y1="438" x2="680" y2="480" stroke="#059669" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#a)"/>
+
+  <!-- Label explaining the consumers zone -->
+  <text x="40" y="450" font-size="9" fill="#64748b">WORKER_EXECUTION_FINISHED (fan-out)</text>
+  <text x="580" y="450" font-size="9" fill="#064e3b">Stage events (fan-out)</text>
+</svg>

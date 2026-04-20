@@ -1,0 +1,119 @@
+<svg width="820" height="420" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, -apple-system, sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#475569"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#16a34a"/>
+    </marker>
+    <marker id="arrow-blue" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#1d4ed8"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="820" height="420" fill="#f8fafc" rx="12"/>
+
+  <!-- Title -->
+  <text x="410" y="30" text-anchor="middle" font-size="15" font-weight="700" fill="#0f172a">casehub-engine: Reactive Event Loop</text>
+  <text x="410" y="48" text-anchor="middle" font-size="12" fill="#64748b">Vert.x EventBus — always present regardless of which LoopControl is active</text>
+
+  <!-- ── Row 1: top flow ── -->
+
+  <!-- Box: CONTEXT_CHANGED (event) -->
+  <ellipse cx="72" cy="130" rx="60" ry="24" fill="#dbeafe" stroke="#1d4ed8" stroke-width="1.5"/>
+  <text x="72" y="134" text-anchor="middle" font-size="11" font-weight="600" fill="#1e3a8a">CONTEXT</text>
+  <text x="72" y="147" text-anchor="middle" font-size="11" font-weight="600" fill="#1e3a8a">_CHANGED</text>
+
+  <!-- Arrow -->
+  <line x1="133" y1="130" x2="165" y2="130" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Box: CaseContextChangedEventHandler -->
+  <rect x="167" y="108" width="148" height="44" rx="6" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="241" y="127" text-anchor="middle" font-size="10" fill="#334155">CaseContextChanged</text>
+  <text x="241" y="141" text-anchor="middle" font-size="10" fill="#334155">EventHandler</text>
+
+  <!-- Arrow -->
+  <line x1="315" y1="130" x2="347" y2="130" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Box: evaluate trigger conditions -->
+  <rect x="349" y="108" width="130" height="44" rx="6" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="414" y="127" text-anchor="middle" font-size="10" fill="#334155">evaluate trigger</text>
+  <text x="414" y="141" text-anchor="middle" font-size="10" fill="#334155">conditions</text>
+
+  <!-- Arrow -->
+  <line x1="479" y1="130" x2="511" y2="130" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- HOOK POINT: loopControl.select() — highlighted -->
+  <rect x="513" y="104" width="148" height="52" rx="6" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+  <text x="587" y="122" text-anchor="middle" font-size="10" font-weight="700" fill="#14532d">loopControl</text>
+  <text x="587" y="136" text-anchor="middle" font-size="10" font-weight="700" fill="#14532d">.select()</text>
+  <text x="587" y="150" text-anchor="middle" font-size="9" fill="#166534">← HOOK POINT</text>
+
+  <!-- Arrow -->
+  <line x1="661" y1="130" x2="693" y2="130" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Box: WorkerScheduleEvent -->
+  <ellipse cx="743" cy="130" rx="64" ry="24" fill="#dbeafe" stroke="#1d4ed8" stroke-width="1.5"/>
+  <text x="743" y="127" text-anchor="middle" font-size="10" font-weight="600" fill="#1e3a8a">Worker</text>
+  <text x="743" y="141" text-anchor="middle" font-size="10" font-weight="600" fill="#1e3a8a">ScheduleEvent</text>
+
+  <!-- ── Down arrow from WorkerScheduleEvent ── -->
+  <line x1="743" y1="154" x2="743" y2="210" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ── Row 2: bottom flow (right to left) ── -->
+
+  <!-- Box: Quartz + Worker -->
+  <rect x="657" y="212" width="172" height="44" rx="6" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="743" y="231" text-anchor="middle" font-size="10" fill="#334155">Quartz schedules</text>
+  <text x="743" y="245" text-anchor="middle" font-size="10" fill="#334155">→ Worker executes</text>
+
+  <!-- Arrow -->
+  <line x1="657" y1="234" x2="619" y2="234" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Box: WORKER_EXECUTION_FINISHED (event) -->
+  <ellipse cx="553" cy="234" rx="64" ry="24" fill="#dbeafe" stroke="#1d4ed8" stroke-width="1.5"/>
+  <text x="553" y="230" text-anchor="middle" font-size="10" font-weight="600" fill="#1e3a8a">WORKER_EXECUTION</text>
+  <text x="553" y="244" text-anchor="middle" font-size="10" font-weight="600" fill="#1e3a8a">_FINISHED</text>
+
+  <!-- Arrow -->
+  <line x1="489" y1="234" x2="451" y2="234" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Box: WorkflowExecutionCompletedHandler -->
+  <rect x="295" y="212" width="154" height="44" rx="6" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="372" y="231" text-anchor="middle" font-size="10" fill="#334155">WorkflowExecution</text>
+  <text x="372" y="245" text-anchor="middle" font-size="10" fill="#334155">CompletedHandler</text>
+
+  <!-- Arrow -->
+  <line x1="295" y1="234" x2="257" y2="234" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Box: applies output to CaseContext -->
+  <rect x="115" y="212" width="140" height="44" rx="6" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="185" y="231" text-anchor="middle" font-size="10" fill="#334155">applies worker output</text>
+  <text x="185" y="245" text-anchor="middle" font-size="10" fill="#334155">to CaseContext</text>
+
+  <!-- Left feedback arrow (down then left, back up to CONTEXT_CHANGED) -->
+  <line x1="115" y1="234" x2="72" y2="234" stroke="#475569" stroke-width="1.5"/>
+  <line x1="72" y1="234" x2="72" y2="160" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ── Second consumer note ── -->
+  <!-- Fan-out arrow from WORKER_EXECUTION_FINISHED down -->
+  <line x1="553" y1="258" x2="553" y2="298" stroke="#7c3aed" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <rect x="473" y="300" width="160" height="44" rx="6" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.5"/>
+  <text x="553" y="319" text-anchor="middle" font-size="10" fill="#4c1d95">PlanItemCompletion</text>
+  <text x="553" y="333" text-anchor="middle" font-size="10" fill="#4c1d95">Handler (blackboard)</text>
+
+  <!-- Label for dashed line -->
+  <text x="600" y="283" font-size="9" fill="#7c3aed">fan-out (publish)</text>
+
+  <!-- ── Legend ── -->
+  <rect x="30" y="360" width="760" height="50" rx="6" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1"/>
+  <ellipse cx="70" cy="385" rx="20" ry="10" fill="#dbeafe" stroke="#1d4ed8" stroke-width="1.5"/>
+  <text x="95" y="389" font-size="10" fill="#334155">Event (published on Vert.x EventBus)</text>
+  <rect x="270" y="376" width="30" height="18" rx="3" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="306" y="389" font-size="10" fill="#334155">Handler / processor</text>
+  <rect x="460" y="376" width="30" height="18" rx="3" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+  <text x="496" y="389" font-size="10" fill="#334155">LoopControl hook point</text>
+  <rect x="640" y="376" width="30" height="18" rx="3" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.5"/>
+  <text x="676" y="389" font-size="10" fill="#334155">Blackboard consumer</text>
+</svg>

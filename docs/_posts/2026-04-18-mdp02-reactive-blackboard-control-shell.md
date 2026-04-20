@@ -136,5 +136,57 @@ The upgrade path is opt-in, the control contract is reactive throughout,
 and strategies have access to the full context the event loop provides —
 including anything a non-blocking I/O call can reach.
 
+## One Loop, One Hook Point
+
+A common question: if the engine already has a control loop, what is the
+blackboard's control loop doing? Are there two loops? Do they conflict?
+
+There is one loop. The engine's reactive Vert.x EventBus cycle drives
+everything — it always runs, with or without `casehub-blackboard` on the
+classpath. What changes is what happens at a single hook point inside that
+loop: `loopControl.select()`.
+
+[![Engine reactive event loop showing the loopControl.select() hook point](/casehub/images/engine-reactive-loop.svg)](/casehub/images/engine-reactive-loop.svg)
+
+On every `CONTEXT_CHANGED` event, `CaseContextChangedEventHandler` evaluates
+trigger conditions and produces a list of eligible bindings. It then hands that
+list to `loopControl.select()` and waits for the answer. That answer determines
+which workers fire.
+
+By default, `ChoreographyLoopControl` answers "all of them" — one line, the
+identity function. `PlanningStrategyLoopControl` from `casehub-blackboard`
+replaces it via `@Alternative @Priority(10)` and answers differently: it
+evaluates stage lifecycle, consults the per-case plan model, then delegates to
+`PlanningStrategy`, which can do anything a non-blocking Uni allows before
+returning its selection.
+
+[![ChoreographyLoopControl versus PlanningStrategyLoopControl at the hook point](/casehub/images/loopcontrol-comparison.svg)](/casehub/images/loopcontrol-comparison.svg)
+
+The engine loop is unchanged. The selection function is replaced. That is the
+entire integration surface.
+
+## The Full Picture
+
+Below is how all the blackboard components wire together with the engine on
+every cycle.
+
+[![Full casehub-blackboard architecture showing all components and their connections to the engine](/casehub/images/blackboard-architecture.svg)](/casehub/images/blackboard-architecture.svg)
+
+`PlanningStrategyLoopControl` coordinates three things on each `select()` call:
+it builds `PlanItem`s for newly eligible bindings (via `BlackboardRegistry`,
+which owns the per-case `CasePlanModel`), runs `StageLifecycleEvaluator` to
+activate and terminate stages and publish their lifecycle events, then delegates
+to `PlanningStrategy` which returns the final selection.
+
+Separately, two `@ConsumeEvent` handlers run on the engine's fan-out events:
+`PlanItemCompletionHandler` listens to `WORKER_EXECUTION_FINISHED` and marks
+plan items complete — triggering stage autocomplete when all required items
+are done. `MilestoneAchievementHandler` listens to `MILESTONE_REACHED` and
+promotes tracked milestones to ACHIEVED in the plan model.
+
+Neither handler interferes with the engine's own processing of the same events.
+Fan-out (`eventBus.publish()`) means both the engine and the blackboard receive
+every event independently.
+
 The synchronous control shell was a constraint of its era. It doesn't need
 to be a constraint of ours.
