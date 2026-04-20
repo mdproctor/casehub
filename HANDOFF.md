@@ -1,62 +1,63 @@
 # Session Handover — CaseHub
-**Date:** 2026-04-18
+**Date:** 2026-04-20
 **Branch (casehub):** main
-**Branch (casehub-engine):** feat/persistence/engine-decoupling (PR3 — pushed, PR open)
+**Branch (casehub-engine):** 3 PRs open from fork branches
 
 ---
 
 ## Where We Are
 
-PR3 complete and pushed. PR #75 is open against casehubio/engine:main.
+All upstream PRs (#72, #74, #85/PR3) have merged into `casehubio/engine:main`.
 
-The engine module is now JPA-free: domain objects are plain POJOs, all
-persistence routes through SPI interfaces, engine tests run without Docker.
+`casehub-blackboard` module redesigned from scratch — wiped treblereel's existing
+implementation, rebuilt with async-reactive design. 68 tests passing.
 
-**Awaiting upstream:** PR #72 (our memory work) and PR #73 (treblereel's
-rebased version) are both open. PR #75 depends on one of them merging first.
-Once merged, rebase #75 on new main before review.
+**3 PRs open against `casehubio/engine:main` — merge in order:**
 
-**Watch:** PR #74 (treblereel — concurrent signal processing) touches
-`SignalReceivedEventHandler`, which we rewrote in PR3. **Conflict analysed
-2026-04-18:** Both changes are orthogonal — treblereel adds a Vert.x
-SharedData lock around `applyAndDiff`; we add SPI injection. When #74 merges
-before #75, manually resolve `applySignal`: wrap our `EventLogRepository`
-persistence path with treblereel's lock pattern. `WorkerScheduleEventHandler`
-was also heavily changed in #74 but we didn't touch it in PR3 — no conflict
-there.
+| PR | Branch | What | Tests |
+|---|---|---|---|
+| #88 | `feat/bb-1-async-loop-control` | `LoopControl.select()` → `Uni<List<Binding>>` (4 files) | 386 engine |
+| #89 | `feat/bb-2-data-model` | PlanItem, CasePlanModel, Stage, event records (pure Java) | 36 unit |
+| #90 | `feat/bb-3-orchestration` | PlanningStrategy, handlers, PlanningStrategyLoopControl, @QuarkusTest | 68 total |
+
+**Awaiting upstream review.** All branches built cleanly from `upstream/main`.
 
 ---
 
 ## What Was Done This Session
 
-- Executed 27-task PR3 plan via subagent-driven development
-- Added `updateStateAndAppendEvent` to `CaseInstanceRepository` SPI (atomic state + event write)
-- Converted `CaseMetaModel`, `CaseInstance`, `EventLog` from `PanacheEntity` to plain POJOs
-- Refactored 12 handler/service classes to inject repository SPI
-- Removed JPA/Panache/PostgreSQL/Testcontainers deps from engine/pom.xml
-- Solved Maven cycle: copied in-memory impls into `engine/src/test/java/` instead of module dep
-- Engine tests run without Docker — 353 pass, 1 pre-existing port-conflict flake (AgentPipelineBeanTest)
-- Blog: `docs/_posts/2026-04-18-mdp01-cutting-the-jpa-wire.md`
-- Garden: 2 new entries (GE-20260417-96accd Maven cycle, GE-20260417-460714 mvn -q false-clean); 2 revisions (GE-20260417-a405a4 library module variant, GE-20260417-c59817 test-local index update)
+- Researched LLM-based blackboard papers (arXiv 2507.01701, 2510.01285); informed async design
+- Brainstormed and designed async reactive blackboard architecture (async LoopControl key insight)
+- Published article: `docs/_posts/2026-04-18-mdp02-reactive-blackboard-control-shell.md`
+- Spec: `docs/superpowers/specs/2026-04-18-casehub-blackboard-design.md`
+- Plan: `docs/superpowers/plans/2026-04-18-casehub-blackboard.md`
+- Executed 16-task subagent-driven build; discovered treblereel's existing impl mid-task
+- Decision: clean design forward → wiped old impl (2519 lines), rebuilt from scratch
+- Code review (18 findings): fixed critical PBQ mutation bug (priority now final), TOCTOU race
+  (activeByBinding O(1) index), plus 15 important/minor fixes; 68 tests passing
+- Stacked PRs #88/#89/#90 created and pushed to fork, opened against upstream
+- casehub-engine CLAUDE.md updated with blackboard module test conventions
+- 7 garden entries submitted (PRs #82, #83 to Hortora/garden)
+- Blog: `docs/_posts/2026-04-20-mdp01-blackboard-research-design-build.md`
 
 ---
 
 ## Open PRs in casehubio/engine
 
-| PR | What | Base | Status |
-|---|---|---|---|
-| #72 | casehub-persistence-memory (our version) | main | Open — waiting |
-| #73 | casehub-persistence-memory (treblereel rebased) | main | Open — likely to merge first |
-| #74 | Concurrent signal processing (treblereel) | main | Open — may conflict with PR3 SignalReceivedEventHandler |
-| #75 | Engine persistence decoupling (PR3) | main | Open — depends on #72 or #73 |
+| PR | What | Status |
+|---|---|---|
+| #88 | Async LoopControl (prerequisite for #89, #90) | Open — awaiting review |
+| #89 | Data model | Open — merge #88 first |
+| #90 | Orchestration + integration tests | Open — merge #89 first |
 
 ---
 
 ## Immediate Next Steps
 
-1. **Watch #72/#73** — once one merges, rebase #75 on new main and push
-2. **Review PR #74** — read treblereel's signal handler changes; confirm compatible with our rewrite before either merges
-3. **PR4 (casehub-blackboard)** — start only after #75 is on clean merged ground
+1. **Watch #88/#89/#90** — ping upstream once ready for review
+2. **Next module: casehub-resilience** (#51) — DLQ, PoisonPill, RetryPolicy, TimeoutEnforcer;
+   align with #22 (treblereel's ExecutionPolicy) before starting
+3. **Milestone/Goal/Stage alignment** (#84) — worth design discussion before casehub-quarkus
 
 ---
 
@@ -64,14 +65,17 @@ there.
 
 | File | What |
 |------|-------|
-| `docs/superpowers/plans/2026-04-16-pr3-engine-decoupling.md` | PR3 plan (completed) |
-| `/Users/mdproctor/dev/casehub-engine/CLAUDE.md` | casehub-engine conventions (updated this session) |
-| `docs/_posts/2026-04-18-mdp01-cutting-the-jpa-wire.md` | Session blog entry |
+| `docs/superpowers/specs/2026-04-18-casehub-blackboard-design.md` | Full design spec |
+| `docs/superpowers/plans/2026-04-18-casehub-blackboard.md` | 16-task plan (executed) |
+| `docs/_posts/2026-04-18-mdp02-reactive-blackboard-control-shell.md` | Technical article |
+| `/Users/mdproctor/dev/casehub-engine/CLAUDE.md` | Updated with blackboard test conventions |
 
 ## GitHub Issues
 
 | Repo | Issue | Status |
 |------|-------|--------|
 | casehubio/engine | #30 (epic) | Open — Phase 2 in progress |
-| casehubio/engine | #69 | Open — PR3 (engine decoupling), PR #75 filed |
+| casehubio/engine | #76 | Open — PRs #88/#89/#90 filed |
+| casehubio/engine | #77 | Open — future evolution epic (#78–#83 child issues) |
+| casehubio/engine | #84 | Open — Milestone/Goal/Stage alignment |
 | mdproctor/casehub | #8 | Open — retirement tracking |
