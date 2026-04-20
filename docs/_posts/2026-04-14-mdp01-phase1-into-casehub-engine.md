@@ -15,7 +15,7 @@ excerpt: "The merge direction reversed before a single line of code was written.
 
 ## The direction changed before the first commit
 
-The previous entry laid out a 9-phase merge plan — casehub as the base, casehub-engine's reactive infrastructure ported in. Sensible at the time. But the co-worker made a point worth taking seriously: casehub-engine already has the working reactive event cycle, Quartz, EventLog, Signal mechanism. Porting that into casehub would mean a big-bang Phase 5 async refactor that everything before it sits on top of. Wrong order.
+The previous entry laid out a 9-phase merge plan — casehub as the base, casehub-engine's reactive infrastructure ported in. Sensible at the time. The co-worker was right: casehub-engine already has the working reactive event cycle, Quartz, EventLog, Signal mechanism. Porting all of that into casehub would mean a big-bang Phase 5 async refactor that everything before it sits on top of. Wrong order.
 
 The better answer: casehub-engine is the home. casehub's CMMN/Blackboard features come in as Maven modules layered on top of the reactive core. One repo, clean module dependencies, the architecture enforced by the build.
 

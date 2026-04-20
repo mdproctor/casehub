@@ -38,10 +38,11 @@ Task 2 — Maven module setup — surfaced something worth noting: a
 implementation was already in place: generic `PlanItem<T>`, stages containing
 workers directly, `CasePlanModelRegistry`, `SubCase`.
 
-## Why a rewrite rather than an adaptation
+## Why a fresh implementation against the new specification
 
-The immediate incompatibility was the `LoopControl` interface change. The
-existing `PlanningStrategyLoopControl` implemented the old synchronous signature:
+The immediate incompatibility was the `LoopControl` interface change — our own
+Task 1. The existing `PlanningStrategyLoopControl` had been built against the
+previous synchronous signature:
 
 ```java
 @Override
@@ -49,52 +50,51 @@ public List<Binding> select(PlanExecutionContext context, List<Binding> eligible
 ```
 
 Our Task 1 change required `Uni<List<Binding>>`. The existing implementation
-did not compile against the new interface.
+no longer compiled against the new interface.
 
-Beyond the compilation break, analysis of the existing implementation identified
-six architectural differences that would have required substantial rework in any
-case:
+Beyond the compilation break, the existing module reflected an earlier design
+specification. Several decisions reached during the brainstorm session were not
+part of that prior specification. Adapting the existing code to meet the new
+specification involved six divergences, each requiring changes of comparable
+scope to building against the new specification directly:
 
-**1. Plan model keyed by case type, not case instance.** `CasePlanModelRegistry`
-associated plan models with `CaseDefinition` objects. For concurrent cases of
-the same type, all running instances would share one plan model — their agendas,
-stages, and focus of attention mixed together. The new `BlackboardRegistry` keys
-by case UUID; each running instance has an independent `CasePlanModel`.
+**1. Plan model scope.** `CasePlanModelRegistry` associated plan models with
+`CaseDefinition` objects. The new specification requires a `CasePlanModel`
+per running case UUID, so that concurrent instances of the same case type each
+have independent agenda, stage state, and focus of attention. This was a
+decision from the design session.
 
-**2. `PlanItem<T>` — a generic type holding either `Stage` or `Worker`.** This
-conflates two distinct concerns: an activation record (a unit of work to schedule)
-and a lifecycle container (a stage that gates activation). Making them the same
-generic type prevents independent tracking of plan item completion within stages.
+**2. `PlanItem<T>` as a unified generic type.** The new specification separates
+the activation record (`PlanItem`, keyed to a `Binding`) from the lifecycle
+container (`Stage`). This separation is required by the independent
+completion-tracking design, which was new to the specification.
 
-**3. Stages contained `Worker` objects directly.** In the existing implementation,
-workers were assigned to stages at definition time. In the CMMN model and in the
-design we were targeting, stages gate *which Bindings can fire* — they evaluate
-entry and exit conditions against the case state, not against worker capability
-names. Stage-to-worker coupling at definition time prevents the engine's dynamic
-capability matching from working correctly within a staged case.
+**3. Stage-to-worker relationship.** In the prior implementation, workers were
+assigned to stages at definition time. The new specification has stages evaluate
+entry and exit conditions against `CaseContext` state — stages gate which
+Bindings can fire, not which workers are assigned. This reflects the design
+session's decision on how capability matching should interact with stage activation.
 
-**4. `PlanningStrategy` did not have access to the plan model.** The interface
-took `(CaseContext, List<PlanItem<?>>)`. Strategies were pure selectors with no
-way to write control state — no focus of attention, no resource budget, no
-extensible key-value store. The separation of domain state (`CaseContext`) from
-control state (`CasePlanModel`) that the Hayes-Roth BB1 architecture describes
-was not present.
+**4. `PlanningStrategy` interface signature.** The new specification gives
+strategies read-write access to `CasePlanModel` — focus of attention, resource
+budget, extensible key-value state. The new signature
+`(CasePlanModel, PlanExecutionContext, List<Binding>)` captures design decisions
+not present in the prior specification.
 
-**5. No completion tracking.** There was no equivalent of `PlanItemCompletionHandler`.
-Nothing informed the plan model when a worker finished executing. Stage autocomplete
-— completing a stage when all its required plan items are done — had no
-implementation path.
+**5. Plan item completion feedback.** The `PlanItemCompletionHandler` role —
+marking items complete when workers finish and triggering stage autocomplete —
+was introduced in the new specification and was not in scope for the prior
+implementation.
 
-**6. No stage lifecycle events.** Stage transitions were internal state mutations.
-No `StageActivatedEvent`, `StageCompletedEvent`, or `StageTerminatedEvent` were
-published on the event bus. Stage lifecycle was opaque to any observability,
-lineage, or dashboard component.
+**6. Stage lifecycle events.** The new specification publishes
+`StageActivatedEvent`, `StageCompletedEvent`, and `StageTerminatedEvent` as
+first-class EventBus events for observability and lineage integration. This
+was a new requirement.
 
-Given the incompatible interface and these structural differences, a rewrite from
-the new design specification was the more straightforward path than an adaptation.
-The result: `plan/`, `stage/`, `event/`, `control/`, `registry/`, `handler/`
-packages built against the async `LoopControl` contract, with the six points
-above addressed throughout.
+Given the interface incompatibility and the six specification divergences, an
+implementation built directly against the new specification was the cleaner
+path. The result: `plan/`, `stage/`, `event/`, `control/`, `registry/`,
+`handler/` packages built throughout against the async `LoopControl` contract.
 
 ## On the synchronous nature of the original LoopControl
 

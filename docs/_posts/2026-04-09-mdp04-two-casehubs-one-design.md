@@ -15,7 +15,7 @@ excerpt: "Discovering a parallel casehub-engine implementation and charting a 9-
 
 ## Where this started
 
-A colleague had been working on a CMMN-inspired implementation for agentic AI — casehub-engine. Good work, progressing well. I wanted to understand the space more deeply myself, partly to get a clearer picture of what he was building, partly so I could direct him more precisely toward the broader architectural concepts I had in mind.
+A colleague had been building casehub-engine — a CMMN-inspired implementation for agentic AI. Good work, progressing well. I wanted to go deeper into the design space myself, partly to understand it more concretely and partly so we could arrive at a shared picture of the broader architectural direction we were aiming for.
 
 I started some exploratory work with Claude. What I didn't expect was how quickly it would build out an entire system. What began as exploration to improve my own understanding turned into something of real value in its own right — a working framework built across just three sessions, starting from Blackboard Architecture and evolving to incorporate CMMN concepts, as discussed in the earlier posts in this series.
 
@@ -60,7 +60,7 @@ Three sessions. The framework was real and working. Then I looked at what my col
 
 ## The other implementation
 
-My colleague had been building casehub-engine independently. Different architectural choices throughout: a reactive event bus (Vert.x + Mutiny), JQ expressions for conditions, Quartz for durable worker execution, a YAML/JSON schema with codegen, and a Goal model that was already implemented.
+The colleague had been building casehub-engine with a distinct set of architectural choices: a reactive event bus (Vert.x + Mutiny), JQ expressions for conditions, Quartz for durable worker execution, a YAML/JSON schema with codegen, and a Goal model that was already implemented.
 
 The question wasn't whether to merge — it was which direction and how.
 
@@ -87,7 +87,7 @@ The gap runs in both directions — each system has capabilities the other lacks
 
 ## The direction: casehub as the base
 
-casehub-engine's contributions are interface design and infrastructure — additive. casehub's contributions are architectural — the Blackboard control loop, CMMN stages, resilience, lineage. Starting from casehub-engine would mean rebuilding everything casehub already has. Starting from casehub means adopting casehub-engine's better surface design incrementally.
+Both systems bring substantial architectural work. casehub-engine has a production reactive event cycle, durable Quartz execution, and a working Goal model. casehub has the Blackboard control loop, CMMN stage lifecycle, resilience layer, and lineage model. The assessment at this point was that layering casehub-engine's reactive infrastructure into casehub would involve a larger Phase 5 async refactor than the reverse. As the next post shows, that assessment was revisited once implementation began.
 
 The merge direction was clear. The approach: evolve casehub in place, phase by phase.
 

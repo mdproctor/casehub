@@ -28,7 +28,7 @@ Two CI failures were waiting in PR 1.
 
 The first: `JpaCaseMetaModelRepositoryTest.save_thenFindByKey_roundTrip` was failing on `expected: 2026-04-16T18:35:11.983912167Z but was: 2026-04-16T18:35:11.983912Z`. Java's `Instant.now()` has nanosecond precision; PostgreSQL `timestamp` columns store microseconds. We write a nanosecond-precise value, PostgreSQL truncates it, we read back a microsecond-precise value, the equality check fails. The fix: `Instant.now().truncatedTo(ChronoUnit.MICROS)`. Round-trip is now stable.
 
-The second looked like a broken deduplication mechanism. `SignalTest.workerRunsOnceOnDuplicateSignal` — send the same signal twice, expect the worker to run once, get two. The test had previously been `@Ignore // TODO`; a commit from the upstream maintainer removed the annotation after adding a fix.
+The second looked like a broken deduplication mechanism. `SignalTest.workerRunsOnceOnDuplicateSignal` — send the same signal twice, expect the worker to run once, get two. The test had previously been `@Ignore // TODO`; a commit from the upstream maintainer added a dedup fix and activated the test. As the analysis below shows, the dedup mechanism was correct — the failure was a pre-existing test isolation problem that the newly active test made visible.
 
 The dedup code uses `applyAndDiff()` under a write lock. If signal 1 sets `payment` in the case context, signal 2 calls `applyAndDiff`, sees the value unchanged, and returns `Optional.empty()` — no second `CONTEXT_CHANGED` event, no second worker scheduling. That logic is correct.
 
