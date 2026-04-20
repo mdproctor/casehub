@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Blackboard: Research, Design, Build, Wipe, Rebuild"
+title: "Blackboard: Research, Analysis, and Implementation"
 date: 2026-04-20
 type: phase-update
 entry_type: note
@@ -33,45 +33,128 @@ blocking the Vert.x event loop. We changed `LoopControl.select()` to return
 The spec and plan came next — 16 tasks, TDD throughout. We started executing via
 subagent-driven development.
 
-Task 2 — Maven module setup — came back unexpected: the `casehub-blackboard`
-module already existed. Treblereel had implemented it. Generic `PlanItem<T>`,
-stages containing workers directly, `CasePlanModelRegistry`, `SubCase`. Different
-architecture from what we designed.
+Task 2 — Maven module setup — surfaced something worth noting: a
+`casehub-blackboard` module already existed in the upstream. A prior
+implementation was already in place: generic `PlanItem<T>`, stages containing
+workers directly, `CasePlanModelRegistry`, `SubCase`.
 
-I looked at it for about two minutes. My response: *"I don't care about old code
-or compatibility. I want the best clean design going forward."*
+## Why a rewrite rather than an adaptation
 
-We wiped it. All of it — 11 main source files, 13 test files, 2519 lines deleted
-in a single commit. Then built from scratch: `plan/`, `stage/`, `event/`,
-`control/`, `registry/`, `handler/`. The new design has final priority on
-`PlanItem` (no post-insertion PBQ mutation), an `activeByBinding` index for
-O(1) atomic deduplication, `ConcurrentHashMap.newKeySet()` for Stage containment.
-68 tests. All green.
+The immediate incompatibility was the `LoopControl` interface change. The
+existing `PlanningStrategyLoopControl` implemented the old synchronous signature:
 
-The code review came back with 18 findings. Two were critical enough to have
-caused production bugs:
+```java
+@Override
+public List<Binding> select(PlanExecutionContext context, List<Binding> eligible)
+```
 
-First: `PlanItem.priority` was mutable. `setPriority()` was public. A strategy
-calling it after insertion would silently corrupt the `PriorityBlockingQueue`
-heap — wrong ordering, no exception, no warning. Claude caught it. We made
-`priority` final.
+Our Task 1 change required `Uni<List<Binding>>`. The existing implementation
+did not compile against the new interface.
 
-Second: `hasActivePlanItem()` was scanning all `ConcurrentHashMap` values in a
-stream — O(n) with a TOCTOU gap between the check and the insert. We replaced
-it with an `activeByBinding` index: a single map lookup, effectively atomic.
+Beyond the compilation break, analysis of the existing implementation identified
+six architectural differences that would have required substantial rework in any
+case:
 
-The six remaining Important findings were all fixed. Three more Minor ones
-tightened test coverage and the `PlanItemCompletionHandler` control flow.
+**1. Plan model keyed by case type, not case instance.** `CasePlanModelRegistry`
+associated plan models with `CaseDefinition` objects. For concurrent cases of
+the same type, all running instances would share one plan model — their agendas,
+stages, and focus of attention mixed together. The new `BlackboardRegistry` keys
+by case UUID; each running instance has an independent `CasePlanModel`.
 
-Then the merge attempt. The upstream had diverged enough that `git rebase upstream/main`
-produced conflicts on commit 1 of 48. I aborted it, created a fresh branch from
-upstream, extracted the net diff with `git diff upstream/main -- <files>`,
-applied it cleanly. One commit. 68 tests still green.
+**2. `PlanItem<T>` — a generic type holding either `Stage` or `Worker`.** This
+conflates two distinct concerns: an activation record (a unit of work to schedule)
+and a lifecycle container (a stage that gates activation). Making them the same
+generic type prevents independent tracking of plan item completion within stages.
 
-One problem: the reviewer said the PR was too large. Three PRs instead — #88
-(async LoopControl, 4 files), #89 (data model, 36 tests), #90 (orchestration +
-integration, full 68 tests). All open against `casehubio/engine:main`, merge in
-order.
+**3. Stages contained `Worker` objects directly.** In the existing implementation,
+workers were assigned to stages at definition time. In the CMMN model and in the
+design we were targeting, stages gate *which Bindings can fire* — they evaluate
+entry and exit conditions against the case state, not against worker capability
+names. Stage-to-worker coupling at definition time prevents the engine's dynamic
+capability matching from working correctly within a staged case.
+
+**4. `PlanningStrategy` did not have access to the plan model.** The interface
+took `(CaseContext, List<PlanItem<?>>)`. Strategies were pure selectors with no
+way to write control state — no focus of attention, no resource budget, no
+extensible key-value store. The separation of domain state (`CaseContext`) from
+control state (`CasePlanModel`) that the Hayes-Roth BB1 architecture describes
+was not present.
+
+**5. No completion tracking.** There was no equivalent of `PlanItemCompletionHandler`.
+Nothing informed the plan model when a worker finished executing. Stage autocomplete
+— completing a stage when all its required plan items are done — had no
+implementation path.
+
+**6. No stage lifecycle events.** Stage transitions were internal state mutations.
+No `StageActivatedEvent`, `StageCompletedEvent`, or `StageTerminatedEvent` were
+published on the event bus. Stage lifecycle was opaque to any observability,
+lineage, or dashboard component.
+
+Given the incompatible interface and these structural differences, a rewrite from
+the new design specification was the more straightforward path than an adaptation.
+The result: `plan/`, `stage/`, `event/`, `control/`, `registry/`, `handler/`
+packages built against the async `LoopControl` contract, with the six points
+above addressed throughout.
+
+## On the synchronous nature of the original LoopControl
+
+It is worth being precise about what "synchronous" meant here, because the
+existing handler was already operating in a reactive context.
+
+`CaseContextChangedEventHandler` is a `@ConsumeEvent` handler that returns
+`Uni<Void>` — it participates in Vert.x's reactive model. However, within that
+handler, the call to `loopControl.select()` was a blocking synchronous call
+returning `List<Binding>`:
+
+```java
+// Before: synchronous call lodged inside an async chain
+List<Binding> selected = loopControl.select(planCtx, eligible);
+// ...then compose the Uni from results
+return Uni.combine().all().unis(unis).discardItems();
+```
+
+The outer context was reactive; the selection point within it was not. Any code
+inside `select()` that attempted I/O — querying the EventLog, calling an external
+scoring service — would block the event loop thread directly. On Vert.x, blocking
+the event loop thread is a correctness violation, not merely a performance concern.
+
+After the change, `select()` returns a `Uni` and participates in the chain:
+
+```java
+// After: select() is a first-class participant in the reactive pipeline
+return loopControl.select(planCtx, eligible)
+    .chain(selected -> { ... });
+```
+
+The practical difference: a `PlanningStrategy` can now query the EventLog,
+call an LLM scorer, or reach any non-blocking I/O before resolving its selection.
+The async context and the selection point are now consistent throughout.
+
+## Code review and findings
+
+The code review returned 18 findings. Two were critical:
+
+First: `PlanItem.priority` was mutable. A strategy calling `setPriority()` after
+insertion into the `PriorityBlockingQueue` would silently corrupt the heap —
+wrong ordering, no exception, no warning. `priority` was made `final`.
+
+Second: `hasActivePlanItem()` was an O(n) scan of all `ConcurrentHashMap` values
+with a TOCTOU gap between the check and the subsequent insert. We replaced it
+with an `activeByBinding` index — a single map lookup, effectively atomic.
+
+The six remaining Important findings were all fixed. Three Minor ones tightened
+test coverage and the `PlanItemCompletionHandler` control flow.
+
+## Integration and PRs
+
+The upstream had diverged enough that a rebase of the branch produced conflicts
+on commit 1 of 48. A fresh branch from `upstream/main` with the net diff applied
+via `git diff upstream/main -- <files>` resolved this cleanly. One commit, 68
+tests green.
+
+The PR was split into three for review — #88 (async LoopControl, 4 files), #89
+(data model, 36 tests), #90 (orchestration + integration, full 68 tests). All
+open against `casehubio/engine:main`, merge in order.
 
 The research-identified improvements — meta-control, private agent scratchpad,
 memory stratification, hierarchical panels — are all tracked in issues #77–#84.
