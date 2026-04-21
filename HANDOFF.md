@@ -1,63 +1,55 @@
 # Session Handover — CaseHub
-**Date:** 2026-04-20
+**Date:** 2026-04-21
 **Branch (casehub):** main
-**Branch (casehub-engine):** 3 PRs open from fork branches
+**Branch (casehub-engine):** 13 PRs open from fork branches
 
 ---
 
 ## Where We Are
 
-All upstream PRs (#72, #74, #85/PR3) have merged into `casehubio/engine:main`.
+All upstream PRs merged. blackboard PRs #88–#100 open, QE PRs #91–#100, parity PRs #96–#100.
+PR #88 is now CI-green after fixing downstream compilation (casehub-blackboard LoopControl impl).
 
-`casehub-blackboard` module redesigned from scratch — wiped treblereel's existing
-implementation, rebuilt with async-reactive design. 68 tests passing.
+**Full PR merge order (all targeting casehubio/engine:main):**
 
-**3 PRs open against `casehubio/engine:main` — merge in order:**
+| PR | What |
+|---|---|
+| #88 | Async LoopControl [1/3] — **CI green, ready** |
+| #89 | Data model [2/3] |
+| #90 | Orchestration [3/3] |
+| #91–#95 | QE A–E (thread safety, lifecycle, nested stages, integration, edge cases) |
+| #96–#100 | QE F–J (plan configurer, strict lifecycle, SubCase, Stage validation, binding gating) |
+| #119 | PropagationContext to api/ |
+| #120 | Architectural exclusion fitness tests |
 
-| PR | Branch | What | Tests |
-|---|---|---|---|
-| #88 | `feat/bb-1-async-loop-control` | `LoopControl.select()` → `Uni<List<Binding>>` (4 files) | 386 engine |
-| #89 | `feat/bb-2-data-model` | PlanItem, CasePlanModel, Stage, event records (pure Java) | 36 unit |
-| #90 | `feat/bb-3-orchestration` | PlanningStrategy, handlers, PlanningStrategyLoopControl, @QuarkusTest | 68 total |
-
-**Awaiting upstream review.** All branches built cleanly from `upstream/main`.
+Additional independent PRs (can merge any time):
+- `feat/bb-1-async-loop-control` → PR #88 already captures this
 
 ---
 
 ## What Was Done This Session
 
-- Researched LLM-based blackboard papers (arXiv 2507.01701, 2510.01285); informed async design
-- Brainstormed and designed async reactive blackboard architecture (async LoopControl key insight)
-- Published article: `docs/_posts/2026-04-18-mdp02-reactive-blackboard-control-shell.md`
-- Spec: `docs/superpowers/specs/2026-04-18-casehub-blackboard-design.md`
-- Plan: `docs/superpowers/plans/2026-04-18-casehub-blackboard.md`
-- Executed 16-task subagent-driven build; discovered treblereel's existing impl mid-task
-- Decision: clean design forward → wiped old impl (2519 lines), rebuilt from scratch
-- Code review (18 findings): fixed critical PBQ mutation bug (priority now final), TOCTOU race
-  (activeByBinding O(1) index), plus 15 important/minor fixes; 68 tests passing
-- Stacked PRs #88/#89/#90 created and pushed to fork, opened against upstream
-- casehub-engine CLAUDE.md updated with blackboard module test conventions
-- 7 garden entries submitted (PRs #82, #83 to Hortora/garden)
-- Blog: `docs/_posts/2026-04-20-mdp01-blackboard-research-design-build.md`
-
----
-
-## Open PRs in casehubio/engine
-
-| PR | What | Status |
-|---|---|---|
-| #88 | Async LoopControl (prerequisite for #89, #90) | Open — awaiting review |
-| #89 | Data model | Open — merge #88 first |
-| #90 | Orchestration + integration tests | Open — merge #89 first |
+- QE review: found 4 parity gaps vs treblereel's implementation, closed all with PRs F–J
+- ADR-0002: Stage binding gating — convention over configuration (Kogito/CMMN pattern)
+- `docs/adr/0002-stage-binding-gating-convention-over-configuration.md` committed
+- PropagationContext ported to `api/` (PR #119, 35 tests)
+- Architectural exclusion fitness tests (PR #120)
+- 15 use case issues created (#101–#116) under epic #102
+- Issue #121: TaskBroker/WorkItems integration design (full boundary analysis)
+- Issue #122: Claim SLA continuation decision (4 approaches A–D, grid, recommendation)
+- casehub-engine CLAUDE.md: added persistence-memory profile docs and full-reactor compile warning
+- Blog: 3 entries today (mdp01, mdp02, mdp03)
 
 ---
 
 ## Immediate Next Steps
 
-1. **Watch #88/#89/#90** — ping upstream once ready for review
-2. **Next module: casehub-resilience** (#51) — DLQ, PoisonPill, RetryPolicy, TimeoutEnforcer;
-   align with #22 (treblereel's ExecutionPolicy) before starting
-3. **Milestone/Goal/Stage alignment** (#84) — worth design discussion before casehub-quarkus
+1. **Watch #88** (CI green) — ping treblereel for review, then cascade #89 → #90 → #91–#100 → #119/#120
+2. **Alignment decisions before casehub-resilience** (issue #51):
+   - `ConflictResolver` — keep or drop? (issue #45)
+   - `ExecutionPolicy` vs `TimeoutEnforcer` alignment with treblereel (issue #22)
+3. **Naming ADR for Task vs WorkItem** — needed before any TaskBroker implementation (issue #121 open decision #1)
+4. **Claim SLA policy decision** (issue #122) — read the four approaches, decide with treblereel
 
 ---
 
@@ -65,17 +57,21 @@ implementation, rebuilt with async-reactive design. 68 tests passing.
 
 | File | What |
 |------|-------|
-| `docs/superpowers/specs/2026-04-18-casehub-blackboard-design.md` | Full design spec |
-| `docs/superpowers/plans/2026-04-18-casehub-blackboard.md` | 16-task plan (executed) |
-| `docs/_posts/2026-04-18-mdp02-reactive-blackboard-control-shell.md` | Technical article |
-| `/Users/mdproctor/dev/casehub-engine/CLAUDE.md` | Updated with blackboard test conventions |
+| `docs/adr/INDEX.md` | ADR-0001 (Goal Model), ADR-0002 (Stage Binding Gating) |
+| `docs/superpowers/plans/2026-04-21-blackboard-pr-*.md` | Plans PR-A through PR-J (all executed) |
+| `/Users/mdproctor/dev/casehub-engine/CLAUDE.md` | Updated with persistence-memory profile + full-reactor compile warning |
 
-## GitHub Issues
+## GitHub Issues (casehubio/engine)
 
-| Repo | Issue | Status |
-|------|-------|--------|
-| casehubio/engine | #30 (epic) | Open — Phase 2 in progress |
-| casehubio/engine | #76 | Open — PRs #88/#89/#90 filed |
-| casehubio/engine | #77 | Open — future evolution epic (#78–#83 child issues) |
-| casehubio/engine | #84 | Open — Milestone/Goal/Stage alignment |
-| mdproctor/casehub | #8 | Open — retirement tracking |
+| Issue | Status |
+|---|---|
+| #30 (epic CMMN/Blackboard) | Open — PRs #88-#100 are the delivery |
+| #76 (casehub-blackboard) | Open — same |
+| #77 (future evolution epic) | Open — #78–#84 child issues |
+| #84 (Milestone/Goal/Stage alignment) | Open — next after PRs merge |
+| #102 (ecosystem use cases epic) | Open — #101–#116 child issues |
+| #121 (TaskBroker/WorkItems design) | Open — needs naming ADR before implementation |
+| #122 (Claim SLA continuation decision) | Open — needs discussion with treblereel |
+| #119 | Open — PropagationContext |
+| #120 | Open — architectural exclusions |
+| mdproctor/casehub#8 | Open — retirement tracking |
