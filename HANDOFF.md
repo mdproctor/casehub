@@ -7,55 +7,52 @@
 
 ## Where We Are
 
-casehub-resilience is implemented and open as PR #126 on casehubio/engine.
+Massive progress on the blackboard PR series today. PRs #90–#99 all merged.
+One QE branch remains open (#100 binding-gating), plus #119, #120, #126.
 
-Blackboard PRs #88 and #89 merged during this session. PR #90 is CLEAN and ready to merge. PRs #91–#100 and #119/#120 need rebasing onto the new upstream/main (since #88 and #89 have merged).
-
-**Full PR status:**
+**Current open PRs on casehubio/engine:**
 
 | PR | What | Status |
 |---|---|---|
-| #88 | Async LoopControl [1/3] | MERGED |
-| #89 | Data model [2/3] | MERGED |
-| #90 | Orchestration [3/3] | CLEAN — ready to merge |
-| #91–#95 | QE A–E | Need rebase onto upstream/main |
-| #96–#100 | QE F–J | Need rebase onto upstream/main |
-| #119 | PropagationContext to api/ | Need rebase |
-| #120 | Architectural exclusion fitness tests | Need rebase |
-| #126 | casehub-resilience | Open — new this session |
+| #100 | Stage binding declarations gate loop control [QE-J] | CI running — just pushed, awaiting green |
+| #119 | PropagationContext — tracing, budget, inherited attrs | MERGEABLE, CI green |
+| #120 | Architectural fitness tests | MERGEABLE, CI green |
+| #126 | casehub-resilience | MERGEABLE, CI green |
 
-**casehub-engine local main:** 9 commits ahead of upstream/main (all casehub-resilience). Pushed to mdproctor/engine:main. PR #126 is from mdproctor:main → casehubio/engine:main.
+**#100 note:** has a timeout fix commit included (MixedWorkersBlackboardTest 15s→30s)
+to address a recurring flaky test on Java 17 CI. This commit should stay — it was
+added to QE-I first, then cascaded into QE-J.
 
 ---
 
 ## What Was Done This Session
 
-- casehub-resilience implemented: ConflictResolver SPI (3 strategies), CaseTimeoutEnforcer (@Scheduled wall-clock scanner), 59 tests
-- Key finding: Quarkus Vert.x @ConsumeEvent on a request() address competes round-robin with the primary consumer — use lazy start-time recording instead
-- Key finding: after merging a branch that modifies api/, run `mvn install -DskipTests -pl api,engine,casehub-resilience -am` before tests or you get NoSuchMethodError from stale local Maven JAR
-- Merged feat/casehub-resilience-main into local main, pushed to origin, PR #126 open
-- Blog entry written: `docs/_posts/2026-04-22-mdp01-resilience-conflict-timeout-vertx.md`
-- Garden PR #95: 3 Quarkus entries submitted (stale-maven-jar, scheduled-clock-testability, consumeevent-request-starvation)
+- Rebased PR #90 onto upstream/main (treblereel had commented `/rebase`)
+- PR #90 merged by treblereel
+- Cascade-rebased all QE branches (#91–#100), #119, #120 — multiple rounds
+  as treblereel merged PRs in rapid succession throughout the session
+- Fixed flaky `MixedWorkersBlackboardTest` timeout 15s→30s (commit on QE-I,
+  cascaded to QE-J)
+- Garden PR #97 open: 5 entries (1 revise GE-20260421-654530, 4 new)
 
 ---
 
 ## Immediate Next Steps
 
-1. **Merge PR #90** (CLEAN) — ping treblereel; then cascade: rebase #91–#100 onto new upstream/main
-2. **Rebase #119 and #120** onto upstream/main after #90 merges
-3. **Upgrade CaseTimeoutEnforcer** to use `PropagationContext.isBudgetExhausted()` after PR #119 merges (one-line change in `CaseTimeoutEnforcer.java`)
-4. **Naming ADR** — Task vs WorkItem — needed before any TaskBroker implementation (issue #121 open decision #1)
+1. **Confirm #100 CI is green** — was still running at session end
+2. **After #100 merges** — rebase likely needed again (treblereel merges fast);
+   use `git rebase upstream/main feat/bb-qa-j-binding-gating` in the worktree at
+   `/Users/mdproctor/dev/casehub-engine/.worktrees/feat/casehub-blackboard`
+3. **Upgrade CaseTimeoutEnforcer** to use `PropagationContext.isBudgetExhausted()`
+   after #119 merges (one-line change in `CaseTimeoutEnforcer.java`)
+4. **Naming ADR** — Task vs WorkItem (issue #121) — needed before TaskBroker work
 5. **Claim SLA policy** (issue #122) — four approaches A–D, needs decision with treblereel
 
 ---
 
 ## Key Files
 
-| File | What |
-|------|-------|
-| `docs/superpowers/plans/2026-04-21-casehub-resilience.md` | Resilience plan (all 7 tasks complete) |
-| `docs/_posts/2026-04-22-mdp01-resilience-conflict-timeout-vertx.md` | Blog: resilience phase update |
-| `docs/adr/INDEX.md` | ADR-0001 (Goal Model), ADR-0002 (Stage Binding Gating) |
+*Unchanged — `git show HEAD~1:HANDOFF.md`*
 
 ## GitHub Issues (casehubio/engine)
 
