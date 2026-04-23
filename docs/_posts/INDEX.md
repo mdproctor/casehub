@@ -2,6 +2,7 @@
 
 | File | Date | Title |
 |------|------|-------|
+| [2026-04-23-mdp01-workbroker-wiring-shared-spi.md](2026-04-23-mdp01-workbroker-wiring-shared-spi.md) | 2026-04-23 | WorkBroker wiring: naming ADR, choreography fix, durable orchestration with WAITING state |
 | [2026-03-27-mdp01-wanted-sketch-got-framework.md](2026-03-27-mdp01-wanted-sketch-got-framework.md) | 2026-03-27 | I wanted a sketch. Claude built a framework. |
 | [2026-03-28-mdp02-architecture-behind-casehub.md](2026-03-28-mdp02-architecture-behind-casehub.md) | 2026-03-28 | The architecture behind CaseHub |
 | [2026-04-09-mdp03-pojo-graph-and-goals.md](2026-04-09-mdp03-pojo-graph-and-goals.md) | 2026-04-09 | POJO graph and Goals |
