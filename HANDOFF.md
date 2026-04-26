@@ -1,45 +1,49 @@
 # Session Handover — CaseHub
-**Date:** 2026-04-23
-**Branch (casehub):** main
-**Branch (casehub-engine):** main (local, ahead of upstream by 22 WorkBroker commits — not yet PR'd)
+**Date:** 2026-04-26
+**Branch (casehub-engine):** main (casehubio — `604ef8b`)
 
 ---
 
 ## Where We Are
 
-WorkBroker integration complete and merged to local main (epic #131, casehubio/engine).
-473 tests passing. Branch `feat/bb-qa-i-stage-entry-validation` deleted.
+Ecosystem build is green. All major CI issues resolved.
 
-**What landed:**
-- Choreography: `WorkBroker.apply()` + `LeastLoadedStrategy` replaces schedule-all in `publishWorkerSchedules()`
-- Orchestration: `WorkOrchestrator` (durable replacement for casehub-core `TaskBroker`) — `submit()`/`submitAndWait()` return `CompletionStage<WorkResult>`
-- WAITING state: `waitingForWorkId` on `CaseInstance` + `CaseInstanceEntity`, V1.4.0 Flyway migration
-- `PendingWorkRegistry` with thread-safe synchronization + EventLog startup recovery
-- `WorkflowExecutionCompletedHandler` resumes WAITING cases on matching completion
-- ADR-0003: Work/WorkBroker/WorkItem/Task naming hierarchy — `TaskBroker` name retired
-- `docs/DESIGN.md` synced, issue #121 closed with comment
+**What landed since last handover:**
+- PRs #140–#144 (WorkBroker), #151 (ledger), #154–#157 merged to casehubio/engine
+- casehub-parent dashboards fixed — were silently skipping casehub-engine (checked `publish.yml`; engine uses `maven.yml`); now queries latest push run regardless of workflow name; `continue-on-error` + `exit 1` fixes for full-stack build false greens
+- `quarkus-qhorus` and `claudony` fixed — both needed `<repositories>` pointing to GitHub Packages in their poms; claudony CI had `server-id: github-casehubio` mismatched to `<id>github</id>`
+- `ChoreographySelectionTest` hardened — binding `.trigger == "go"` was permanently true, re-fired after worker wrote output; fixed with `and .result == null`. Per-run-ID tracking replaces shared static counters.
+- `WorkerRetryExtendedTest` hardened — event log assertions folded into `await()` blocks
+- Ecosystem CLAUDE.mds updated across all 6 repos; `casehub-parent/CLAUDE.md` created
+- `mdproctor` added to casehubio `developers` team with write access to all 7 repos — can now push directly without fork PRs
 
-**casehub-engine main is 22 commits ahead of upstream/main** — needs a PR to treblereel.
+**Still open:**
+- `casehub-engine` deploy — `mvn verify` works; `mvn deploy` fails on first-ever SNAPSHOT publish to GitHub Packages. Maven tries to GET snapshot metadata before uploading; GitHub Packages returns a non-404 error for non-existent artifacts. CI is on `verify` for now. Fix: initialize the namespace, or configure wagon plugin retry.
+- PR #159 (`Scheduler refactoring`) open on casehubio/engine — check CI, merge when ready.
 
 ---
 
 ## Immediate Next Steps
 
-1. **Push and open PR** for WorkBroker integration against casehubio/engine — push `main` to origin fork, then `gh pr create --repo casehubio/engine`
-2. **Close issue #121** — `gh issue close 121 --repo casehubio/engine` (naming decision resolved by ADR-0003)
-3. **Claim SLA policy (issue #122)** — four approaches A–D, needs decision with treblereel
-4. **Task vs WorkItem naming (#121)** — done; alignment steps for WorkBroker integration tracked by issues #132–#137
+1. Unblock `mvn deploy` — either initialize the GitHub Packages namespace for `io.casehub:api` manually, or investigate `maven-wagon-http` config to handle missing metadata gracefully
+2. Check/merge PR #159
+3. Run the casehub-parent dashboards and confirm they show accurate green across all repos
 
 ---
 
-## Key Files (casehub-engine)
+## Key Files
 
-*Unchanged — `git show HEAD~1:HANDOFF.md`*
+- `casehub-parent/.github/workflows/dashboard.yml` — queries `?branch=main&event=push`, not workflow name
+- `casehub-engine/engine/src/test/java/.../ChoreographySelectionTest.java` — per-run-ID tracking + `and .result == null` binding
+- `casehub-engine/pom.xml` — `maven.deploy.skip=true` default; `version.io.quarkiverse.*` properties
 
-## GitHub Issues (casehubio/engine)
+## Repo Build Status (end of session)
 
-- **#131** — Epic: WorkBroker integration (22 commits on local main, not PR'd yet)
-- **#132–#137** — Child issues (CI, pom, choreography, orchestration, WAITING, docs) — complete
-- **#121** — Naming decision — closed by ADR-0003 comment; `gh issue close` pending
-- **#128** — PropagationContext/CaseTimeoutEnforcer — closed (PR #129 merged upstream)
-- **Open:** #122 (Claim SLA policy — next decision needed with treblereel)
+| Repo | Status |
+|------|--------|
+| casehubio/engine | ✅ |
+| casehubio/quarkus-work | ✅ |
+| casehubio/quarkus-ledger | ✅ |
+| casehubio/quarkus-qhorus | ✅ |
+| casehubio/claudony | ✅ |
+| casehubio/casehub-parent | ✅ |
