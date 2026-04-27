@@ -1,20 +1,19 @@
 # Session Handover — CaseHub
 **Date:** 2026-04-27
-**Branch (casehub-engine):** main (casehubio — `a2449ea`)
+**Branch (casehub-engine):** main (casehubio — `2758a4c`)
 
 ---
 
 ## Where We Are
 
-Ecosystem fully green — all 7 repos, both Pages sites, first-ever full-stack build pass.
-
 **What landed this session:**
-- Migration plan cleaned: removed stale ListenerEvaluator and Vert.x items (both already resolved)
-- Issue audit: 14 done issues closed across both epics (#2, #3, #11, #30, #45, #76, #131 + children, #145 + children, #152)
-- SPIs wired into engine lifecycle (WorkerStatusListener, WorkerContextProvider, CaseChannelProvider) — `a58f042`
-- cancelCase / suspendCase / resumeCase added to CaseHub public API — `90e1ae2`
-- CLAUDE.md updated: recording SPI test pattern documented
-- Garden entry: `@Alternative @Priority(1)` recording SPI technique — `GE-20260427-62d3ab`
+- `CaseLifecycleEvent` fired for `WORKER_EXECUTION_STARTED` / `WORKER_EXECUTION_COMPLETED` — fixes Claudony lineage always returning empty (`59cee54`)
+- `casehub-testing` module — `@Alternative @Priority(1)` in-memory repos + `WorkResultSubmitter`; Jandex index missing so external consumers still need `casehub-persistence-memory` + `quarkus.arc.selected-alternatives` (`c0edb1c`)
+- `casehub-work-adapter` — CDI observer bridges `WorkItemLifecycleEvent` → `PlanItem` transitions via `BlackboardRegistry`; `callerRef` format `case:{caseId}/pi:{planItemId}`; choreography path only (`f440c80`)
+- NPE fix: `CaseContextChangedEventHandler` null-guards `getCaseMetaModel()` before `ConcurrentHashMap.get()` — filed casehubio/claudony#82 (`469200c`)
+- 4 garden entries: `workItem()` not public (use `source()`), `EXPIRED.isTerminal()` false, Jandex test jar, `JpaWorkloadProvider` ambiguity
+
+**Claudony #81 is now unblocked** — both upstreams (#79 + #80) are on main, published to GitHub Packages via CI.
 
 ---
 
@@ -22,23 +21,15 @@ Ecosystem fully green — all 7 repos, both Pages sites, first-ever full-stack b
 
 1. **Rename** `casehubio/engine` → `casehubio/casehub-engine`; update `pom.xml` `distributionManagement` URL
 2. **`casehub-quarkus/`** — not started, biggest remaining work
-3. **WorkerProvisioner wiring** — deferred from #152; needs design: dynamic provisioning changes the model (workers pre-defined in YAML vs provisioned at runtime)
+3. **WorkerProvisioner wiring** — deferred; needs design (dynamic provisioning vs YAML-defined workers)
 4. **#22 (SLA)** — case-level and goal-level SLA not implemented; milestone SLA exists
 
 ---
 
 ## Key References
 
-- Migration plan (fully updated): `docs/superpowers/specs/2026-04-14-casehub-engine-migration-plan.md`
+*Unchanged — `git show HEAD~1:HANDOFF.md`*
 
 ## Repo Build Status
 
-| Repo | Status |
-|------|--------|
-| casehubio/engine | ✅ (now deploys) |
-| casehubio/quarkus-work | ✅ |
-| casehubio/quarkus-ledger | ✅ |
-| casehubio/quarkus-qhorus | ✅ |
-| casehubio/claudony | ✅ |
-| casehubio/casehub-parent | ✅ |
-| casehubio/quarkus-langchain4j | ✅ |
+*Unchanged — `git show HEAD~1:HANDOFF.md`*
