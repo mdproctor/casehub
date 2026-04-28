@@ -1,35 +1,53 @@
 # Session Handover — CaseHub
-**Date:** 2026-04-27
-**Branch (casehub-engine):** main (casehubio — `2758a4c`)
+**Date:** 2026-04-28
+**Branch (casehub-engine):** `fix/blackboard-mixed-workers-188` (open PR #190 against `casehubio/engine`)
 
 ---
 
 ## Where We Are
 
 **What landed this session:**
-- `CaseLifecycleEvent` fired for `WORKER_EXECUTION_STARTED` / `WORKER_EXECUTION_COMPLETED` — fixes Claudony lineage always returning empty (`59cee54`)
-- `casehub-testing` module — `@Alternative @Priority(1)` in-memory repos + `WorkResultSubmitter`; Jandex index missing so external consumers still need `casehub-persistence-memory` + `quarkus.arc.selected-alternatives` (`c0edb1c`)
-- `casehub-work-adapter` — CDI observer bridges `WorkItemLifecycleEvent` → `PlanItem` transitions via `BlackboardRegistry`; `callerRef` format `case:{caseId}/pi:{planItemId}`; choreography path only (`f440c80`)
-- NPE fix: `CaseContextChangedEventHandler` null-guards `getCaseMetaModel()` before `ConcurrentHashMap.get()` — filed casehubio/claudony#82 (`469200c`)
-- 4 garden entries: `workItem()` not public (use `source()`), `EXPIRED.isTerminal()` false, Jandex test jar, `JpaWorkloadProvider` ambiguity
+- All 10 PRs (#175–#184) merged to `casehubio/engine` main by trebelreel — SPI wiring, lifecycle events, casehub-testing, casehub-work-adapter, NPE fix, ADR-0006, CLAUDE.md, sessionMeta fix, CI fork gate
+- **WorkerProvisioner wiring designed** — spec at `docs/superpowers/specs/2026-04-27-worker-provisioner-wiring-design.md`, plan at `docs/superpowers/plans/2026-04-27-worker-provisioner-wiring.md` (15 tasks, full TDD pyramid)
+- **ADR-0006** — worker registration as normative act; discovery lineage maps to `causedByEntryId` chains; cross-referenced in Qhorus normative-ledger-design.md and message-type-redesign-design.md
+- **Fork discipline established** — all work via `mdproctor/engine` fork, one branch per concern, every commit linked to an issue
+- **casehub-connectors snapshotRepository fix** — missing `<snapshotRepository>` caused SNAPSHOT deploys to inherit parent registry URL (403); fixed and pushed direct to main
+- **PR #190 open** — `fix/blackboard-mixed-workers-188`: event-driven `MixedWorkersBlackboardTest` using `PlanItemCompletedEvent` carrying exact `planItemId`; CI running
+- **casehub-engine CLAUDE.md** — added blackboard event-driven test pattern + PR workflow section (on PR #190 branch)
+- Issue #187 created — future `WorkerCandidateSource` SPI chain inside `WorkerRegistry` (no plans to schedule)
 
-**Claudony #81 is now unblocked** — both upstreams (#79 + #80) are on main, published to GitHub Packages via CI.
+**pom.xml rename already done** — `distributionManagement` already shows `casehubio/casehub-engine`; GitHub repo rename is a separate admin task.
 
 ---
 
 ## Immediate Next Steps
 
-1. **Rename** `casehubio/engine` → `casehubio/casehub-engine`; update `pom.xml` `distributionManagement` URL
-2. **`casehub-quarkus/`** — not started, biggest remaining work
-3. **WorkerProvisioner wiring** — deferred; needs design (dynamic provisioning vs YAML-defined workers)
-4. **#22 (SLA)** — case-level and goal-level SLA not implemented; milestone SLA exists
+1. **Merge PR #190** (`fix/blackboard-mixed-workers-188`) — CI should be green; check and merge
+2. **Fork setup for remaining repos** — claudony, quarkus-qhorus, quarkus-ledger, quarkus-work, casehub-parent still push direct to org; all clean (no unmerged local commits)
+3. **WorkerProvisioner wiring implementation** — spec + plan ready; use `superpowers:subagent-driven-development` or `superpowers:executing-plans`; start with Task 1 (sealed `WorkerExecution` hierarchy)
+4. **`casehub-quarkus/`** — biggest remaining migration work, not started
+5. **#22 (SLA)** — case-level and goal-level SLA not implemented
 
 ---
 
 ## Key References
 
-*Unchanged — `git show HEAD~1:HANDOFF.md`*
+| What | Path |
+|---|---|
+| WorkerProvisioner wiring spec | `docs/superpowers/specs/2026-04-27-worker-provisioner-wiring-design.md` |
+| WorkerProvisioner wiring plan | `docs/superpowers/plans/2026-04-27-worker-provisioner-wiring.md` |
+| ADR-0006 | `casehub-engine/adr/0006-worker-registration-as-normative-act.md` |
+| Migration plan | `docs/superpowers/specs/2026-04-14-casehub-engine-migration-plan.md` |
+| Backup branch (fork reset) | `mdproctor/engine:backup/fork-main-2026-04-27` |
 
 ## Repo Build Status
 
-*Unchanged — `git show HEAD~1:HANDOFF.md`*
+| Repo | Status |
+|------|--------|
+| casehubio/engine | ✅ (all PRs merged) |
+| casehubio/quarkus-qhorus | ✅ |
+| casehubio/quarkus-ledger | ✅ |
+| casehubio/quarkus-work | ✅ |
+| casehubio/casehub-connectors | ✅ (snapshotRepository fix landed) |
+| casehubio/casehub-parent | ✅ |
+| casehubio/claudony | ✅ |
