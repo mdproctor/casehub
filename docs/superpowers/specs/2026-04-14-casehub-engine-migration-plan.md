@@ -107,8 +107,7 @@ None of the old casehub-specific items were ported across:
 
 | Item | Module | Notes |
 |---|---|---|
-| `ListenerEvaluator` | casehub-blackboard/ | Small — evaluates which workers are eligible based on CaseFile state. Plan put it here; not implemented. |
-| `IdempotencyService` TTL | casehub-resilience/ | Task submission dedup (separate from Quartz SHA256 job dedup). Not designed. |
+| `IdempotencyService` TTL | casehub-resilience/ | ✅ `casehub.idempotency.window` config + `findSchedulingEvents(after)` cutoff. Closes #193. |
 | Dead letter replay | casehub-resilience/ | DLQ infrastructure exists; replay mechanism not yet designed. |
 | `SubCaseBinding` | casehub-blackboard/ | `Binding` variant that spawns a child `CaseInstance`. `SubCase` exists but this Binding hook is missing. |
 
@@ -197,8 +196,6 @@ GitHub auto-redirects old clone URLs. Maven `distributionManagement` URL in `pom
 ## Priority Order for Next Sprint
 
 1. **Rename** `engine` → `casehub-engine` on GitHub + update pom.xml distributionManagement URL
-2. **`ListenerEvaluator`** in casehub-blackboard — small, unblocks cleaner blackboard semantics
-3. **#130** Quartz → Vert.x replacement — scheduler-quartz module elimination
-4. **#152 / #131** Worker Provisioner SPIs + WorkBroker integration — the active epics
+2. **#152 / #131** Worker Provisioner SPIs + WorkBroker integration — the active epics
 5. **`casehub-quarkus/`** — plan the extension before writing it; several open decisions (registry shim, TaskDefinition sugar, Dev Services scope)
 6. **`casehub-examples/`** — needed before archiving old casehub
