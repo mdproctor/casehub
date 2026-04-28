@@ -12,8 +12,8 @@
 - **ADR-0006** — worker registration as normative act; discovery lineage maps to `causedByEntryId` chains; cross-referenced in Qhorus normative-ledger-design.md and message-type-redesign-design.md
 - **Fork discipline established** — all work via `mdproctor/engine` fork, one branch per concern, every commit linked to an issue
 - **casehub-connectors snapshotRepository fix** — missing `<snapshotRepository>` caused SNAPSHOT deploys to inherit parent registry URL (403); fixed and pushed direct to main
-- **PR #190 open** — `fix/blackboard-mixed-workers-188`: event-driven `MixedWorkersBlackboardTest` using `PlanItemCompletedEvent` carrying exact `planItemId`; CI running
-- **casehub-engine CLAUDE.md** — added blackboard event-driven test pattern + PR workflow section (on PR #190 branch)
+- **PR #190 merged** — `fix/blackboard-mixed-workers-188`: event-driven `MixedWorkersBlackboardTest` — `PlanItemCompletedEvent` carries exact `planItemId`; eliminates timing flake
+- **casehub-engine CLAUDE.md** — blackboard event-driven test pattern + PR workflow section landed with #190
 - Issue #187 created — future `WorkerCandidateSource` SPI chain inside `WorkerRegistry` (no plans to schedule)
 
 **pom.xml rename already done** — `distributionManagement` already shows `casehubio/casehub-engine`; GitHub repo rename is a separate admin task.
@@ -22,8 +22,7 @@
 
 ## Immediate Next Steps
 
-1. **Merge PR #190** (`fix/blackboard-mixed-workers-188`) — CI should be green; check and merge
-2. **Fork setup for remaining repos** — claudony, quarkus-qhorus, quarkus-ledger, quarkus-work, casehub-parent still push direct to org; all clean (no unmerged local commits)
+1. **Fork setup for remaining repos** — claudony, quarkus-qhorus, quarkus-ledger, quarkus-work, casehub-parent still push direct to org; all clean (no unmerged local commits)
 3. **WorkerProvisioner wiring implementation** — spec + plan ready; use `superpowers:subagent-driven-development` or `superpowers:executing-plans`; start with Task 1 (sealed `WorkerExecution` hierarchy)
 4. **`casehub-quarkus/`** — biggest remaining migration work, not started
 5. **#22 (SLA)** — case-level and goal-level SLA not implemented
