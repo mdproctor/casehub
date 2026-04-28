@@ -108,7 +108,7 @@ None of the old casehub-specific items were ported across:
 | Item | Module | Notes |
 |---|---|---|
 | `IdempotencyService` TTL | casehub-resilience/ | ✅ `casehub.idempotency.window` config + `findSchedulingEvents(after)` cutoff. Closes #193. |
-| Dead letter replay | casehub-resilience/ | DLQ infrastructure exists; replay mechanism not yet designed. |
+| Dead letter replay | casehub-resilience/ | ✅ DeadLetterReplayService (explicit) + DeadLetterAutoReplayJob (@Scheduled, disabled by default). Closes #194. |
 | `SubCaseBinding` | casehub-blackboard/ | `Binding` variant that spawns a child `CaseInstance`. `SubCase` exists but this Binding hook is missing. |
 
 ### New modules not started
