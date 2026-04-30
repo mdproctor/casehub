@@ -23,3 +23,4 @@
 | [2026-04-27-mdp02-connecting-quarkus-work-blackboard.md](2026-04-27-mdp02-connecting-quarkus-work-blackboard.md) | 2026-04-27 | Bridging quarkus-work lifecycle events to CaseHub PlanItem transitions — callerRef routing, CDI surprises, adapter module |
 | [2026-04-27-mdp01-wiring-spis-lifecycle-control.md](2026-04-27-mdp01-wiring-spis-lifecycle-control.md) | 2026-04-27 | Wiring Worker Provisioner SPIs into the engine lifecycle and adding cancelCase/suspendCase/resumeCase to the public API |
 | [2026-04-29-mdp01-migration-gaps-closed.md](2026-04-29-mdp01-migration-gaps-closed.md) | 2026-04-29 | Three migration gaps closed: idempotency window, DLQ replay, SubCaseBinding; quarkus-ledger cascade failure and fix. |
+| [2026-04-30-mdp01-workaround-that-wasnt.md](2026-04-30-mdp01-workaround-that-wasnt.md) | 2026-04-30 | Misdiagnosed a sdk-java null output bug, got corrected by the maintainer, fixed it properly. |
