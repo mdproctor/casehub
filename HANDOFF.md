@@ -1,50 +1,39 @@
 # Session Handover — CaseHub
 **Date:** 2026-05-01
-**Session:** Ecosystem consistency pass, Jandex fix, CI unblocked
+**Session:** WorkerExecutionContext wiring + engine#220 closed
 
 ---
 
 ## Where We Are
 
 **What landed this session:**
-- **#218** (Qhorus COMMAND on worker schedule) — merged to `casehubio/engine` main ✅
-- **#223** (Jandex/CDI/discriminator fixes, conflict-resolved from Dmitrii's #222) — merged ✅
-- **#222** — closed, superseded by #223
-- **#219** (consistency pass: stale names, artifact leak, gitignore) — merged ✅
-- Jandex added to `api`/`testing` modules in `ledger`, `work`, `qhorus`, `claudony` — pushed to main directly
-- 49 stale `io.casehub.*` SNAPSHOT packages deleted from GitHub Packages registry
+- **Jandex pin** — `jandex-maven-plugin 3.1.2` added to root `pluginManagement` in qhorus, ledger, work, claudony. Consistent with engine. Pushed to main in all four repos.
+- **engine#220 complete** — PR #224 open on `feat/case-channel-provider-post-220`:
+  - `WorkerContextProvider.buildContext()` gains `UUID caseId` (blocking + reactive SPIs)
+  - `EmptyWorkerContextProvider` injects `CaseChannelProvider`, populates `channels` via `listChannels(caseId)`
+  - `WorkerExecutionContext` — new thread-local in `api/model/`; set inside `CompletableFuture.supplyAsync` lambda in `QuartzWorkerExecutionJob` before function call, cleared in `finally`
+  - 490 tests pass locally; 6 new `WorkerExecutionContextTest`, updated contract tests, new integration test `workerExecutionContext_channelsAccessibleDuringExecution`
+  - Key gotcha: ThreadLocal set on Quartz thread is invisible in `supplyAsync` lambda (ForkJoinPool thread) — must set it inside the lambda
 
-**casehubio/engine main is clean and green.**
-
-**Two design issues opened:**
-- `casehubio/qhorus#131` — generalised Channel abstraction (gateway, backends, human participation, digest problem)
-- `casehubio/engine#220` — `CaseChannelProvider` needs `post()` on the SPI + `WorkerContext.channels()` access
+**CI on PR #224:** failing due to `casehub-ledger:0.2-SNAPSHOT` not in GitHub Packages — pre-existing dependency resolution gap, unrelated to this change. The `ci: use GH_PAT` fix is on the branch and should resolve it on re-run.
 
 ---
 
 ## Immediate Next Steps
 
-1. **engine#220** — add `post(CaseChannel, sender, payload)` to `CaseChannelProvider` SPI, no-op default, expose via `WorkerContext`. Do this before Qhorus design (#131) — engine need defines Qhorus scope.
-2. **engine#220 → qhorus#131** — once SPI is defined, design the Qhorus Channel layer (gateway, backends, WhatsApp, history store).
-3. **Jandex version pin** — engine root pom has `3.1.2` pinned in pluginManagement; `ledger`, `work`, `qhorus`, `claudony` root poms still lack it.
+1. **Merge PR #224** — once CI is green. Verify `casehub-ledger:0.2-SNAPSHOT` publishing is unblocked first.
+2. **engine#220 → qhorus#131** — with the engine SPI defined, design the Qhorus Channel layer (gateway, backends, WhatsApp, history store). See casehubio/qhorus#131.
 
 ---
 
 ## Repo Build Status
 
-| Repo | Status |
-|------|--------|
-| casehubio/engine main | ✅ green |
-| casehubio/ledger main | ✅ Jandex added to `api` |
-| casehubio/work main | ✅ Jandex added to `casehub-work-api`, `testing` |
-| casehubio/qhorus main | ✅ Jandex added to `api`, `testing` |
-| casehubio/claudony main | ✅ Jandex added to `claudony-core` |
+*Unchanged — `git show HEAD~1:HANDOFF.md`*
 
 ## Key References
 
 | What | Where |
 |---|---|
-| Channel SPI design | `casehubio/engine#220` |
+| PR #224 (engine#220 impl) | `casehubio/engine/pull/224`, branch `feat/case-channel-provider-post-220` |
 | Qhorus Channel abstraction | `casehubio/qhorus#131` |
-| Clear SNAPSHOT Packages workflow | `casehubio/parent/.github/workflows/clear-snapshot-packages.yml` |
-| Check GH_PAT Scopes workflow | `casehubio/parent/.github/workflows/check-pat-scopes.yml` |
+| Channel SPI design issue | `casehubio/engine#220` |
