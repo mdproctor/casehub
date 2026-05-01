@@ -24,3 +24,4 @@
 | [2026-04-27-mdp01-wiring-spis-lifecycle-control.md](2026-04-27-mdp01-wiring-spis-lifecycle-control.md) | 2026-04-27 | Wiring Worker Provisioner SPIs into the engine lifecycle and adding cancelCase/suspendCase/resumeCase to the public API |
 | [2026-04-29-mdp01-migration-gaps-closed.md](2026-04-29-mdp01-migration-gaps-closed.md) | 2026-04-29 | Three migration gaps closed: idempotency window, DLQ replay, SubCaseBinding; quarkus-ledger cascade failure and fix. |
 | [2026-04-30-mdp01-workaround-that-wasnt.md](2026-04-30-mdp01-workaround-that-wasnt.md) | 2026-04-30 | Misdiagnosed a sdk-java null output bug, got corrected by the maintainer, fixed it properly. |
+| [2026-05-01-mdp01-workers-can-talk-back.md](2026-05-01-mdp01-workers-can-talk-back.md) | 2026-05-01 | WorkerExecutionContext thread-local: closing the channel access gap so workers can read their case channels at runtime. |
