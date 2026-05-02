@@ -42,6 +42,37 @@ These are artifacts of the development process, not history:
 
 ---
 
+## Merge similar commits into a unified message
+
+When two or more commits address the same concern — even if both have detailed, well-written
+messages — they can be merged into one if a single message can capture the full story more
+cleanly than two separate ones.
+
+**Signals that two commits should merge:**
+- Same scope and file set (`fix(blackboard): X` + `fix(blackboard): Y` both touching `PlanItem.java`)
+- Sequential commits that together form one logical change ("add field" + "wire field into handler")
+- Two `test:` commits for the same feature scenario (setup + assertion split across commits)
+- Two `feat:` commits that are clearly part one and part two of the same capability
+
+**How to write the unified message:**
+- Use the broader of the two scopes
+- Combine the key points from both messages into one description
+- If both had issue references, keep all of them
+- The unified message should be richer than either individual message alone
+
+**Example:**
+```
+MERGE ← feat(blackboard): add PlanItem strict lifecycle — markRunning/markCompleted
+MERGE ← feat(blackboard): PlanItem lifecycle validation — IllegalStateTransition guard
+INTO → feat(blackboard): PlanItem strict lifecycle with IllegalStateTransition guard —
+       markRunning/markCompleted enforce valid transitions; concurrent CAS prevents races
+```
+
+Do not merge commits from different features or scopes just because they are small.
+Merge only when the result tells a cleaner, more complete story than either commit alone.
+
+---
+
 ## Special cases
 
 **Revert chains:** `Revert X` + `X (attempt 2)` + `fix` → collapse to one commit with the
