@@ -38,7 +38,7 @@ These are artifacts of the development process, not history:
 | `fix(test): ...` where the same test class was fixed in the previous commit | Squash — it's the same test being hardened |
 | `build: wire ...` with a `Revert "build: wire ..."` following it | Both are noise — squash into the eventual working state |
 | Any commit with `< 5 lines changed` and no issue reference | Squash into preceding commit |
-| Multiple commits with near-identical messages on the same class/file | Keep the last (most complete), squash the earlier ones |
+| Multiple commits with near-identical messages on the same class/file | Identify the most complete commit, integrate any unique information from the others into its message, then squash the rest |
 
 ---
 
@@ -79,8 +79,8 @@ Merge only when the result tells a cleaner, more complete story than either comm
 final message, noting the approach that worked. Do not preserve the failed attempts.
 
 **Test hardening runs:** When 3+ commits touch the same test class (`fix(test): ...`
-repeatedly), keep only the last one. The earlier attempts add no information once the
-final version is known.
+repeatedly), identify the one with the most complete message, integrate any unique
+context from the others, and squash the rest into it.
 
 **CI/build fixups:** `ci: retrigger`, `build: bump`, `fix(ci): correct URL` — squash into
 the feature or fix they were unblocking, or discard if purely mechanical.
