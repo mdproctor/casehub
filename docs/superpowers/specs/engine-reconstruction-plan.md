@@ -18,7 +18,7 @@
 | Original commits on mdproctor branches (raw) | ~180 |
 | Proposed commits after curation | ~105 |
 
-> **Note on stacked PRs:** Several mdproctor PR series (e.g. #140–#144, #91–#100) used a stacked branch strategy where each branch contained all commits from the previous. In these cases, the "before" commits shown per PR are the unique commits added in that PR only (derived from GitHub PR commit lists), not the full branch log.
+> **Note on stacked PRs:** Several mdproctor PR series (e.g. #140–#144, #91–#100) used a stacked branch strategy where each branch contained all commits from the previous. The commits shown per PR are the unique commits added in that PR only (derived from GitHub PR commit lists), not the full branch log.
 
 > **Note on PRs #52, #53, #54:** These were opened on casehubio/engine branches and merged into casehubio/engine main. Their content was subsequently consolidated into PR #126 (from mdproctor/engine:main). Both the original casehubio merges and the mdproctor consolidation are documented. The reconstruction uses the PR #126 consolidated commit as the canonical entry.
 
@@ -28,126 +28,97 @@
 
 ## PR #1 — initial schema/models (2026-04-08) [TREBLEREEL]
 
-### Squash commit (unchanged)
-| SHA | Message |
-|-----|---------|
-| 761b8ca | initial schema/models |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `761b8ca` initial schema/models | TREBLEREEL (unchanged) | *(kept as-is)* |
 
 ---
 
 ## PR #24 — initial README (2026-04-09) [TREBLEREEL]
 
-### Squash commit (unchanged)
-| SHA | Message |
-|-----|---------|
-| ac51bd6 | initial README |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `ac51bd6` initial README | TREBLEREEL (unchanged) | *(kept as-is)* |
 
 ---
 
 ## PR #26 — Add GitHub Action to run Maven tests for pull requests, fixes #25 (2026-04-10) [TREBLEREEL]
 
-### Squash commit (unchanged)
-| SHA | Message |
-|-----|---------|
-| 9b31438 | Add GitHub Action to run Maven tests for pull requests, fixes #25 |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `9b31438` Add GitHub Action to run Maven tests for pull requests, fixes #25 | TREBLEREEL (unchanged) | *(kept as-is)* |
 
 ---
 
 ## PR #28 — Improve build configuration and code quality enforcement, fixes #27 (2026-04-13) [TREBLEREEL]
 
-### Squash commit (unchanged)
-| SHA | Message |
-|-----|---------|
-| 2162300 | Improve build configuration and code quality enforcement, fixes #27 |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `2162300` Improve build configuration and code quality enforcement, fixes #27 | TREBLEREEL (unchanged) | *(kept as-is)* |
 
 ---
 
 ## PR #32 — feat(engine): add LoopControl SPI for pluggable dispatch rule selection (2026-04-14) [MDPROCTOR]
 
-**Branch:** `feat/loop-control-spi` (origin and upstream)
+**Branch:** `feat/loop-control-spi`
 
-### Before (original commits)
-| SHA | Message |
-|-----|---------|
-| f488145 | feat(engine): add LoopControl SPI for pluggable dispatch rule selection |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | f488145 | feat(engine): add LoopControl SPI for pluggable dispatch rule selection |
-
-> Single meaningful commit — nothing to squash.
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `f488145` feat(engine): add LoopControl SPI for pluggable dispatch rule selection | ✅ KEEP | `feat(engine): add LoopControl SPI for pluggable dispatch rule selection` |
 
 ---
 
 ## PR #36 — Duplicate signal can trigger the same worker twice despite deduplication, fixes #29 (2026-04-14) [TREBLEREEL]
 
-### Squash commit (unchanged)
-| SHA | Message |
-|-----|---------|
-| 2e66a8d | Duplicate signal can trigger the same worker twice despite deduplication, fixes #29 |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `2e66a8d` Duplicate signal can trigger the same worker twice despite deduplication, fixes #29 | TREBLEREEL (unchanged) | *(kept as-is)* |
 
 ---
 
 ## PR #38 — refactor(api): rename DispatchRule → Binding, CaseHubDefinition → CaseDefinition (2026-04-14) [MDPROCTOR]
 
-**Branch:** `feat/rename-binding-casedefinition` (first merge of this branch — the rename work only)
+**Branch:** `feat/rename-binding-casedefinition` (first merge — rename work only)
 
-### Before (original commits)
-| SHA | Message |
-|-----|---------|
-| 2ca7bfb | refactor(api): rename DispatchRule → Binding, CaseHubDefinition → CaseDefinition |
-| 441213d | chore: remove .claude/ from tracking, add to .gitignore |
-| 5f356b0 | docs(api): add Javadoc clarifying Goal vs Milestone distinction and unified Milestone design |
-| 5ac72ea | refactor(schema): rename CaseHubDefinition.yaml → CaseDefinition.yaml, DispatchRule → Binding |
-| 161bdfd | refactor(api): rename getRules()/rules() → getBindings()/bindings() on CaseDefinition |
-| 7a75233 | test: comprehensive coverage pass — model builders, StateContext, ValidationResult, GoalExpression |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `2ca7bfb` refactor(api): rename DispatchRule → Binding, CaseHubDefinition → CaseDefinition | ✅ KEEP | `refactor(api): rename DispatchRule → Binding, CaseHubDefinition → CaseDefinition` (unified with 441213d + 5ac72ea + 5f356b0) |
+| `441213d` chore: remove .claude/ from tracking, add to .gitignore | 🔽 SQUASH ↑ | *(absorbed — < 5 lines, no issue ref)* |
+| `5f356b0` docs(api): add Javadoc clarifying Goal vs Milestone distinction and unified Milestone design | 🔽 SQUASH ↑ | *(absorbed — Javadoc follows rename commit)* |
+| `5ac72ea` refactor(schema): rename CaseHubDefinition.yaml → CaseDefinition.yaml, DispatchRule → Binding | 🔀 MERGE with 2ca7bfb | *(unified — same rename scope)* |
+| `161bdfd` refactor(api): rename getRules()/rules() → getBindings()/bindings() on CaseDefinition | ✅ KEEP | `refactor(api): rename getRules()/rules() → getBindings()/bindings() on CaseDefinition` |
+| `7a75233` test: comprehensive coverage pass — model builders, StateContext, ValidationResult, GoalExpression | ✅ KEEP | `test: comprehensive coverage pass — model builders, StateContext, ValidationResult, GoalExpression` |
 
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | 2ca7bfb | refactor(api): rename DispatchRule → Binding, CaseHubDefinition → CaseDefinition |
-| SQUASH into above | 441213d | chore: remove .claude/ from tracking, add to .gitignore — < 5 lines, no issue ref |
-| MERGE with above | 5ac72ea | refactor(schema): rename CaseHubDefinition.yaml → CaseDefinition.yaml, DispatchRule → Binding — same rename scope as 2ca7bfb |
-| SQUASH into above | 5f356b0 | docs(api): add Javadoc clarifying Goal vs Milestone distinction — follows rename commit |
-| KEEP | 161bdfd | refactor(api): rename getRules()/rules() → getBindings()/bindings() on CaseDefinition |
-| KEEP | 7a75233 | test: comprehensive coverage pass — model builders, StateContext, ValidationResult, GoalExpression |
-
-> **Result:** 3 commits. 2ca7bfb+441213d+5ac72ea+5f356b0 → unified rename commit. 161bdfd (API method rename). 7a75233 (test coverage).
+> **Result:** 3 commits.
 
 ---
 
-## PR #40 — refactor(api): rename DispatchRule → Binding, CaseHubDefinition → CaseDefinition (follow-up) (2026-04-14) [TREBLEREEL]
+## PR #40 — refactor(api): rename follow-up (2026-04-14) [TREBLEREEL]
 
-### Squash commit (unchanged)
-| SHA | Message |
-|-----|---------|
-| 65e5f6a | #38 follow-up commit |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `65e5f6a` #38 follow-up commit | TREBLEREEL (unchanged) | *(kept as-is)* |
 
 ---
 
 ## PR #41 — Lambda expression evaluator (2026-04-14) [TREBLEREEL]
 
-> PR #41 was merged as a regular merge (not squash). Two commits went in.
+> PR #41 was merged as a regular merge (not squash). Treated as single treblereel unit.
 
-### Squash commit (unchanged — treating as single unit)
-| SHA | Message |
-|-----|---------|
-| 95db452 | feat(api): unseal ExpressionEvaluator, add LambdaExpressionEvaluator |
-| 3734f95 | Rebase branch, resolve conflicts, and restore build |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `95db452` feat(api): unseal ExpressionEvaluator, add LambdaExpressionEvaluator | TREBLEREEL (unchanged) | *(kept as-is)* |
+| `3734f95` Rebase branch, resolve conflicts, and restore build | TREBLEREEL (unchanged) | *(kept as-is)* |
 
 ---
 
 ## PR #42 — 35 refactor changes (2026-04-14) [TREBLEREEL]
 
-> The PR #42 (35_Refactor_changes) squash commit in main_20260502 corresponds to build-rebase work.
+> PR #42 squash commit is the same SHA as the PR #41 rebase commit — same branch context.
 
-### Squash commit (unchanged)
-| SHA | Message |
-|-----|---------|
-| 3734f95 | Rebase branch, resolve conflicts, and restore build |
-
-> **Note:** This commit and the PR #41 merge-commit `3734f95` appear to be the same — PR #42 was a rebase+conflict-resolve on the same branch context. Treated as a single treblereel-owned commit.
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `3734f95` Rebase branch, resolve conflicts, and restore build | TREBLEREEL (unchanged) | *(kept as-is — same SHA as PR #41 merge commit)* |
 
 ---
 
@@ -155,53 +126,28 @@
 
 **Branch:** `feat/rename-binding-casedefinition` (second merge — blackboard scaffold added after PR #38 landed)
 
-### Before (original commits)
-| SHA | Message |
-|-----|---------|
-| 51e60d9 | feat(api): promote CaseStatus to public API, align with CNCF Serverless Workflow |
-| 1913332 | fix(engine): use merge() not persist() in WorkerRetriesExhaustedEventHandler |
-| e81161c | test(engine): add CaseStatus lifecycle and FAULTED state coverage |
-| fc53944 | fix(api): requireNonNull on String condition overloads in Milestone and Goal builders |
-| 086a901 | refactor(api): rename StateContext → CaseContext throughout |
-| 7b0745e | feat(blackboard): scaffold casehub-blackboard module |
-| 68739ad | feat(api): add PlanElement marker interface; Worker implements it |
-| c30e27e | feat(api): add lambda Predicate overload to Milestone and Goal condition builders |
-| f8d2623 | feat(blackboard): add PlanItemStatus lifecycle enum |
-| 42fd911 | feat(blackboard): add PlanItem<T> generic lifecycle container |
-| 3624609 | feat(blackboard): add Stage type with three-overload condition builder |
-| aec682c | feat(blackboard): add SubCase + SubCaseCompletionStrategy |
-| 6f3d197 | feat(blackboard): add CasePlanModel and CasePlanModelRegistry |
-| e2d284a | feat(blackboard): add PlanningStrategy SPI + DefaultPlanningStrategy |
-| ae785f0 | feat(api): add PlanExecutionContext; enrich LoopControl.select() signature |
-| f22b805 | feat(blackboard): add PlanningStrategyLoopControl — Stage-aware LoopControl bridge |
-| 79843d2 | feat(engine): add parentPlanItemId to CaseInstance for sub-case wiring |
-| d6ad453 | test(blackboard): add nested stage integration tests |
-| eba658e | fix(engine): correct logger class in CaseContextChangedEventHandler after rebase |
-| 0ba9410 | chore: remove beans.xml and migration files from PR #49 |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | 51e60d9 | feat(api): promote CaseStatus to public API, align with CNCF Serverless Workflow — Closes #46 Refs #14 |
-| MERGE with above | 1913332 | fix(engine): use merge() not persist() in WorkerRetriesExhaustedEventHandler — same PR, small fix |
-| SQUASH into above | e81161c | test(engine): add CaseStatus lifecycle and FAULTED state coverage — follows the feat |
-| SQUASH into above | fc53944 | fix(api): requireNonNull on String condition overloads — < 5 lines, defensive fix |
-| KEEP | 086a901 | refactor(api): rename StateContext → CaseContext throughout |
-| KEEP | 7b0745e | feat(blackboard): scaffold casehub-blackboard module |
-| SQUASH into above | 68739ad | feat(api): add PlanElement marker interface; Worker implements it — < 5 lines, API marker only |
-| KEEP | c30e27e | feat(api): add lambda Predicate overload to Milestone and Goal condition builders |
-| KEEP | f8d2623 | feat(blackboard): add PlanItemStatus lifecycle enum |
-| KEEP | 42fd911 | feat(blackboard): add PlanItem<T> generic lifecycle container |
-| KEEP | 3624609 | feat(blackboard): add Stage type with three-overload condition builder |
-| KEEP | aec682c | feat(blackboard): add SubCase + SubCaseCompletionStrategy |
-| KEEP | 6f3d197 | feat(blackboard): add CasePlanModel and CasePlanModelRegistry |
-| KEEP | e2d284a | feat(blackboard): add PlanningStrategy SPI + DefaultPlanningStrategy |
-| MERGE with above | ae785f0 | feat(api): add PlanExecutionContext; enrich LoopControl.select() signature — wires PlanExecutionContext into PlanningStrategy |
-| KEEP | f22b805 | feat(blackboard): add PlanningStrategyLoopControl — Stage-aware LoopControl bridge |
-| MERGE with above | 79843d2 | feat(engine): add parentPlanItemId to CaseInstance for sub-case wiring — SubCase field wiring |
-| KEEP | d6ad453 | test(blackboard): add nested stage integration tests |
-| SQUASH into above | eba658e | fix(engine): correct logger class in CaseContextChangedEventHandler after rebase — < 5 lines |
-| SQUASH into above | 0ba9410 | chore: remove beans.xml and migration files from PR #49 — cleanup artifact |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `51e60d9` feat(api): promote CaseStatus to public API, align with CNCF Serverless Workflow | ✅ KEEP | `feat(api): promote CaseStatus to public API, align with CNCF Serverless Workflow — Closes #46 Refs #14` (unified with 1913332 + e81161c + fc53944) |
+| `1913332` fix(engine): use merge() not persist() in WorkerRetriesExhaustedEventHandler | 🔀 MERGE with 51e60d9 | *(unified — same PR, small fix)* |
+| `e81161c` test(engine): add CaseStatus lifecycle and FAULTED state coverage | 🔽 SQUASH ↑ | *(absorbed — follows the feat)* |
+| `fc53944` fix(api): requireNonNull on String condition overloads in Milestone and Goal builders | 🔽 SQUASH ↑ | *(absorbed — < 5 lines, defensive fix)* |
+| `086a901` refactor(api): rename StateContext → CaseContext throughout | ✅ KEEP | `refactor(api): rename StateContext → CaseContext throughout` |
+| `7b0745e` feat(blackboard): scaffold casehub-blackboard module | ✅ KEEP | `feat(blackboard): scaffold casehub-blackboard module` (unified with 68739ad) |
+| `68739ad` feat(api): add PlanElement marker interface; Worker implements it | 🔽 SQUASH ↑ | *(absorbed — < 5 lines, API marker only)* |
+| `c30e27e` feat(api): add lambda Predicate overload to Milestone and Goal condition builders | ✅ KEEP | `feat(api): add lambda Predicate overload to Milestone and Goal condition builders` |
+| `f8d2623` feat(blackboard): add PlanItemStatus lifecycle enum | ✅ KEEP | `feat(blackboard): add PlanItemStatus lifecycle enum` |
+| `42fd911` feat(blackboard): add PlanItem<T> generic lifecycle container | ✅ KEEP | `feat(blackboard): add PlanItem<T> generic lifecycle container` |
+| `3624609` feat(blackboard): add Stage type with three-overload condition builder | ✅ KEEP | `feat(blackboard): add Stage type with three-overload condition builder` |
+| `aec682c` feat(blackboard): add SubCase + SubCaseCompletionStrategy | ✅ KEEP | `feat(blackboard): add SubCase + SubCaseCompletionStrategy` |
+| `6f3d197` feat(blackboard): add CasePlanModel and CasePlanModelRegistry | ✅ KEEP | `feat(blackboard): add CasePlanModel and CasePlanModelRegistry` |
+| `e2d284a` feat(blackboard): add PlanningStrategy SPI + DefaultPlanningStrategy | ✅ KEEP | `feat(blackboard): add PlanningStrategy SPI + DefaultPlanningStrategy` (unified with ae785f0) |
+| `ae785f0` feat(api): add PlanExecutionContext; enrich LoopControl.select() signature | 🔀 MERGE with e2d284a | *(unified — wires PlanExecutionContext into PlanningStrategy)* |
+| `f22b805` feat(blackboard): add PlanningStrategyLoopControl — Stage-aware LoopControl bridge | ✅ KEEP | `feat(blackboard): add PlanningStrategyLoopControl — Stage-aware LoopControl bridge` (unified with 79843d2) |
+| `79843d2` feat(engine): add parentPlanItemId to CaseInstance for sub-case wiring | 🔀 MERGE with f22b805 | *(unified — SubCase field wiring)* |
+| `d6ad453` test(blackboard): add nested stage integration tests | ✅ KEEP | `test(blackboard): add nested stage integration tests` (unified with eba658e + 0ba9410) |
+| `eba658e` fix(engine): correct logger class in CaseContextChangedEventHandler after rebase | 🔽 SQUASH ↑ | *(absorbed — < 5 lines)* |
+| `0ba9410` chore: remove beans.xml and migration files from PR #49 | 🔽 SQUASH ↑ | *(absorbed — cleanup artifact)* |
 
 > **Result:** ~12 commits. Large but unavoidable — this PR encompassed CaseStatus migration + entire blackboard scaffold.
 
@@ -209,233 +155,168 @@
 
 ## PR #52 — feat(resilience): backoff strategies, WorkerExecutionGuard SPI, module scaffold (2026-04-15) [MDPROCTOR — casehubio/engine branch]
 
-> **Note:** PRs #52, #53, #54 were opened directly on casehubio/engine and merged into casehubio/engine main in rapid succession (within 21 minutes). Their content was subsequently consolidated into PR #126 which became the canonical resilience commit in `main_20260502`. These three PRs are documented for completeness but their individual squash commits are NOT present in `main_20260502` — only PR #126's commit is.
+> **Note:** PRs #52, #53, #54 were opened directly on casehubio/engine and merged in rapid succession. Content was consolidated into PR #126 which is canonical in `main_20260502`. These PRs are documented for completeness but their individual squash commits are NOT in `main_20260502`.
 
-### Before (original commits — branch-unique only)
-| SHA | Message |
-|-----|---------|
-| b30c1c2 | feat(resilience): add backoff strategies, WorkerExecutionGuard SPI, module scaffold |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| SUPERSEDED by PR #126 | b30c1c2 | Content folded into PR #126 consolidated resilience commit |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `b30c1c2` feat(resilience): add backoff strategies, WorkerExecutionGuard SPI, module scaffold | ❌ DROP (superseded by PR #126) | *(content folded into PR #126 consolidated resilience commit)* |
 
 ---
 
 ## PR #53 — feat(resilience): Dead Letter Queue — store, query, replay, discard (2026-04-15) [MDPROCTOR — casehubio/engine branch]
 
-### Before (original commits — branch-unique only)
-| SHA | Message |
-|-----|---------|
-| 959e3a4 | feat(resilience): add Dead Letter Queue — store, query, replay, discard |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| SUPERSEDED by PR #126 | 959e3a4 | Content folded into PR #126 consolidated resilience commit |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `959e3a4` feat(resilience): add Dead Letter Queue — store, query, replay, discard | ❌ DROP (superseded by PR #126) | *(content folded into PR #126 consolidated resilience commit)* |
 
 ---
 
 ## PR #54 — feat(resilience): PoisonPill detection — sliding-window quarantine, scheduler skip (2026-04-15) [MDPROCTOR — casehubio/engine branch]
 
-### Before (original commits — branch-unique only)
-| SHA | Message |
-|-----|---------|
-| 2ad38d9 | feat(resilience): add PoisonPill detection — sliding-window quarantine, scheduler skip |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| SUPERSEDED by PR #126 | 2ad38d9 | Content folded into PR #126 consolidated resilience commit |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `2ad38d9` feat(resilience): add PoisonPill detection — sliding-window quarantine, scheduler skip | ❌ DROP (superseded by PR #126) | *(content folded into PR #126 consolidated resilience commit)* |
 
 ---
 
 ## PR #57 — wrong class declared in logger in CaseStateContextChangedEventHandler (2026-04-15) [TREBLEREEL]
 
-### Squash commit (unchanged)
-| SHA | Message |
-|-----|---------|
-| 78b1378 | wrong class decalred in the logger in CaseStateContextChangedEventHandler (#57) |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `78b1378` wrong class decalred in the logger in CaseStateContextChangedEventHandler (#57) | TREBLEREEL (unchanged) | *(kept as-is)* |
 
 ---
 
 ## PR #58 — fix(engine): improve signal deduplication and worker recovery (2026-04-15) [TREBLEREEL]
 
-### Squash commit (unchanged)
-| SHA | Message |
-|-----|---------|
-| 66330ef | - introduce CaseContext.applyAndDiff() to compute diffs as part of the write operation (#58) |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `66330ef` - introduce CaseContext.applyAndDiff() to compute diffs as part of the write operation (#58) | TREBLEREEL (unchanged) | *(kept as-is)* |
 
 ---
 
 ## PR #59 — bump gh_actions to the latest (2026-04-15) [TREBLEREEL]
 
-### Squash commit (unchanged)
-| SHA | Message |
-|-----|---------|
-| 1cca5e3 | bump gh_actions to the latest (#59) |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `1cca5e3` bump gh_actions to the latest (#59) | TREBLEREEL (unchanged) | *(kept as-is)* |
 
 ---
 
 ## PR #60 — Rename binding casedefinition rebased main (2026-04-15) [TREBLEREEL]
 
-> **Note:** PR #60 was merged at 2026-04-15T22:15:05Z but its content does not appear as a distinct commit in `main_20260502`. The rename work was superseded by PR #62 (another rebase of the same rename). Treated as superseded.
+> **Note:** Content superseded by PR #62. No distinct commit in `main_20260502`.
 
-### Squash commit (unchanged)
-| SHA | Message |
-|-----|---------|
-| (superseded) | Rename binding casedefinition rebased main — content absorbed into PR #62 |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| *(superseded)* Rename binding casedefinition rebased main | ❌ DROP (superseded by PR #62) | *(content absorbed into PR #62)* |
 
 ---
 
 ## PR #61 — feat(engine): enrich WORKER_EXECUTION_COMPLETED with ContextDiffStrategy (2026-04-15) [TREBLEREEL]
 
-> **Note:** PR #61 was merged at 2026-04-15T22:54:08Z. The ContextDiffStrategy commits (ContextDiffStrategy SPI, TopLevelContextDiffStrategy, JsonPatchContextDiffStrategy, enrichment) exist on upstream branches but do not appear as distinct commits in `main_20260502` — they were absorbed into subsequent rebases by treblereel.
+> **Note:** ContextDiffStrategy commits exist on upstream branches but do not appear as distinct commits in `main_20260502` — absorbed into subsequent treblereel rebases.
 
-### Squash commit (unchanged)
-| SHA | Message |
-|-----|---------|
-| (absorbed) | feat(engine): enrich WORKER_EXECUTION_COMPLETED with ContextDiffStrategy — content folded into PR #62 rebase |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| *(absorbed)* feat(engine): enrich WORKER_EXECUTION_COMPLETED with ContextDiffStrategy | ❌ DROP (absorbed into PR #62 rebase) | *(content folded into PR #62)* |
 
 ---
 
 ## PR #62 — Rename binding casedefinitio rebased (2026-04-15) [TREBLEREEL]
 
-### Squash commit (unchanged)
-| SHA | Message |
-|-----|---------|
-| 5b264c1 | Rename binding casedefinitio rebased (#62) |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `5b264c1` Rename binding casedefinitio rebased (#62) | TREBLEREEL (unchanged) | *(kept as-is)* |
 
 ---
 
 ## PR #65 — feat(engine): add repository SPI interfaces for persistence decoupling (2026-04-16) [MDPROCTOR]
 
-**Branch:** `feat/persistence/spi` (origin)
+**Branch:** `feat/persistence/spi`
 
-### Before (original commits)
-| SHA | Message |
-|-----|---------|
-| 1f5ace9 | feat(engine): add CaseMetaModelRepository, CaseInstanceRepository, EventLogRepository SPI interfaces |
-| 791ffbe | docs(engine): align findByKey Javadoc null-return wording |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `1f5ace9` feat(engine): add CaseMetaModelRepository, CaseInstanceRepository, EventLogRepository SPI interfaces | ✅ KEEP | `feat(engine): add CaseMetaModelRepository, CaseInstanceRepository, EventLogRepository SPI interfaces` |
+| `791ffbe` docs(engine): align findByKey Javadoc null-return wording | 🔽 SQUASH ↑ | *(absorbed — Javadoc fixup follows feature; squash-policy canonical example)* |
 
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | 1f5ace9 | feat(engine): add CaseMetaModelRepository, CaseInstanceRepository, EventLogRepository SPI interfaces |
-| SQUASH into above | 791ffbe | docs(engine): align findByKey Javadoc null-return wording — Javadoc fixup follows feature (squash policy example) |
-
-> **Result:** 1 commit. The Javadoc alignment is the canonical squash-policy example.
+> **Result:** 1 commit.
 
 ---
 
 ## PR #66 — feat(persistence-hibernate): scaffold module + JPA entity classes (2026-04-16) [MDPROCTOR]
 
-**Branch:** `feat/persistence/hibernate-entities` (origin)
+**Branch:** `feat/persistence/hibernate-entities`
 
-### Before (original commits — unique to this branch beyond PR #65)
-| SHA | Message |
-|-----|---------|
-| c7ce1de | chore(build): scaffold casehub-persistence-hibernate module |
-| 0990374 | feat(persistence-hibernate): add JPA entity classes |
-| 58d0f02 | fix(persistence-hibernate): add missing length=50 on CaseInstanceEntity.state column |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `c7ce1de` chore(build): scaffold casehub-persistence-hibernate module | 🔀 MERGE with 0990374 | *(unified — scaffold alone is noise)* |
+| `0990374` feat(persistence-hibernate): add JPA entity classes | ✅ KEEP | `feat(persistence-hibernate): scaffold module + JPA entity classes` (unified with c7ce1de + 58d0f02) |
+| `58d0f02` fix(persistence-hibernate): add missing length=50 on CaseInstanceEntity.state column | 🔽 SQUASH ↑ | *(absorbed — < 5 lines, same entity)* |
 
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| MERGE with next | c7ce1de | chore(build): scaffold casehub-persistence-hibernate module — scaffold alone is noise |
-| KEEP | 0990374 | feat(persistence-hibernate): scaffold module + JPA entity classes — unified: includes scaffold |
-| SQUASH into above | 58d0f02 | fix(persistence-hibernate): add missing length=50 on CaseInstanceEntity.state column — < 5 lines, same entity |
-
-> **Result:** 1 commit. Scaffold + entities + length fix unified into single feat commit.
+> **Result:** 1 commit.
 
 ---
 
 ## PR #71 — feat(persistence-hibernate): JPA repository implementations + 17 integration tests (2026-04-16) [TREBLEREEL]
 
-### Squash commit (unchanged)
-| SHA | Message |
-|-----|---------|
-| 76eed17 | feat(persistence-hibernate): JPA repository implementations + 17 integration tests (#71) |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `76eed17` feat(persistence-hibernate): JPA repository implementations + 17 integration tests (#71) | TREBLEREEL (unchanged) | *(kept as-is)* |
 
 ---
 
 ## PR #72 — feat(persistence-memory): in-memory SPI implementations — no Docker, no PostgreSQL (2026-04-19) [MDPROCTOR]
 
-**Branch:** `feat/persistence/memory-clean` (origin)
+**Branch:** `feat/persistence/memory-clean`
 
-### Before (original commits)
-| SHA | Message |
-|-----|---------|
-| 3fd7d1d | chore(build): scaffold casehub-persistence-memory module |
-| 5b6c1c1 | feat(persistence-memory): add InMemoryEventLogRepository with 12 unit tests |
-| 9b374a2 | feat(persistence-memory): add InMemoryCaseMetaModelRepository with 7 unit tests |
-| e7bc4d2 | fix(persistence-memory): guard id assignment in InMemoryCaseMetaModelRepository |
-| 25fa1fb | feat(persistence-memory): add InMemoryCaseInstanceRepository with 9 unit tests |
-| e26cd20 | fix(persistence-memory): throw IllegalStateException in update() for unknown UUID |
-| 441e8c4 | fix(tests): correct test isolation for signal dedup and primitive signal tests |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `3fd7d1d` chore(build): scaffold casehub-persistence-memory module | 🔀 MERGE with 5b6c1c1 | *(unified — scaffold alone is noise)* |
+| `5b6c1c1` feat(persistence-memory): add InMemoryEventLogRepository with 12 unit tests | ✅ KEEP | `feat(persistence-memory): scaffold module + InMemoryEventLogRepository with 12 unit tests` (unified with 3fd7d1d) |
+| `9b374a2` feat(persistence-memory): add InMemoryCaseMetaModelRepository with 7 unit tests | ✅ KEEP | `feat(persistence-memory): add InMemoryCaseMetaModelRepository with 7 unit tests` (unified with e7bc4d2) |
+| `e7bc4d2` fix(persistence-memory): guard id assignment in InMemoryCaseMetaModelRepository | 🔀 MERGE with 9b374a2 | *(unified — same class hardened in same sitting)* |
+| `25fa1fb` feat(persistence-memory): add InMemoryCaseInstanceRepository with 9 unit tests | ✅ KEEP | `feat(persistence-memory): add InMemoryCaseInstanceRepository with 9 unit tests` (unified with e26cd20) |
+| `e26cd20` fix(persistence-memory): throw IllegalStateException in update() for unknown UUID | 🔀 MERGE with 25fa1fb | *(unified — same class hardened)* |
+| `441e8c4` fix(tests): correct test isolation for signal dedup and primitive signal tests | ✅ KEEP | `fix(tests): correct test isolation for signal dedup and primitive signal tests` |
 
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| SQUASH into next | 3fd7d1d | chore(build): scaffold casehub-persistence-memory module — scaffold alone is noise |
-| KEEP | 5b6c1c1 | feat(persistence-memory): scaffold module + InMemoryEventLogRepository with 12 unit tests |
-| KEEP | 9b374a2 | feat(persistence-memory): add InMemoryCaseMetaModelRepository with 7 unit tests |
-| MERGE with above | e7bc4d2 | fix(persistence-memory): guard id assignment in InMemoryCaseMetaModelRepository — same class hardened in same sitting |
-| KEEP | 25fa1fb | feat(persistence-memory): add InMemoryCaseInstanceRepository with 9 unit tests |
-| MERGE with above | e26cd20 | fix(persistence-memory): throw IllegalStateException in update() for unknown UUID — same class hardened |
-| KEEP | 441e8c4 | fix(tests): correct test isolation for signal dedup and primitive signal tests |
-
-> **Result:** 4 commits. Each repository gets one entry; test isolation fix standalone.
+> **Result:** 4 commits.
 
 ---
 
 ## PR #74 — Serialize concurrent signal processing with Vert.x local lock (2026-04-20) [TREBLEREEL]
 
-### Squash commit (unchanged)
-| SHA | Message |
-|-----|---------|
-| 7c2372a | Description: (#74) |
-
-> **Note:** Squash message is low-quality ("Description:"). Content: serialize concurrent signal processing with Vert.x local lock. The author should consider improving the squash message during reconstruction.
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `7c2372a` Description: (#74) | TREBLEREEL (unchanged) | *(kept as-is — low-quality message; content: serialize concurrent signal processing with Vert.x local lock)* |
 
 ---
 
 ## PR #85 — Feat/persistence/engine decoupling (2026-04-20) [TREBLEREEL]
 
-### Squash commit (unchanged)
-| SHA | Message |
-|-----|---------|
-| 49dc32f | Feat/persistence/engine decoupling (#85) |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `49dc32f` Feat/persistence/engine decoupling (#85) | TREBLEREEL (unchanged) | *(kept as-is — title-case artifact from branch name)* |
 
 ---
 
 ## PR #86 — test(engine): add Maven profiles for dual-persistence testing (hibernate/memory) (2026-04-21) [TREBLEREEL]
 
-### Squash commit (unchanged)
-| SHA | Message |
-|-----|---------|
-| e880f73 | test(engine): add Maven profiles for dual-persistence testing (hibernate/memory) (#86) |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `e880f73` test(engine): add Maven profiles for dual-persistence testing (hibernate/memory) (#86) | TREBLEREEL (unchanged) | *(kept as-is)* |
 
 ---
 
 ## PR #88 — feat(api): make LoopControl.select() return Uni<List<Binding>> [1/3] (2026-04-21) [MDPROCTOR]
 
-**Branch:** `feat/bb-1-async-loop-control` (origin)
+**Branch:** `feat/bb-1-async-loop-control`
 
-### Before (original commits)
-| SHA | Message |
-|-----|---------|
-| 8dd0399 | feat(api): make LoopControl.select() return Uni<List<Binding>> (casehubio/engine#76) |
-| ae923d4 | fix: update PlanningStrategyLoopControl to return Uni<List<Binding>> |
-| dfc5185 | docs(claude): document persistence-memory profile and full-reactor compile check |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | 8dd0399 | feat(api): make LoopControl.select() return Uni<List<Binding>> — Refs #76 |
-| SQUASH into above | ae923d4 | fix: update PlanningStrategyLoopControl to return Uni<List<Binding>> — same-class fixup of the feat |
-| SQUASH | dfc5185 | docs(claude): document persistence-memory profile — CLAUDE.md maintenance, squash (no issue ref, < 5 significant lines) |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `8dd0399` feat(api): make LoopControl.select() return Uni<List<Binding>> (casehubio/engine#76) | ✅ KEEP | `feat(api): make LoopControl.select() return Uni<List<Binding>> — Refs #76` (unified with ae923d4 + dfc5185) |
+| `ae923d4` fix: update PlanningStrategyLoopControl to return Uni<List<Binding>> | 🔽 SQUASH ↑ | *(absorbed — same-class fixup of the feat)* |
+| `dfc5185` docs(claude): document persistence-memory profile and full-reactor compile check | 🔽 SQUASH ↑ | *(absorbed — CLAUDE.md maintenance, no issue ref, < 5 significant lines)* |
 
 > **Result:** 1 commit.
 
@@ -443,19 +324,12 @@
 
 ## PR #89 — feat(blackboard): data model — PlanItem, CasePlanModel, Stage, event records [2/3] (2026-04-21) [MDPROCTOR]
 
-**Branch:** `feat/bb-2-data-model` (origin)
+**Branch:** `feat/bb-2-data-model`
 
-### Before (original commits — unique to this PR)
-| SHA | Message |
-|-----|---------|
-| 75b33ba | feat(blackboard): data model — PlanItem, CasePlanModel, Stage, event records (casehubio/engine#76) |
-| 3336f28 | ci: trigger CI after rebase onto updated PR #88 branch |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | 75b33ba | feat(blackboard): data model — PlanItem, CasePlanModel, Stage, event records — Refs #76 |
-| SQUASH | 3336f28 | ci: trigger CI after rebase — CI/build fixup, pure noise |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `75b33ba` feat(blackboard): data model — PlanItem, CasePlanModel, Stage, event records (casehubio/engine#76) | ✅ KEEP | `feat(blackboard): data model — PlanItem, CasePlanModel, Stage, event records — Refs #76` |
+| `3336f28` ci: trigger CI after rebase onto updated PR #88 branch | 🔽 SQUASH ↑ | *(absorbed — CI/build fixup, pure noise)* |
 
 > **Result:** 1 commit.
 
@@ -463,19 +337,12 @@
 
 ## PR #90 — feat(blackboard): orchestration layer — PlanningStrategy, handlers, integration tests [3/3] (2026-04-22) [MDPROCTOR]
 
-**Branch:** `feat/bb-3-orchestration` (origin)
+**Branch:** `feat/bb-3-orchestration`
 
-### Before (original commits — unique to this PR)
-| SHA | Message |
-|-----|---------|
-| 40ca1fb | feat(blackboard): orchestration layer — PlanningStrategy, handlers, integration tests (casehubio/engine#76) |
-| 9546a4c | docs(claude): add casehub-blackboard module conventions and test patterns |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | 40ca1fb | feat(blackboard): orchestration layer — PlanningStrategy, handlers, integration tests — Refs #76 |
-| SQUASH | 9546a4c | docs(claude): casehub-blackboard conventions — CLAUDE.md maintenance, no issue ref |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `40ca1fb` feat(blackboard): orchestration layer — PlanningStrategy, handlers, integration tests (casehubio/engine#76) | ✅ KEEP | `feat(blackboard): orchestration layer — PlanningStrategy, handlers, integration tests — Refs #76` |
+| `9546a4c` docs(claude): add casehub-blackboard module conventions and test patterns | 🔽 SQUASH ↑ | *(absorbed — CLAUDE.md maintenance, no issue ref)* |
 
 > **Result:** 1 commit.
 
@@ -483,61 +350,43 @@
 
 ## PR #124 — add '/rebase' github action trigger (2026-04-21) [TREBLEREEL]
 
-### Squash commit (unchanged)
-| SHA | Message |
-|-----|---------|
-| c4a2600 | add '/rebase' github action trigger (#124) |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `c4a2600` add '/rebase' github action trigger (#124) | TREBLEREEL (unchanged) | *(kept as-is)* |
 
 ---
 
 ## PR #125 — fix(ci): handle fork PRs in rebase workflow (2026-04-21) [TREBLEREEL]
 
-### Squash commit (unchanged)
-| SHA | Message |
-|-----|---------|
-| f5b63e8 | fix(ci): handle fork PRs in rebase workflow (#125) |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `f5b63e8` fix(ci): handle fork PRs in rebase workflow (#125) | TREBLEREEL (unchanged) | *(kept as-is)* |
 
 ---
 
 ## PR #91 — fix(blackboard): thread safety — volatile, AtomicReference CAS, atomic addPlanItemIfAbsent [QE-A/5] (2026-04-22) [MDPROCTOR]
 
-**Branch:** `feat/bb-qa-a-thread-safety` (origin)
+**Branch:** `feat/bb-qa-a-thread-safety`
 
-### Before (original commits — unique to this PR)
-| SHA | Message |
-|-----|---------|
-| d56b6fb | fix(blackboard): make PlanItem.status volatile for cross-thread visibility (casehubio/engine#76) |
-| 9e18bef | fix(blackboard): Stage.status → AtomicReference with CAS lifecycle methods (casehubio/engine#76) |
-| 3c406d7 | fix(blackboard): addPlanItemIfAbsent — atomic check-and-insert via ConcurrentHashMap.compute() (casehubio/engine#76) |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `d56b6fb` fix(blackboard): make PlanItem.status volatile for cross-thread visibility (casehubio/engine#76) | 🔀 MERGE all three | `fix(blackboard): thread safety — volatile PlanItem.status, AtomicReference Stage.status CAS, atomic addPlanItemIfAbsent — Refs #76` |
+| `9e18bef` fix(blackboard): Stage.status → AtomicReference with CAS lifecycle methods (casehubio/engine#76) | 🔀 MERGE into d56b6fb | *(unified — same scope, same sitting)* |
+| `3c406d7` fix(blackboard): addPlanItemIfAbsent — atomic check-and-insert via ConcurrentHashMap.compute() (casehubio/engine#76) | 🔀 MERGE into d56b6fb | *(unified — same scope, same sitting)* |
 
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| MERGE all three | d56b6fb | fix(blackboard): thread safety — volatile PlanItem.status, AtomicReference Stage.status CAS, atomic addPlanItemIfAbsent — Refs #76 |
-| MERGE into above | 9e18bef | (same scope, same sitting, three fixes form one thread-safety story) |
-| MERGE into above | 3c406d7 | (same scope, same sitting) |
-
-> **Result:** 1 commit. Three thread-safety fixes form one coherent story — the policy merge case.
+> **Result:** 1 commit. Three thread-safety fixes form one coherent story.
 
 ---
 
 ## PR #92 — fix(blackboard): lifecycle correctness — achieveMilestone, autocomplete guard, CaseEvictionHandler [QE-B/5] (2026-04-22) [MDPROCTOR]
 
-**Branch:** `feat/bb-qa-b-lifecycle` (origin)
+**Branch:** `feat/bb-qa-b-lifecycle`
 
-### Before (original commits — unique to this PR beyond #91)
-| SHA | Message |
-|-----|---------|
-| a5223a9 | fix(blackboard): achieveMilestone uses put() — records regardless of trackMilestone order (casehubio/engine#76) |
-| 6bd812a | fix(blackboard): document lazy activeByBinding cleanup; add autocomplete guard tests (casehubio/engine#76) |
-| a68a182 | feat(blackboard): CaseEvictionHandler — evict plan models on terminal case state (casehubio/engine#76) |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | a5223a9 | fix(blackboard): achieveMilestone uses put() — records regardless of trackMilestone order — Refs #76 |
-| MERGE with above | 6bd812a | fix(blackboard): document lazy activeByBinding cleanup; add autocomplete guard tests — same lifecycle concern |
-| KEEP | a68a182 | feat(blackboard): CaseEvictionHandler — evict plan models on terminal case state — Refs #76 |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `a5223a9` fix(blackboard): achieveMilestone uses put() — records regardless of trackMilestone order (casehubio/engine#76) | ✅ KEEP | `fix(blackboard): achieveMilestone uses put() — records regardless of trackMilestone order — Refs #76` (unified with 6bd812a) |
+| `6bd812a` fix(blackboard): document lazy activeByBinding cleanup; add autocomplete guard tests (casehubio/engine#76) | 🔀 MERGE with a5223a9 | *(unified — same lifecycle concern)* |
+| `a68a182` feat(blackboard): CaseEvictionHandler — evict plan models on terminal case state (casehubio/engine#76) | ✅ KEEP | `feat(blackboard): CaseEvictionHandler — evict plan models on terminal case state — Refs #76` |
 
 > **Result:** 2 commits.
 
@@ -545,112 +394,74 @@
 
 ## PR #93 — fix(blackboard): nested stage activation gated on parent ACTIVE state [QE-C/5] (2026-04-22) [MDPROCTOR]
 
-**Branch:** `feat/bb-qa-c-nested-stages` (origin)
+**Branch:** `feat/bb-qa-c-nested-stages`
 
-### Before (original commits — unique to this PR beyond #92)
-| SHA | Message |
-|-----|---------|
-| c50c13f | fix(blackboard): nested stage activation gated on parent ACTIVE state (casehubio/engine#76) |
-| f43f250 | test(blackboard): C2 nested stage integration test — child activates after parent (casehubio/engine#76) |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `c50c13f` fix(blackboard): nested stage activation gated on parent ACTIVE state (casehubio/engine#76) | ✅ KEEP | `fix(blackboard): nested stage activation gated on parent ACTIVE state — Refs #76` (unified with f43f250) |
+| `f43f250` test(blackboard): C2 nested stage integration test — child activates after parent (casehubio/engine#76) | 🔀 MERGE with c50c13f | *(unified — fix + test are part of one story)* |
 
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | c50c13f | fix(blackboard): nested stage activation gated on parent ACTIVE state — Refs #76 |
-| MERGE with above | f43f250 | test(blackboard): C2 nested stage integration test — child activates after parent — two commits for same fix+test; unified per policy |
-
-> **Result:** 1 commit. Fix and test are part two of one story.
+> **Result:** 1 commit.
 
 ---
 
 ## PR #127 — feature(ci): added '/retest' command (2026-04-22) [TREBLEREEL]
 
-### Squash commit (unchanged)
-| SHA | Message |
-|-----|---------|
-| fd2c3a2 | feature(ci): added '/retest' command (#127) |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `fd2c3a2` feature(ci): added '/retest' command (#127) | TREBLEREEL (unchanged) | *(kept as-is)* |
 
 ---
 
 ## PR #94 — test(blackboard): integration regression coverage — R1, R3, R4, R5 [QE-D/5] (2026-04-22) [MDPROCTOR]
 
-**Branch:** `feat/bb-qa-d-integration-regression` (origin)
+**Branch:** `feat/bb-qa-d-integration-regression`
 
-### Before (original commits — unique to this PR beyond #93)
-| SHA | Message |
-|-----|---------|
-| 19e36f6 | test(blackboard): R1 — two sequential stages activate in order (casehubio/engine#76) |
-| 6c7097e | test(blackboard): R3 — exit condition satisfied by worker output end-to-end (casehubio/engine#76) |
-| 757549f | test(blackboard): R4 — two workers with different capabilities both complete (casehubio/engine#76) |
-| 78c03a8 | test(blackboard): R5 — lambda entry condition activates stage end-to-end (casehubio/engine#76) |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `19e36f6` test(blackboard): R1 — two sequential stages activate in order (casehubio/engine#76) | ✅ KEEP | `test(blackboard): R1 — two sequential stages activate in order — Refs #76` |
+| `6c7097e` test(blackboard): R3 — exit condition satisfied by worker output end-to-end (casehubio/engine#76) | ✅ KEEP | `test(blackboard): R3 — exit condition satisfied by worker output end-to-end — Refs #76` |
+| `757549f` test(blackboard): R4 — two workers with different capabilities both complete (casehubio/engine#76) | ✅ KEEP | `test(blackboard): R4 — two workers with different capabilities both complete — Refs #76` |
+| `78c03a8` test(blackboard): R5 — lambda entry condition activates stage end-to-end (casehubio/engine#76) | ✅ KEEP | `test(blackboard): R5 — lambda entry condition activates stage end-to-end — Refs #76` |
 
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | 19e36f6 | test(blackboard): R1 — two sequential stages activate in order — Refs #76 |
-| KEEP | 6c7097e | test(blackboard): R3 — exit condition satisfied by worker output end-to-end — Refs #76 |
-| KEEP | 757549f | test(blackboard): R4 — two workers with different capabilities both complete — Refs #76 |
-| KEEP | 78c03a8 | test(blackboard): R5 — lambda entry condition activates stage end-to-end — Refs #76 |
-
-> **Result:** 4 commits. Each test scenario (R1, R3, R4, R5) describes a distinct behaviour — the policy keeps `test(scope): <scenario>` commits.
+> **Result:** 4 commits. Each test scenario describes a distinct behaviour — the policy keeps `test(scope): <scenario>` commits.
 
 ---
 
 ## PR #95 — fix+test(blackboard): edge cases — dedup contract, getTopPlanItems(0), fault() guards [QE-E/5] (2026-04-22) [MDPROCTOR]
 
-**Branch:** `feat/bb-qa-e-edge-cases` (origin)
+**Branch:** `feat/bb-qa-e-edge-cases`
 
-### Before (original commits — unique to this PR)
-| SHA | Message |
-|-----|---------|
-| 327f61f | test(blackboard): N2 getTopPlanItems(0) returns empty; N3 type mismatch returns empty (casehubio/engine#76) |
-| bb99aaa | fix(blackboard): DefaultPlanningStrategy deduplicates eligible list; contract test verifies (casehubio/engine#76) |
-| f998021 | test(blackboard): N7 fault() from terminal states is no-op — 3 confirmatory tests (casehubio/engine#76) |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `327f61f` test(blackboard): N2 getTopPlanItems(0) returns empty; N3 type mismatch returns empty (casehubio/engine#76) | ✅ KEEP | `test(blackboard): N2/N3 — getTopPlanItems(0) and type mismatch return empty — Refs #76` |
+| `bb99aaa` fix(blackboard): DefaultPlanningStrategy deduplicates eligible list; contract test verifies (casehubio/engine#76) | ✅ KEEP | `fix(blackboard): DefaultPlanningStrategy deduplicates eligible list — Refs #76` |
+| `f998021` test(blackboard): N7 fault() from terminal states is no-op — 3 confirmatory tests (casehubio/engine#76) | ✅ KEEP | `test(blackboard): N7 — fault() from terminal states is no-op — Refs #76` |
 
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | 327f61f | test(blackboard): N2/N3 — getTopPlanItems(0) and type mismatch return empty — Refs #76 |
-| KEEP | bb99aaa | fix(blackboard): DefaultPlanningStrategy deduplicates eligible list — Refs #76 |
-| KEEP | f998021 | test(blackboard): N7 — fault() from terminal states is no-op — Refs #76 |
-
-> **Result:** 3 commits. Each addresses a distinct edge case contract.
+> **Result:** 3 commits.
 
 ---
 
-## PR #96 — feat(blackboard): BlackboardPlanConfigurer SPI — per-type plan config with per-instance semantics [QE-F/4] (2026-04-22) [MDPROCTOR]
+## PR #96 — feat(blackboard): BlackboardPlanConfigurer SPI [QE-F/4] (2026-04-22) [MDPROCTOR]
 
-**Branch:** `feat/bb-qa-f-plan-configurer` (origin)
+**Branch:** `feat/bb-qa-f-plan-configurer`
 
-### Before (original commits — unique to this PR beyond #95)
-| SHA | Message |
-|-----|---------|
-| 26cfd77 | feat(blackboard): BlackboardPlanConfigurer SPI — per-type plan config with per-instance semantics (casehubio/engine#76) |
-| e5a80ad | test(blackboard): integration test for BlackboardPlanConfigurer — stages declared, called once per instance (casehubio/engine#76) |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `26cfd77` feat(blackboard): BlackboardPlanConfigurer SPI — per-type plan config with per-instance semantics (casehubio/engine#76) | ✅ KEEP | `feat(blackboard): BlackboardPlanConfigurer SPI — per-type plan config with per-instance semantics — Refs #76` (unified with e5a80ad) |
+| `e5a80ad` test(blackboard): integration test for BlackboardPlanConfigurer — stages declared, called once per instance (casehubio/engine#76) | 🔀 MERGE with 26cfd77 | *(unified — feature + its integration test = one logical unit)* |
 
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | 26cfd77 | feat(blackboard): BlackboardPlanConfigurer SPI — per-type plan config with per-instance semantics — Refs #76 |
-| MERGE with above | e5a80ad | test(blackboard): integration test for BlackboardPlanConfigurer — "add field" + "wire into integration test" are part one/two of same capability |
-
-> **Result:** 1 commit. Feature + its integration test = one logical unit.
+> **Result:** 1 commit.
 
 ---
 
-## PR #97 — feat(blackboard): PlanItem strict lifecycle — markRunning/markCompleted/markFaulted/markCancelled replace setStatus() [QE-G/4] (2026-04-22) [MDPROCTOR]
+## PR #97 — feat(blackboard): PlanItem strict lifecycle [QE-G/4] (2026-04-22) [MDPROCTOR]
 
-**Branch:** `feat/bb-qa-g-strict-lifecycle` (origin)
+**Branch:** `feat/bb-qa-g-strict-lifecycle`
 
-### Before (original commits — unique to this PR beyond #96)
-| SHA | Message |
-|-----|---------|
-| aeda201 | feat(blackboard): PlanItem strict lifecycle — markRunning/markCompleted/markFaulted/markCancelled replace setStatus() (casehubio/engine#76) |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | aeda201 | feat(blackboard): PlanItem strict lifecycle — markRunning/markCompleted/markFaulted/markCancelled replace setStatus() — Refs #76 |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `aeda201` feat(blackboard): PlanItem strict lifecycle — markRunning/markCompleted/markFaulted/markCancelled replace setStatus() (casehubio/engine#76) | ✅ KEEP | `feat(blackboard): PlanItem strict lifecycle — markRunning/markCompleted/markFaulted/markCancelled replace setStatus() — Refs #76` |
 
 > **Result:** 1 commit.
 
@@ -658,37 +469,25 @@
 
 ## PR #98 — feat(blackboard): SubCase data model — parity with prior implementation [QE-H/4] (2026-04-22) [MDPROCTOR]
 
-**Branch:** `feat/bb-qa-h-subcase` (origin)
+**Branch:** `feat/bb-qa-h-subcase`
 
-### Before (original commits — unique to this PR beyond #97)
-| SHA | Message |
-|-----|---------|
-| f49ad06 | feat(blackboard): SubCase data model — parity with prior implementation (casehubio/engine#76) |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | f49ad06 | feat(blackboard): SubCase data model — parity with prior implementation — Refs #76 |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `f49ad06` feat(blackboard): SubCase data model — parity with prior implementation (casehubio/engine#76) | ✅ KEEP | `feat(blackboard): SubCase data model — parity with prior implementation — Refs #76` |
 
 > **Result:** 1 commit.
 
 ---
 
-## PR #99 — feat(blackboard): Stage.builder() requires entryCondition; Stage.alwaysActivate() makes intent explicit [QE-I/4] (2026-04-22) [MDPROCTOR]
+## PR #99 — feat(blackboard): Stage.builder() requires entryCondition; Stage.alwaysActivate() [QE-I/4] (2026-04-22) [MDPROCTOR]
 
-**Branch:** `feat/bb-qa-i-stage-entry-validation` (first use of this branch)
+**Branch:** `feat/bb-qa-i-stage-entry-validation` (first use; branch later reused for PR #129)
 
-> **Note:** The current branch tip shows only `159f027` (resilience wiring from PR #129). The PR #99 stage-entry-validation commit was merged as squash `d498915` and the branch was subsequently reused for PR #129.
+> The PR #99 stage-entry-validation commit was merged as squash `d498915`. The branch was subsequently reused for PR #129.
 
-### Before (original commits)
-| SHA | Message |
-|-----|---------|
-| d498915 | feat(blackboard): Stage.builder() requires entryCondition; Stage.alwaysActivate() makes intent explicit — squash commit in main |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | d498915 | feat(blackboard): Stage.builder() requires entryCondition; Stage.alwaysActivate() makes intent explicit — Refs #76 |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `d498915` feat(blackboard): Stage.builder() requires entryCondition; Stage.alwaysActivate() makes intent explicit | ✅ KEEP | `feat(blackboard): Stage.builder() requires entryCondition; Stage.alwaysActivate() makes intent explicit — Refs #76` |
 
 > **Result:** 1 commit.
 
@@ -696,19 +495,12 @@
 
 ## PR #100 — feat(blackboard): Stage binding declarations gate loop control selection (ADR-0002) [QE-J] (2026-04-22) [MDPROCTOR]
 
-**Branch:** `feat/bb-qa-j-binding-gating` (origin)
+**Branch:** `feat/bb-qa-j-binding-gating`
 
-### Before (original commits)
-| SHA | Message |
-|-----|---------|
-| df452c7 | test(blackboard): bump MixedWorkersBlackboardTest timeout 15s → 30s — flaky on Java 17 CI |
-| 67e45a7 | feat(blackboard): Stage binding declarations gate loop control selection (ADR-0002, casehubio/engine#76) |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| SQUASH into next | df452c7 | test(blackboard): bump MixedWorkersBlackboardTest timeout — < 5 lines, CI fixup |
-| KEEP | 67e45a7 | feat(blackboard): Stage binding declarations gate loop control selection (ADR-0002) — Refs #76 |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `df452c7` test(blackboard): bump MixedWorkersBlackboardTest timeout 15s → 30s — flaky on Java 17 CI | 🔽 SQUASH ↑ | *(absorbed into 67e45a7 — < 5 lines, CI fixup)* |
+| `67e45a7` feat(blackboard): Stage binding declarations gate loop control selection (ADR-0002, casehubio/engine#76) | ✅ KEEP | `feat(blackboard): Stage binding declarations gate loop control selection (ADR-0002) — Refs #76` |
 
 > **Result:** 1 commit.
 
@@ -716,17 +508,11 @@
 
 ## PR #119 — feat(api): PropagationContext — tracing, budget, and inherited attributes value object (2026-04-22) [MDPROCTOR]
 
-**Branch:** `feat/propagation-context` (origin)
+**Branch:** `feat/propagation-context`
 
-### Before (original commits)
-| SHA | Message |
-|-----|---------|
-| f091c12 | feat(api): port PropagationContext — tracing, budget, inherited attributes value object (casehubio/engine#117) |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | f091c12 | feat(api): PropagationContext — tracing, budget, and inherited attributes value object — Refs #117 |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `f091c12` feat(api): port PropagationContext — tracing, budget, inherited attributes value object (casehubio/engine#117) | ✅ KEEP | `feat(api): PropagationContext — tracing, budget, and inherited attributes value object — Refs #117` |
 
 > **Result:** 1 commit.
 
@@ -734,17 +520,11 @@
 
 ## PR #120 — test(engine): architectural fitness — deprecated casehub-core types must not be ported (2026-04-22) [MDPROCTOR]
 
-**Branch:** `feat/architectural-exclusions` (origin)
+**Branch:** `feat/architectural-exclusions`
 
-### Before (original commits)
-| SHA | Message |
-|-----|---------|
-| d37053f | test(engine): architectural fitness — deprecated casehub-core types must not be ported (casehubio/engine#118) |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | d37053f | test(engine): architectural fitness — deprecated casehub-core types must not be ported — Refs #118 |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `d37053f` test(engine): architectural fitness — deprecated casehub-core types must not be ported (casehubio/engine#118) | ✅ KEEP | `test(engine): architectural fitness — deprecated casehub-core types must not be ported — Refs #118` |
 
 > **Result:** 1 commit.
 
@@ -754,22 +534,13 @@
 
 **Branch:** `main` on mdproctor/engine — consolidated resilience work (supercedes PRs #52, #53, #54)
 
-### Before (original commits — this is the consolidated form; granular commits are on feat/casehub-resilience/* branches)
+> Granular commits are from the resilience branch chain; PR #126 squash in main is the canonical entry.
 
-The PR #126 squash commit in main_20260502 is the entry point. The granular commits existed on the resilience branches and in PRs #52/#53/#54 but those were superseded. For reconstruction, restore granular commits from the resilience branch chain:
-
-| SHA | Message |
-|-----|---------|
-| b30c1c2 | feat(resilience): add backoff strategies, WorkerExecutionGuard SPI, module scaffold |
-| 959e3a4 | feat(resilience): add Dead Letter Queue — store, query, replay, discard |
-| 2ad38d9 | feat(resilience): add PoisonPill detection — sliding-window quarantine, scheduler skip |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | b30c1c2 | feat(resilience): backoff strategies, WorkerExecutionGuard SPI, module scaffold — Refs #51 |
-| KEEP | 959e3a4 | feat(resilience): Dead Letter Queue — store, query, replay, discard — Refs #51 |
-| KEEP | 2ad38d9 | feat(resilience): PoisonPill detection — sliding-window quarantine, scheduler skip — Refs #51 |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `b30c1c2` feat(resilience): add backoff strategies, WorkerExecutionGuard SPI, module scaffold | ✅ KEEP | `feat(resilience): backoff strategies, WorkerExecutionGuard SPI, module scaffold — Refs #51` |
+| `959e3a4` feat(resilience): add Dead Letter Queue — store, query, replay, discard | ✅ KEEP | `feat(resilience): Dead Letter Queue — store, query, replay, discard — Refs #51` |
+| `2ad38d9` feat(resilience): add PoisonPill detection — sliding-window quarantine, scheduler skip | ✅ KEEP | `feat(resilience): PoisonPill detection — sliding-window quarantine, scheduler skip — Refs #51` |
 
 > **Result:** 3 commits. Each resilience capability is independently valuable.
 
@@ -777,17 +548,11 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 ## PR #129 — feat(resilience): wire PropagationContext budget into CaseTimeoutEnforcer (2026-04-22) [MDPROCTOR]
 
-**Branch:** `feat/bb-qa-i-stage-entry-validation` (reused for this PR)
+**Branch:** `feat/bb-qa-i-stage-entry-validation` (reused)
 
-### Before (original commits)
-| SHA | Message |
-|-----|---------|
-| 159f027 | feat(resilience): wire PropagationContext budget into CaseTimeoutEnforcer |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | 159f027 | feat(resilience): wire PropagationContext budget into CaseTimeoutEnforcer |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `159f027` feat(resilience): wire PropagationContext budget into CaseTimeoutEnforcer | ✅ KEEP | `feat(resilience): wire PropagationContext budget into CaseTimeoutEnforcer` |
 
 > **Result:** 1 commit.
 
@@ -795,10 +560,9 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 ## PR #138 — feat(engine): add ScheduleTrigger support for time-based worker execution (2026-04-22) [TREBLEREEL]
 
-### Squash commit (unchanged)
-| SHA | Message |
-|-----|---------|
-| e74f879 | feat(engine): add ScheduleTrigger support for time-based worker execution (#138) |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `e74f879` feat(engine): add ScheduleTrigger support for time-based worker execution (#138) | TREBLEREEL (unchanged) | *(kept as-is)* |
 
 ---
 
@@ -806,52 +570,28 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 **Branch:** `feat/pr2-workbroker-deps`
 
-### Before (original commits — unique to PR #140, from GitHub PR commit list)
-| SHA | Message |
-|-----|---------|
-| f3d7e5a | test(engine): harden ChoreographySelectionTest and WorkerRetryExtendedTest |
-| dd8b353 | fix(test): remove cache.clear() from loop in twoSequentialCases — caused Quartz re-runs |
-| cb010b7 | fix(test): restructure twoSequentialCases to use single pre-loop snapshot |
-| 26f9072 | test(engine): rewrite ChoreographySelectionTest with per-run-ID isolation |
-| 2242c16 | build: wire casehub-parent BOM and GitHub Packages for quarkus-ledger |
-| 07a89a8 | Revert "build: wire casehub-parent BOM and GitHub Packages for quarkus-ledger" |
-| fccb647 | build: remove embedded ledger/work builds; use GitHub Packages; add distributionManagement |
-| 948e9ca | fix(persistence): drop-and-create schema in tests — no installed base |
-| 4b02392 | fix(resilience): disable Hibernate ORM in resilience tests |
-| 747d922 | fix(ci,blackboard): JDK 21 + disable Hibernate ORM in blackboard tests |
-| 5afadc3 | fix(ci): dual JDK — JDK 21 for quarkus-work install, JDK 17 for casehub |
-| ed536fd | fix(ci): install quarkus-work parent POM alongside api and core |
-| 544f4fd | fix(ci): upgrade to JDK 21 — quarkus-work requires Java 21 compiler |
-| 5ab2546 | fix(ci): remove SHA pin from quarkus-work/ledger checkout — use defaults |
-| fb7ad91 | fix(ci): update quarkus-work pinned SHA to 098acfe |
-| 103f9fc | fix(ci): update quarkus-workitems repo reference to quarkus-work (renamed) |
-| 1c2346d | fix(ci): pin quarkus-workitems checkout to 9707bc5 |
-| f321b4e | feat(engine): CDI producers for WorkBroker, LeastLoadedStrategy, NoOpWorkerProvisioner |
-| 08121ea | feat(engine): add quarkus-work-api and quarkus-work-core dependencies |
-| 3f02b18 | feat(ci): install quarkus-work-core alongside quarkus-work-api |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | 3f02b18 | feat(ci): install quarkus-work — JDK 21, dual-JDK CI, GitHub Packages setup |
-| SQUASH into above (all fix(ci)) | 1c2346d | fix(ci): pin quarkus-workitems checkout to 9707bc5 — CI fixup chain squashed into feat |
-| SQUASH into above | 103f9fc | fix(ci): update quarkus-workitems repo to quarkus-work — CI fixup |
-| SQUASH into above | fb7ad91 | fix(ci): update quarkus-work pinned SHA — CI fixup |
-| SQUASH into above | 5ab2546 | fix(ci): remove SHA pin — CI fixup |
-| SQUASH into above | 544f4fd | fix(ci): upgrade to JDK 21 — CI fixup |
-| SQUASH into above | ed536fd | fix(ci): install parent POM — CI fixup |
-| SQUASH into above | 5afadc3 | fix(ci): dual JDK — CI fixup |
-| KEEP | 08121ea | feat(engine): add quarkus-work-api/core dependencies + CDI producers for WorkBroker |
-| MERGE with above | f321b4e | (same concern — deps + wiring go together) |
-| KEEP | 747d922 | fix(ci,blackboard): JDK 21 + disable Hibernate ORM in blackboard+resilience tests |
-| MERGE with above | 4b02392 | (same fix scope) |
-| MERGE with above | 948e9ca | (same fix scope — persistence drop-and-create) |
-| KEEP | 2242c16 | build: use GitHub Packages for quarkus-ledger/work; distributionManagement |
-| SQUASH revert chain into above | 07a89a8 | Revert "build: wire..." — revert+replace collapse to final state |
-| KEEP | 26f9072 | test(engine): rewrite ChoreographySelectionTest with per-run-ID isolation |
-| SQUASH into above | cb010b7 | fix(test): restructure twoSequentialCases — same test class hardened |
-| SQUASH into above | dd8b353 | fix(test): remove cache.clear() from loop — same test class hardened |
-| SQUASH into above | f3d7e5a | test(engine): harden WorkerRetryExtendedTest — same test hardening pass |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `f3d7e5a` test(engine): harden ChoreographySelectionTest and WorkerRetryExtendedTest | 🔽 SQUASH ↑ | *(absorbed into 26f9072 — same test hardening pass)* |
+| `dd8b353` fix(test): remove cache.clear() from loop in twoSequentialCases — caused Quartz re-runs | 🔽 SQUASH ↑ | *(absorbed into 26f9072 — same test class hardened)* |
+| `cb010b7` fix(test): restructure twoSequentialCases to use single pre-loop snapshot | 🔽 SQUASH ↑ | *(absorbed into 26f9072 — same test class hardened)* |
+| `26f9072` test(engine): rewrite ChoreographySelectionTest with per-run-ID isolation | ✅ KEEP | `test(engine): rewrite ChoreographySelectionTest with per-run-ID isolation` |
+| `2242c16` build: wire casehub-parent BOM and GitHub Packages for quarkus-ledger | 🔽 SQUASH ↑ | *(absorbed into fccb647 — revert chain collapsed)* |
+| `07a89a8` Revert "build: wire casehub-parent BOM and GitHub Packages for quarkus-ledger" | ❌ DROP (revert chain) | *(dropped — revert+retry collapsed into final state)* |
+| `fccb647` build: remove embedded ledger/work builds; use GitHub Packages; add distributionManagement | ✅ KEEP | `build: use GitHub Packages for quarkus-ledger/work; distributionManagement` (revert chain collapsed) |
+| `948e9ca` fix(persistence): drop-and-create schema in tests — no installed base | 🔀 MERGE with 747d922 | *(unified — same fix scope)* |
+| `4b02392` fix(resilience): disable Hibernate ORM in resilience tests | 🔀 MERGE with 747d922 | *(unified — same fix scope)* |
+| `747d922` fix(ci,blackboard): JDK 21 + disable Hibernate ORM in blackboard tests | ✅ KEEP | `fix(ci,blackboard): JDK 21 + disable Hibernate ORM in blackboard+resilience tests` (unified with 4b02392 + 948e9ca) |
+| `5afadc3` fix(ci): dual JDK — JDK 21 for quarkus-work install, JDK 17 for casehub | 🔽 SQUASH ↑ | *(absorbed into 3f02b18 — CI fixup chain)* |
+| `ed536fd` fix(ci): install quarkus-work parent POM alongside api and core | 🔽 SQUASH ↑ | *(absorbed into 3f02b18 — CI fixup)* |
+| `544f4fd` fix(ci): upgrade to JDK 21 — quarkus-work requires Java 21 compiler | 🔽 SQUASH ↑ | *(absorbed into 3f02b18 — CI fixup)* |
+| `5ab2546` fix(ci): remove SHA pin from quarkus-work/ledger checkout — use defaults | 🔽 SQUASH ↑ | *(absorbed into 3f02b18 — CI fixup)* |
+| `fb7ad91` fix(ci): update quarkus-work pinned SHA to 098acfe | 🔽 SQUASH ↑ | *(absorbed into 3f02b18 — CI fixup)* |
+| `103f9fc` fix(ci): update quarkus-workitems repo reference to quarkus-work (renamed) | 🔽 SQUASH ↑ | *(absorbed into 3f02b18 — CI fixup)* |
+| `1c2346d` fix(ci): pin quarkus-workitems checkout to 9707bc5 | 🔽 SQUASH ↑ | *(absorbed into 3f02b18 — CI fixup)* |
+| `f321b4e` feat(engine): CDI producers for WorkBroker, LeastLoadedStrategy, NoOpWorkerProvisioner | 🔀 MERGE with 08121ea | *(unified — deps + wiring go together)* |
+| `08121ea` feat(engine): add quarkus-work-api and quarkus-work-core dependencies | ✅ KEEP | `feat(engine): add quarkus-work-api/core dependencies + CDI producers for WorkBroker` (unified with f321b4e) |
+| `3f02b18` feat(ci): install quarkus-work-core alongside quarkus-work-api | ✅ KEEP | `feat(ci): install quarkus-work — JDK 21, dual-JDK CI, GitHub Packages setup` (all CI fixup chain absorbed) |
 
 > **Result:** 5 commits. CI setup unified; CDI wiring unified; CI test-env fixes unified; build unified (revert chain collapsed); test hardening unified.
 
@@ -861,21 +601,12 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 **Branch:** `feat/pr3-choreography`
 
-### Before (original commits — unique to PR #141 beyond PR #140)
-| SHA | Message |
-|-----|---------|
-| c2c645c | feat(engine): CasehubWorkloadProvider — Quartz job count per worker |
-| 724f7c3 | fix(engine): guard against missing workerId in Quartz JobDataMap |
-| c7016fa | feat(engine): choreography worker selection via WorkBroker — replace random strategy |
-| 7340976 | fix(engine): null-guard assigneeId() and document SelectionContext null contract |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | c2c645c | feat(engine): CasehubWorkloadProvider — Quartz job count per worker |
-| KEEP | c7016fa | feat(engine): choreography worker selection via WorkBroker — replace random strategy |
-| SQUASH into above | 724f7c3 | fix(engine): guard against missing workerId in Quartz JobDataMap — same-class guard |
-| SQUASH into above | 7340976 | fix(engine): null-guard assigneeId() — same-class null-contract fix |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `c2c645c` feat(engine): CasehubWorkloadProvider — Quartz job count per worker | ✅ KEEP | `feat(engine): CasehubWorkloadProvider — Quartz job count per worker` |
+| `724f7c3` fix(engine): guard against missing workerId in Quartz JobDataMap | 🔽 SQUASH ↑ | *(absorbed into c7016fa — same-class guard)* |
+| `c7016fa` feat(engine): choreography worker selection via WorkBroker — replace random strategy | ✅ KEEP | `feat(engine): choreography worker selection via WorkBroker — replace random strategy` (unified with 7340976) |
+| `7340976` fix(engine): null-guard assigneeId() and document SelectionContext null contract | 🔽 SQUASH ↑ | *(absorbed — same-class null-contract fix)* |
 
 > **Result:** 2 commits.
 
@@ -885,19 +616,11 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 **Branch:** `feat/pr4-orchestration-model`
 
-### Before (original commits — unique to PR #142 beyond PR #141)
-| SHA | Message |
-|-----|---------|
-| 55fa326 | feat(api): WorkRequest, WorkResult, WorkStatus — orchestration model types |
-| ccdb637 | feat(engine-model): add WORK_SUBMITTED and WORK_COMPLETED event types |
-| 1ebce19 | feat(engine): add waitingForWorkId to CaseInstance and persistence layer |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | 55fa326 | feat(api): WorkRequest, WorkResult, WorkStatus — orchestration model types |
-| KEEP | ccdb637 | feat(engine-model): add WORK_SUBMITTED and WORK_COMPLETED event types |
-| KEEP | 1ebce19 | feat(engine): add waitingForWorkId to CaseInstance and persistence layer |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `55fa326` feat(api): WorkRequest, WorkResult, WorkStatus — orchestration model types | ✅ KEEP | `feat(api): WorkRequest, WorkResult, WorkStatus — orchestration model types` |
+| `ccdb637` feat(engine-model): add WORK_SUBMITTED and WORK_COMPLETED event types | ✅ KEEP | `feat(engine-model): add WORK_SUBMITTED and WORK_COMPLETED event types` |
+| `1ebce19` feat(engine): add waitingForWorkId to CaseInstance and persistence layer | ✅ KEEP | `feat(engine): add waitingForWorkId to CaseInstance and persistence layer` |
 
 > **Result:** 3 commits. Each adds a distinct layer (API model, event types, persistence field).
 
@@ -907,27 +630,15 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 **Branch:** `feat/pr5-pending-registry`
 
-### Before (original commits — unique to PR #143 beyond PR #142)
-| SHA | Message |
-|-----|---------|
-| 3d7ec41 | feat(engine): PendingWorkRegistry — in-memory future correlation for WorkOrchestrator |
-| 21d11e5 | fix(engine): eliminate race condition in PendingWorkRegistry.register() |
-| 664411f | feat(engine): WorkOrchestrator — durable orchestration entry point |
-| 6eccac2 | feat(engine): WorkflowExecutionCompletedHandler resumes WAITING cases |
-| da6d462 | fix(engine): inject LeastLoadedStrategy concrete type in WorkOrchestrator |
-| cad781c | fix(engine): add missing LeastLoadedStrategy import in WorkOrchestrator |
-| 47e15b7 | fix(test): update WorkOrchestratorTest to use LeastLoadedStrategy concrete type |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | 3d7ec41 | feat(engine): PendingWorkRegistry — in-memory future correlation for WorkOrchestrator |
-| SQUASH into above | 21d11e5 | fix(engine): eliminate race condition in PendingWorkRegistry.register() — same class hardened |
-| KEEP | 664411f | feat(engine): WorkOrchestrator — durable orchestration entry point |
-| SQUASH into above | da6d462 | fix(engine): inject LeastLoadedStrategy concrete type in WorkOrchestrator — same file fixup |
-| SQUASH into above | cad781c | fix(engine): add missing LeastLoadedStrategy import — < 5 lines |
-| SQUASH into above | 47e15b7 | fix(test): update WorkOrchestratorTest — same test class, same sitting |
-| KEEP | 6eccac2 | feat(engine): WorkflowExecutionCompletedHandler resumes WAITING cases |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `3d7ec41` feat(engine): PendingWorkRegistry — in-memory future correlation for WorkOrchestrator | ✅ KEEP | `feat(engine): PendingWorkRegistry — in-memory future correlation for WorkOrchestrator` (unified with 21d11e5) |
+| `21d11e5` fix(engine): eliminate race condition in PendingWorkRegistry.register() | 🔽 SQUASH ↑ | *(absorbed — same class hardened)* |
+| `664411f` feat(engine): WorkOrchestrator — durable orchestration entry point | ✅ KEEP | `feat(engine): WorkOrchestrator — durable orchestration entry point` (unified with da6d462 + cad781c + 47e15b7) |
+| `da6d462` fix(engine): inject LeastLoadedStrategy concrete type in WorkOrchestrator | 🔽 SQUASH ↑ | *(absorbed — same file fixup)* |
+| `cad781c` fix(engine): add missing LeastLoadedStrategy import in WorkOrchestrator | 🔽 SQUASH ↑ | *(absorbed — < 5 lines)* |
+| `47e15b7` fix(test): update WorkOrchestratorTest to use LeastLoadedStrategy concrete type | 🔽 SQUASH ↑ | *(absorbed — same test class, same sitting)* |
+| `6eccac2` feat(engine): WorkflowExecutionCompletedHandler resumes WAITING cases | ✅ KEEP | `feat(engine): WorkflowExecutionCompletedHandler resumes WAITING cases` |
 
 > **Result:** 3 commits.
 
@@ -937,27 +648,15 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 **Branch:** `feat/pr6-waiting-state`
 
-### Before (original commits — unique to PR #144 beyond PR #143)
-| SHA | Message |
-|-----|---------|
-| 56c6052 | feat(engine): WorkBroker orchestration wiring — WAITING/RUNNING + scheduling |
-| 67f2ab0 | fix(engine): use LeastLoadedStrategy concrete type in tests; allow out-of-order WAITING |
-| fad9db8 | test(engine): integration and E2E tests for WorkBroker orchestration |
-| 2baf08d | feat(engine): PendingWorkRegistry startup recovery from EventLog |
-| acd8b13 | docs: sync DESIGN.md with WorkBroker hybrid execution model |
-| 29df93c | fix(engine): implement findSubmittedWorkWithoutCompletion in blackboard SPI |
-| c48b749 | fix(resilience): disable Hibernate ORM in resilience tests |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | 56c6052 | feat(engine): WorkBroker orchestration wiring — WAITING/RUNNING + scheduling |
-| SQUASH into above | 67f2ab0 | fix(engine): use LeastLoadedStrategy concrete type in tests — same-class fixup |
-| SQUASH into above | 29df93c | fix(engine): implement findSubmittedWorkWithoutCompletion — same wiring concern |
-| KEEP | fad9db8 | test(engine): integration and E2E tests for WorkBroker orchestration |
-| KEEP | 2baf08d | feat(engine): PendingWorkRegistry startup recovery from EventLog |
-| SQUASH into above | c48b749 | fix(resilience): disable Hibernate ORM in resilience tests — < 5 lines, CI fixup |
-| SQUASH into feat | acd8b13 | docs: sync DESIGN.md with WorkBroker hybrid execution model — docs follow feature |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `56c6052` feat(engine): WorkBroker orchestration wiring — WAITING/RUNNING + scheduling | ✅ KEEP | `feat(engine): WorkBroker orchestration wiring — WAITING/RUNNING + scheduling` (unified with 67f2ab0 + 29df93c + acd8b13) |
+| `67f2ab0` fix(engine): use LeastLoadedStrategy concrete type in tests; allow out-of-order WAITING | 🔽 SQUASH ↑ | *(absorbed — same-class fixup)* |
+| `fad9db8` test(engine): integration and E2E tests for WorkBroker orchestration | ✅ KEEP | `test(engine): integration and E2E tests for WorkBroker orchestration` |
+| `2baf08d` feat(engine): PendingWorkRegistry startup recovery from EventLog | ✅ KEEP | `feat(engine): PendingWorkRegistry startup recovery from EventLog` (unified with c48b749) |
+| `acd8b13` docs: sync DESIGN.md with WorkBroker hybrid execution model | 🔽 SQUASH ↑ | *(absorbed — docs follow feature)* |
+| `29df93c` fix(engine): implement findSubmittedWorkWithoutCompletion in blackboard SPI | 🔽 SQUASH ↑ | *(absorbed — same wiring concern)* |
+| `c48b749` fix(resilience): disable Hibernate ORM in resilience tests | 🔽 SQUASH ↑ | *(absorbed — < 5 lines, CI fixup)* |
 
 > **Result:** 3 commits.
 
@@ -967,44 +666,24 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 **Branch:** `feat/casehub-ledger-integration`
 
-### Before (original commits — unique to PR #151 beyond PR #144)
-| SHA | Message |
-|-----|---------|
-| a2b7343 | feat(casehub-ledger): quarkus-ledger integration — immutable audit ledger for case lifecycle |
-| e4ffdc4 | fix(casehub-ledger): remove double Merkle update — delegate digest and entry creation |
-| 1f66dd2 | docs: sync DESIGN.md with casehub-ledger integration |
-| b39d27b | feat(api): model types for worker provisioner SPIs |
-| 8c9f676 | fix(api): code quality corrections for model types |
-| c5a6e63 | feat(api): WorkerProvisioner SPI + NoOp default |
-| fff74b4 | feat(api): WorkerStatusListener SPI + NoOp default |
-| f61ac20 | feat(api): CaseChannelProvider SPI + NoOp default |
-| 53371c5 | feat(api): WorkerContextProvider SPI + Empty default |
-| 5f84d30 | adr: 0004 — ClaimSlaPolicy as pluggable CDI strategy, Continuation design |
-| dfc206c | test+docs: engine-level unit tests for default SPI impls, document null-worker design |
-| 4004f80 | feat(api): reactive SPI mirrors + NoOp/Empty defaults |
-| 47e6e70 | test: expand reactive SPI test coverage |
-| 230f8d4 | docs: Worker Provisioner SPIs — DESIGN.md, CLAUDE.md, ADR 0004 |
-| 9774a45 | fix: final review corrections for Worker Provisioner SPIs |
-| a07b552 | test(resilience): extend DLQ E2E test — replay on faulted case is rejected |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | a2b7343 | feat(casehub-ledger): quarkus-ledger integration — immutable audit ledger for case lifecycle |
-| SQUASH into above | e4ffdc4 | fix(casehub-ledger): remove double Merkle update — same module, same sitting |
-| SQUASH into above | 1f66dd2 | docs: sync DESIGN.md with casehub-ledger — docs follow feature |
-| KEEP | b39d27b | feat(api): model types + WorkerProvisioner, WorkerStatusListener, CaseChannelProvider, WorkerContextProvider SPIs |
-| MERGE with above | c5a6e63 | (all four SPIs are one capability — model types + four SPIs unified) |
-| MERGE with above | fff74b4 | (same) |
-| MERGE with above | f61ac20 | (same) |
-| MERGE with above | 53371c5 | (same) |
-| SQUASH into above | 8c9f676 | fix(api): code quality corrections for model types — same-sitting cleanup |
-| KEEP | 5f84d30 | adr: 0004 — ClaimSlaPolicy as pluggable CDI strategy, Continuation design |
-| KEEP | dfc206c | test: engine-level unit tests for default SPI impls, document null-worker design |
-| MERGE with above | 4004f80 | feat(api): reactive SPI mirrors + NoOp/Empty defaults — same SPI capability, reactive mirror |
-| MERGE with above | 47e6e70 | test: expand reactive SPI test coverage — two test commits for same feature |
-| SQUASH into SPI feat | 230f8d4 | docs: Worker Provisioner SPIs — DESIGN.md, CLAUDE.md, ADR 0004 — docs follow feature |
-| SQUASH into SPI feat | 9774a45 | fix: final review corrections — < 5 lines |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `a2b7343` feat(casehub-ledger): quarkus-ledger integration — immutable audit ledger for case lifecycle | ✅ KEEP | `feat(casehub-ledger): quarkus-ledger integration — immutable audit ledger for case lifecycle` (unified with e4ffdc4 + 1f66dd2) |
+| `e4ffdc4` fix(casehub-ledger): remove double Merkle update — delegate digest and entry creation | 🔽 SQUASH ↑ | *(absorbed — same module, same sitting)* |
+| `1f66dd2` docs: sync DESIGN.md with casehub-ledger integration | 🔽 SQUASH ↑ | *(absorbed — docs follow feature)* |
+| `b39d27b` feat(api): model types for worker provisioner SPIs | ✅ KEEP | `feat(api): model types + WorkerProvisioner, WorkerStatusListener, CaseChannelProvider, WorkerContextProvider SPIs` (unified with c5a6e63 + fff74b4 + f61ac20 + 53371c5 + 8c9f676 + 4004f80 + 230f8d4 + 9774a45) |
+| `8c9f676` fix(api): code quality corrections for model types | 🔽 SQUASH ↑ | *(absorbed — same-sitting cleanup)* |
+| `c5a6e63` feat(api): WorkerProvisioner SPI + NoOp default | 🔀 MERGE with b39d27b | *(unified — all four SPIs are one capability)* |
+| `fff74b4` feat(api): WorkerStatusListener SPI + NoOp default | 🔀 MERGE with b39d27b | *(unified)* |
+| `f61ac20` feat(api): CaseChannelProvider SPI + NoOp default | 🔀 MERGE with b39d27b | *(unified)* |
+| `53371c5` feat(api): WorkerContextProvider SPI + Empty default | 🔀 MERGE with b39d27b | *(unified)* |
+| `5f84d30` adr: 0004 — ClaimSlaPolicy as pluggable CDI strategy, Continuation design | ✅ KEEP | `adr: 0004 — ClaimSlaPolicy as pluggable CDI strategy, Continuation design` |
+| `dfc206c` test+docs: engine-level unit tests for default SPI impls, document null-worker design | ✅ KEEP | `test: engine-level unit tests for default SPI impls + reactive SPI mirrors` (unified with 4004f80 + 47e6e70) |
+| `4004f80` feat(api): reactive SPI mirrors + NoOp/Empty defaults | 🔀 MERGE with dfc206c | *(unified — same SPI capability, reactive mirror)* |
+| `47e6e70` test: expand reactive SPI test coverage | 🔀 MERGE with dfc206c | *(unified — test commits for same feature)* |
+| `230f8d4` docs: Worker Provisioner SPIs — DESIGN.md, CLAUDE.md, ADR 0004 | 🔽 SQUASH ↑ | *(absorbed into SPI feat — docs follow feature)* |
+| `9774a45` fix: final review corrections for Worker Provisioner SPIs | 🔽 SQUASH ↑ | *(absorbed — < 5 lines, review fixup)* |
+| `a07b552` test(resilience): extend DLQ E2E test — replay on faulted case is rejected | ✅ KEEP | `test(resilience): DLQ E2E — replay on faulted case is rejected` |
 
 > **Result:** 4 commits. Ledger integration; unified SPI feat; ADR; test+reactive coverage.
 
@@ -1014,15 +693,9 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 **Branch:** `fix/workcdi-remove-redundant-producers`
 
-### Before (original commits)
-| SHA | Message |
-|-----|---------|
-| c6546d9 | fix(engine): remove redundant @Produces from WorkCdi; add explanatory Javadoc |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | c6546d9 | fix(engine): remove redundant @Produces from WorkCdi; add explanatory Javadoc |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `c6546d9` fix(engine): remove redundant @Produces from WorkCdi; add explanatory Javadoc | ✅ KEEP | `fix(engine): remove redundant @Produces from WorkCdi; add explanatory Javadoc` |
 
 > **Result:** 1 commit.
 
@@ -1032,40 +705,26 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 **Branch:** `fix/restore-flyway-validate-in-tests`
 
-### Before (original commits — unique to this branch beyond earlier base)
-| SHA | Message |
-|-----|---------|
-| fccb647 | build: remove embedded ledger/work builds; use GitHub Packages; add distributionManagement |
-| 07a89a8 | Revert "build: wire casehub-parent BOM and GitHub Packages for quarkus-ledger" |
-| 2242c16 | build: wire casehub-parent BOM and GitHub Packages for quarkus-ledger |
-| 26f9072 | test(engine): rewrite ChoreographySelectionTest with per-run-ID isolation |
-| cb010b7 | fix(test): restructure twoSequentialCases to use single pre-loop snapshot |
-| dd8b353 | fix(test): remove cache.clear() from loop in twoSequentialCases |
-| f3d7e5a | test(engine): harden ChoreographySelectionTest and WorkerRetryExtendedTest |
-| 4535be5 | build: add GitHub Packages repository and casehub-parent BOM import |
-| 72833a1 | fix(build): move casehub-parent BOM import last — preserves casehub-engine Quarkus version |
-| 66bd725 | fix(build): pin quarkus-ledger to 0.2-SNAPSHOT; align all projects on Quarkus 3.32.2 |
-| d1274a6 | fix(ci): verify on PRs, deploy only on push to main |
-| bb6f7d3 | fix(engine): update quarkus-work-api/core to 0.2-SNAPSHOT |
-| a9596e3 | build: manage quarkus-work/ledger versions via parent POM properties |
-| 1a89a8f | fix(test): prevent binding re-fire after worker output in ChoreographySelectionTest |
-| 05217bd | fix(persistence): restore Flyway+validate in tests — drop-and-create was a workaround |
-| 2d35ae4 | fix(blackboard,resilience): remove quarkus.hibernate-orm.enabled=false workaround |
+> Base commits fccb647 through f3d7e5a were already accounted for in PR #140. Unique additions start from 4535be5.
 
-> **Note:** The base commits (fccb647 through f3d7e5a) were already accounted for in PR #140. The unique additions for PR #155 are from 4535be5 onward.
-
-### After (proposed — unique commits only)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | 4535be5 | build: add GitHub Packages repository and casehub-parent BOM import |
-| MERGE with above | 72833a1 | fix(build): move casehub-parent BOM import last — same build configuration pass |
-| MERGE with above | 66bd725 | fix(build): pin quarkus-ledger; align Quarkus version — same build pass |
-| SQUASH into above | d1274a6 | fix(ci): verify on PRs — < 5 lines, CI policy |
-| SQUASH into above | bb6f7d3 | fix(engine): update quarkus-work-api/core version — < 5 lines |
-| SQUASH into above | a9596e3 | build: manage versions via parent POM — same build configuration |
-| KEEP | 1a89a8f | fix(test): prevent binding re-fire after worker output in ChoreographySelectionTest |
-| KEEP | 05217bd | fix(persistence): restore Flyway+validate in tests — drop-and-create was a workaround |
-| MERGE with above | 2d35ae4 | fix(blackboard,resilience): remove quarkus.hibernate-orm.enabled=false workaround — same Flyway/Hibernate revert story |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `fccb647` build: remove embedded ledger/work builds; use GitHub Packages; add distributionManagement | *(already in PR #140)* | *(not re-counted)* |
+| `07a89a8` Revert "build: wire casehub-parent BOM and GitHub Packages for quarkus-ledger" | *(already in PR #140)* | *(not re-counted)* |
+| `2242c16` build: wire casehub-parent BOM and GitHub Packages for quarkus-ledger | *(already in PR #140)* | *(not re-counted)* |
+| `26f9072` test(engine): rewrite ChoreographySelectionTest with per-run-ID isolation | *(already in PR #140)* | *(not re-counted)* |
+| `cb010b7` fix(test): restructure twoSequentialCases to use single pre-loop snapshot | *(already in PR #140)* | *(not re-counted)* |
+| `dd8b353` fix(test): remove cache.clear() from loop in twoSequentialCases | *(already in PR #140)* | *(not re-counted)* |
+| `f3d7e5a` test(engine): harden ChoreographySelectionTest and WorkerRetryExtendedTest | *(already in PR #140)* | *(not re-counted)* |
+| `4535be5` build: add GitHub Packages repository and casehub-parent BOM import | ✅ KEEP | `build: add GitHub Packages repository + casehub-parent BOM; pin quarkus-ledger; align Quarkus version` (unified with 72833a1 + 66bd725 + d1274a6 + bb6f7d3 + a9596e3) |
+| `72833a1` fix(build): move casehub-parent BOM import last — preserves casehub-engine Quarkus version | 🔀 MERGE with 4535be5 | *(unified — same build configuration pass)* |
+| `66bd725` fix(build): pin quarkus-ledger to 0.2-SNAPSHOT; align all projects on Quarkus 3.32.2 | 🔀 MERGE with 4535be5 | *(unified — same build pass)* |
+| `d1274a6` fix(ci): verify on PRs, deploy only on push to main | 🔽 SQUASH ↑ | *(absorbed — < 5 lines, CI policy)* |
+| `bb6f7d3` fix(engine): update quarkus-work-api/core to 0.2-SNAPSHOT | 🔽 SQUASH ↑ | *(absorbed — < 5 lines)* |
+| `a9596e3` build: manage quarkus-work/ledger versions via parent POM properties | 🔀 MERGE with 4535be5 | *(unified — same build configuration)* |
+| `1a89a8f` fix(test): prevent binding re-fire after worker output in ChoreographySelectionTest | ✅ KEEP | `fix(test): prevent binding re-fire after worker output in ChoreographySelectionTest` |
+| `05217bd` fix(persistence): restore Flyway+validate in tests — drop-and-create was a workaround | ✅ KEEP | `fix(persistence): restore Flyway+validate in tests — drop-and-create was a workaround` (unified with 2d35ae4) |
+| `2d35ae4` fix(blackboard,resilience): remove quarkus.hibernate-orm.enabled=false workaround | 🔀 MERGE with 05217bd | *(unified — same Flyway/Hibernate revert story)* |
 
 > **Result:** 3 commits. Build alignment; test fix; Flyway/Hibernate restore.
 
@@ -1075,19 +734,11 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 **Branch:** `fix/harden-flaky-tests`
 
-> **Note:** Branch contains all commits from PR #155 plus one new commit (1a89a8f). That commit is already captured in PR #155 above. PR #156 squash in main is `6fd9e48`.
+> Branch contains all commits from PR #155 plus `1a89a8f`. That commit is already captured in PR #155.
 
-### Before (original commits — unique to this PR)
-| SHA | Message |
-|-----|---------|
-| 1a89a8f | fix(test): prevent binding re-fire after worker output in ChoreographySelectionTest |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP (already counted in #155) | 1a89a8f | fix(test): prevent binding re-fire after worker output in ChoreographySelectionTest |
-
-> **Note for executor:** This commit appears in both PR #155 and #156 branches. During reconstruction it should appear once — as part of the PR #155 commit block. PR #156 squash can be omitted since the content is already in #155's reconstruction.
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `1a89a8f` fix(test): prevent binding re-fire after worker output in ChoreographySelectionTest | *(already in PR #155)* | *(not re-counted — appears once, in PR #155 block)* |
 
 ---
 
@@ -1095,15 +746,9 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 **Branch:** `fix/deploy-unique-version`
 
-### Before (original commits)
-| SHA | Message |
-|-----|---------|
-| 7c6c877 | fix(deploy): disable timestamped SNAPSHOT versions for GitHub Packages |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | 7c6c877 | fix(deploy): disable timestamped SNAPSHOT versions for GitHub Packages |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `7c6c877` fix(deploy): disable timestamped SNAPSHOT versions for GitHub Packages | ✅ KEEP | `fix(deploy): disable timestamped SNAPSHOT versions for GitHub Packages` |
 
 > **Result:** 1 commit.
 
@@ -1111,37 +756,27 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 ## PR #158 — feat(milestone): add complete milestone SLA tracking implementation (2026-04-24) [TREBLEREEL]
 
-### Squash commit (unchanged)
-| SHA | Message |
-|-----|---------|
-| 2c02436 | feat(milestone): add complete milestone SLA tracking implementation (#158) |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `2c02436` feat(milestone): add complete milestone SLA tracking implementation (#158) | TREBLEREEL (unchanged) | *(kept as-is)* |
 
 ---
 
 ## PR #160 — ci: retrigger deploy with uniqueVersion=false fix (2026-04-26) [MDPROCTOR]
 
-**Branch:** `main` on mdproctor/engine (small CI retrigger)
+**Branch:** `main` on mdproctor/engine (CI retrigger only — no functional change)
 
-> **Note:** This is a CI retrigger only — the squash commit `e6a590f` in main_20260502 represents no functional change. Per policy, CI/build retriggers squash into the feature they were unblocking.
-
-### Before (original commits)
-| SHA | Message |
-|-----|---------|
-| e6a590f | ci: retrigger deploy with uniqueVersion=false fix (#160) |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| SQUASH into PR #157 | e6a590f | ci: retrigger deploy — CI mechanical artifact, squash into fix/deploy-unique-version |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `e6a590f` ci: retrigger deploy with uniqueVersion=false fix (#160) | 🔽 SQUASH into PR #157 | *(absorbed into fix/deploy-unique-version — CI mechanical artifact)* |
 
 ---
 
 ## PR #159 — Scheduler refactoring (2026-04-26) [TREBLEREEL]
 
-### Squash commit (unchanged)
-| SHA | Message |
-|-----|---------|
-| 28888af | Scheduler refactoring (#159) |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `28888af` Scheduler refactoring (#159) | TREBLEREEL (unchanged) | *(kept as-is)* |
 
 ---
 
@@ -1149,21 +784,14 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 **Branch:** `fix/deploy-skip` on casehubio/engine
 
-### Before (original commits)
-| SHA | Message |
-|-----|---------|
-| 5f62430 | ci: enable deploy on main branch pushes |
-| 8f1b555 | fix(ci): correct GitHub Packages deploy URL |
+> commit 8f1b555 appears here and is also the content of PR #164 squash.
 
-> **Note:** commit 8f1b555 appears here but is also the content of PR #164 squash.
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `5f62430` ci: enable deploy on main branch pushes | ✅ KEEP | `ci: enable deploy on main branch pushes` (unified with 8f1b555) |
+| `8f1b555` fix(ci): correct GitHub Packages deploy URL | 🔽 SQUASH ↑ | *(absorbed — immediate follow-on fix, < 5 lines)* |
 
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | 5f62430 | ci: enable deploy on main branch pushes |
-| SQUASH into above | 8f1b555 | fix(ci): correct GitHub Packages deploy URL — immediate follow-on fix, < 5 lines |
-
-> **Result:** 1 commit. Deploy enable + immediate URL fix unified.
+> **Result:** 1 commit.
 
 ---
 
@@ -1171,15 +799,9 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 **Branch:** `fix/deploy-url` on casehubio/engine
 
-### Before (original commits)
-| SHA | Message |
-|-----|---------|
-| 24b6244 | fix(ci): correct GitHub Packages deploy URL |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| SQUASH into PR #163 | 24b6244 | fix(ci): correct deploy URL — immediate CI fixup of PR #163, squash per revert-chain policy |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `24b6244` fix(ci): correct GitHub Packages deploy URL | 🔽 SQUASH into PR #163 | *(absorbed — immediate CI fixup of PR #163)* |
 
 ---
 
@@ -1187,17 +809,10 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 **Branch:** `fix/deploy-parent-pom` on casehubio/engine
 
-### Before (original commits)
-| SHA | Message |
-|-----|---------|
-| 4b274a6 | fix(deploy): deploy root parent POM to GitHub Packages |
-| 0317dde | docs(claude): correct publishing convention — root parent POM must be deployed |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | 4b274a6 | fix(deploy): deploy root parent POM to GitHub Packages |
-| SQUASH into above | 0317dde | docs(claude): correct publishing convention — CLAUDE.md maintenance, follows fix |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `4b274a6` fix(deploy): deploy root parent POM to GitHub Packages | ✅ KEEP | `fix(deploy): deploy root parent POM to GitHub Packages` (unified with 0317dde) |
+| `0317dde` docs(claude): correct publishing convention — root parent POM must be deployed | 🔽 SQUASH ↑ | *(absorbed — CLAUDE.md maintenance, follows fix)* |
 
 > **Result:** 1 commit.
 
@@ -1207,15 +822,9 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 **Branch:** `ci/fork-deploy-verify-only`
 
-### Before (original commits)
-| SHA | Message |
-|-----|---------|
-| 73d1f26 | ci: only deploy on upstream, verify-only on forks |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | 73d1f26 | ci: verify-only on forks, deploy only on upstream main |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `73d1f26` ci: only deploy on upstream, verify-only on forks | ✅ KEEP | `ci: verify-only on forks, deploy only on upstream main` |
 
 > **Result:** 1 commit.
 
@@ -1225,21 +834,13 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 **Branch:** `feat/spi-wiring-152`
 
-### Before (original commits)
-| SHA | Message |
-|-----|---------|
-| 5eeb080 | feat(engine): wire WorkerStatusListener, WorkerContextProvider, CaseChannelProvider into lifecycle — Closes #152 |
-| e2b1ce4 | chore: remove dead workerContextProvider.buildContext() call |
-| 86c73a3 | test(engine): remove WorkerContextProvider wiring tests |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `5eeb080` feat(engine): wire WorkerStatusListener, WorkerContextProvider, CaseChannelProvider into lifecycle — Closes #152 | ✅ KEEP | `feat(engine): wire WorkerStatusListener, WorkerContextProvider, CaseChannelProvider — Closes #152` (unified with e2b1ce4 + 86c73a3) |
+| `e2b1ce4` chore: remove dead workerContextProvider.buildContext() call | 🔽 SQUASH ↑ | *(absorbed — dead code removal follows feature)* |
+| `86c73a3` test(engine): remove WorkerContextProvider wiring tests | 🔽 SQUASH ↑ | *(absorbed — test cleanup follows feature)* |
 
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | 5eeb080 | feat(engine): wire WorkerStatusListener, WorkerContextProvider, CaseChannelProvider — Closes #152 |
-| SQUASH into above | e2b1ce4 | chore: remove dead workerContextProvider.buildContext() call — squash policy: dead code removal follows feature |
-| SQUASH into above | 86c73a3 | test(engine): remove WorkerContextProvider wiring tests — squash policy: test cleanup follows feature |
-
-> **Result:** 1 commit. Matches the squash-policy example verbatim.
+> **Result:** 1 commit. Matches squash-policy example verbatim.
 
 ---
 
@@ -1247,17 +848,10 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 **Branch:** `feat/cancel-suspend-resume-14`
 
-### Before (original commits)
-| SHA | Message |
-|-----|---------|
-| 07846b8 | feat(engine): cancelCase, suspendCase, resumeCase on CaseHub public API — Closes #14 |
-| fcc15a6 | fix: restore CaseContextChangedEvent import dropped in conflict resolution |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | 07846b8 | feat(engine): cancelCase, suspendCase, resumeCase on CaseHub public API — Closes #14 |
-| SQUASH into above | fcc15a6 | fix: restore import dropped in conflict resolution — < 5 lines, pure artifact |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `07846b8` feat(engine): cancelCase, suspendCase, resumeCase on CaseHub public API — Closes #14 | ✅ KEEP | `feat(engine): cancelCase, suspendCase, resumeCase on CaseHub public API — Closes #14` (unified with fcc15a6) |
+| `fcc15a6` fix: restore CaseContextChangedEvent import dropped in conflict resolution | 🔽 SQUASH ↑ | *(absorbed — < 5 lines, pure merge artifact)* |
 
 > **Result:** 1 commit.
 
@@ -1267,15 +861,9 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 **Branch:** `feat/worker-lifecycle-events-169`
 
-### Before (original commits — unique beyond PR #176)
-| SHA | Message |
-|-----|---------|
-| 49aa679 | feat(engine): fire CaseLifecycleEvent for worker execution start and completion |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | 49aa679 | feat(engine): fire CaseLifecycleEvent for worker execution start and completion — Refs #169 |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `49aa679` feat(engine): fire CaseLifecycleEvent for worker execution start and completion | ✅ KEEP | `feat(engine): fire CaseLifecycleEvent for worker execution start and completion — Refs #169` |
 
 > **Result:** 1 commit.
 
@@ -1285,15 +873,9 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 **Branch:** `fix/npe-case-meta-model-172`
 
-### Before (original commits)
-| SHA | Message |
-|-----|---------|
-| 1259329 | fix(engine): guard against null CaseMetaModel in CaseContextChangedEventHandler |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | 1259329 | fix(engine): guard against null CaseMetaModel in CaseContextChangedEventHandler — Refs #172 |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `1259329` fix(engine): guard against null CaseMetaModel in CaseContextChangedEventHandler | ✅ KEEP | `fix(engine): guard against null CaseMetaModel in CaseContextChangedEventHandler — Refs #172` |
 
 > **Result:** 1 commit.
 
@@ -1303,15 +885,9 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 **Branch:** `feat/casehub-testing-170`
 
-### Before (original commits)
-| SHA | Message |
-|-----|---------|
-| 4985616 | feat: add casehub-testing module — in-memory CaseEngine for consumer @QuarkusTest |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | 4985616 | feat: add casehub-testing module — in-memory CaseEngine for consumer @QuarkusTest — Refs #170 |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `4985616` feat: add casehub-testing module — in-memory CaseEngine for consumer @QuarkusTest | ✅ KEEP | `feat: add casehub-testing module — in-memory CaseEngine for consumer @QuarkusTest — Refs #170` |
 
 > **Result:** 1 commit.
 
@@ -1321,15 +897,9 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 **Branch:** `feat/casehub-work-adapter-171`
 
-### Before (original commits — unique beyond PR #180)
-| SHA | Message |
-|-----|---------|
-| 5669dc0 | feat: add casehub-work-adapter — bridge WorkItemLifecycleEvent to PlanItem transitions |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | 5669dc0 | feat: add casehub-work-adapter — bridge WorkItemLifecycleEvent to PlanItem transitions — Refs #171 |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `5669dc0` feat: add casehub-work-adapter — bridge WorkItemLifecycleEvent to PlanItem transitions | ✅ KEEP | `feat: add casehub-work-adapter — bridge WorkItemLifecycleEvent to PlanItem transitions — Refs #171` |
 
 > **Result:** 1 commit.
 
@@ -1339,21 +909,13 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 **Branch:** `docs/claude-md-174`
 
-### Before (original commits)
-| SHA | Message |
-|-----|---------|
-| 253f77c | docs(claude): document recording SPI test pattern for wiring verification |
-| 6f038c3 | docs(claude): document casehub-work-adapter test setup; remove stale blackboard PR list |
-| 2876acd | docs(claude): add platform coherence protocol and cross-repo deep-dives |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `253f77c` docs(claude): document recording SPI test pattern for wiring verification | 🔀 MERGE all three | `docs: CLAUDE.md — SPI test pattern, work-adapter setup, platform coherence — Refs #174` |
+| `6f038c3` docs(claude): document casehub-work-adapter test setup; remove stale blackboard PR list | 🔀 MERGE into 253f77c | *(unified — same CLAUDE.md update pass)* |
+| `2876acd` docs(claude): add platform coherence protocol and cross-repo deep-dives | 🔀 MERGE into 253f77c | *(unified — same CLAUDE.md update pass)* |
 
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| MERGE all three | 253f77c | docs: CLAUDE.md — SPI test pattern, work-adapter setup, platform coherence — Refs #174 |
-| MERGE into above | 6f038c3 | (same CLAUDE.md update pass) |
-| MERGE into above | 2876acd | (same CLAUDE.md update pass) |
-
-> **Result:** 1 commit. Three CLAUDE.md updates in the same sitting — near-identical scope, single doc pass.
+> **Result:** 1 commit. Three CLAUDE.md updates in the same sitting — single doc pass.
 
 ---
 
@@ -1361,15 +923,9 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 **Branch:** `docs/adr-006-173`
 
-### Before (original commits)
-| SHA | Message |
-|-----|---------|
-| 6cddc62 | docs(adr): worker registration as normative act (ADR-0006) |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | 6cddc62 | adr: ADR-0006 — worker registration as normative act — Refs #173 |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `6cddc62` docs(adr): worker registration as normative act (ADR-0006) | ✅ KEEP | `adr: ADR-0006 — worker registration as normative act — Refs #173` |
 
 > **Result:** 1 commit. ADR commits are always standalone per policy.
 
@@ -1379,21 +935,12 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 **Branch:** `fix/session-meta-case-id`
 
-### Before (original commits — unique beyond earlier PRs in this branch)
-| SHA | Message |
-|-----|---------|
-| 1f5d652 | fix(engine): pass caseId in onWorkerStarted sessionMeta |
-| dfe42f1 | docs(spec): WorkerProvisioner wiring design — WorkerRegistry, sealed WorkerExecution, normative ledger |
-| 574c5e3 | docs(plan): WorkerProvisioner wiring implementation plan — 15 tasks, full TDD pyramid |
-| 170d18a | fix(blackboard): event-driven MixedWorkersBlackboardTest — eliminates timing flake |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | 1f5d652 | fix(engine): pass caseId in onWorkerStarted sessionMeta |
-| SQUASH | dfe42f1 | docs(spec): WorkerProvisioner wiring design — internal spec/planning doc, not history |
-| SQUASH | 574c5e3 | docs(plan): WorkerProvisioner wiring implementation plan — internal planning doc, not history |
-| KEEP | 170d18a | fix(blackboard): event-driven MixedWorkersBlackboardTest — eliminates timing flake — Refs #188 |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `1f5d652` fix(engine): pass caseId in onWorkerStarted sessionMeta | ✅ KEEP | `fix(engine): pass caseId in onWorkerStarted sessionMeta` |
+| `dfe42f1` docs(spec): WorkerProvisioner wiring design — WorkerRegistry, sealed WorkerExecution, normative ledger | 🔽 SQUASH ↑ | *(absorbed — internal spec/planning doc, not history)* |
+| `574c5e3` docs(plan): WorkerProvisioner wiring implementation plan — 15 tasks, full TDD pyramid | 🔽 SQUASH ↑ | *(absorbed — internal planning doc, not history)* |
+| `170d18a` fix(blackboard): event-driven MixedWorkersBlackboardTest — eliminates timing flake | ✅ KEEP | `fix(blackboard): event-driven MixedWorkersBlackboardTest — eliminates timing flake — Refs #188` |
 
 > **Result:** 2 commits. Internal spec/plan docs squash out. Fix and test-fix kept separately.
 
@@ -1403,17 +950,10 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 **Branch:** `fix/blackboard-mixed-workers-188`
 
-### Before (original commits)
-| SHA | Message |
-|-----|---------|
-| 6dac3f1 | fix(blackboard): event-driven MixedWorkersBlackboardTest — eliminates timing flake |
-| 46dec86 | docs(claude): blackboard event-driven test pattern + PR workflow convention |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | 6dac3f1 | fix(blackboard): event-driven MixedWorkersBlackboardTest — eliminates timing flake — Refs #188 |
-| SQUASH into above | 46dec86 | docs(claude): blackboard test pattern — CLAUDE.md maintenance, follows fix |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `6dac3f1` fix(blackboard): event-driven MixedWorkersBlackboardTest — eliminates timing flake | ✅ KEEP | `fix(blackboard): event-driven MixedWorkersBlackboardTest — eliminates timing flake — Refs #188` (unified with 46dec86) |
+| `46dec86` docs(claude): blackboard event-driven test pattern + PR workflow convention | 🔽 SQUASH ↑ | *(absorbed — CLAUDE.md maintenance, follows fix)* |
 
 > **Result:** 1 commit.
 
@@ -1421,10 +961,9 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 ## PR #196 — Scheduler refactoring part two (2026-04-28) [TREBLEREEL]
 
-### Squash commit (unchanged)
-| SHA | Message |
-|-----|---------|
-| 172411a | Scheduler refactoring part two (#196) |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `172411a` Scheduler refactoring part two (#196) | TREBLEREEL (unchanged) | *(kept as-is)* |
 
 ---
 
@@ -1432,29 +971,16 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 **Branch:** `feat/worker-provisioner-context-wiring-191`
 
-### Before (original commits — unique to this PR)
-| SHA | Message |
-|-----|---------|
-| f5a96e6 | feat(engine): wire WorkerContextProvider and WorkerProvisioner into execution path |
-| 9e824ce | fix: align PropagationContext.traceId with active OTel span |
-| b1f8b23 | docs(design): resolve merge conflicts and document lifecycle flows |
-| 608ab72 | fix: add MODE=PostgreSQL to H2 test URL in casehub-work-adapter |
-| 106793f | test(engine): fix CDI failure when quarkus-ledger is on engine classpath |
-| ae97e2a | fix(blackboard): configure H2 + NoOpLedgerEntryRepository for quarkus-blackboard tests |
-| 4660961 | fix(resilience): configure H2 + NoOpLedgerEntryRepository for quarkus-resilience tests |
-| bef642c | fix(work-adapter): add NoOpLedgerEntryRepository for quarkus-ledger CDI |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | f5a96e6 | feat(engine): wire WorkerContextProvider and WorkerProvisioner into execution path — Refs #191 |
-| MERGE with above | 9e824ce | fix: align PropagationContext.traceId with active OTel span — same wiring concern |
-| SQUASH into above | b1f8b23 | docs(design): resolve merge conflicts — merge artifact, not history |
-| KEEP | 608ab72 | fix: add MODE=PostgreSQL to H2 test URL in casehub-work-adapter |
-| MERGE with above | 106793f | test(engine): fix CDI failure when quarkus-ledger is on engine classpath — same H2/CDI test env pass |
-| MERGE with above | ae97e2a | fix(blackboard): configure H2 + NoOpLedgerEntryRepository — same test env pass |
-| MERGE with above | 4660961 | fix(resilience): configure H2 + NoOpLedgerEntryRepository — same test env pass |
-| MERGE with above | bef642c | fix(work-adapter): add NoOpLedgerEntryRepository — same test env pass |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `f5a96e6` feat(engine): wire WorkerContextProvider and WorkerProvisioner into execution path | ✅ KEEP | `feat(engine): wire WorkerContextProvider and WorkerProvisioner into execution path — Refs #191` (unified with 9e824ce + b1f8b23) |
+| `9e824ce` fix: align PropagationContext.traceId with active OTel span | 🔀 MERGE with f5a96e6 | *(unified — same wiring concern)* |
+| `b1f8b23` docs(design): resolve merge conflicts and document lifecycle flows | 🔽 SQUASH ↑ | *(absorbed — merge artifact, not history)* |
+| `608ab72` fix: add MODE=PostgreSQL to H2 test URL in casehub-work-adapter | ✅ KEEP | `fix: H2 test URL + CDI/ledger configuration for blackboard, resilience, work-adapter modules` (unified with 106793f + ae97e2a + 4660961 + bef642c) |
+| `106793f` test(engine): fix CDI failure when quarkus-ledger is on engine classpath | 🔀 MERGE with 608ab72 | *(unified — same H2/CDI test env pass)* |
+| `ae97e2a` fix(blackboard): configure H2 + NoOpLedgerEntryRepository for quarkus-blackboard tests | 🔀 MERGE with 608ab72 | *(unified — same test env pass)* |
+| `4660961` fix(resilience): configure H2 + NoOpLedgerEntryRepository for quarkus-resilience tests | 🔀 MERGE with 608ab72 | *(unified — same test env pass)* |
+| `bef642c` fix(work-adapter): add NoOpLedgerEntryRepository for quarkus-ledger CDI | 🔀 MERGE with 608ab72 | *(unified — same test env pass)* |
 
 > **Result:** 2 commits. Wiring feat + test environment fixes.
 
@@ -1464,31 +990,17 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 **Branch:** `feat/idempotency-window-193`
 
-### Before (original commits)
-| SHA | Message |
-|-----|---------|
-| f55aa47 | feat(engine-model): add Instant after cutoff overload to findSchedulingEvents |
-| db991ae | feat(persistence-memory): implement findSchedulingEvents with Instant cutoff |
-| 7173a1f | feat(persistence-hibernate): implement findSchedulingEvents with Instant cutoff |
-| ae9311f | fix(casehub-blackboard): update test-local InMemoryEventLogRepository |
-| 4f286e9 | test(persistence-hibernate): rename withNullCutoff → withNullAfter for clarity |
-| bad672f | style(tests): use ObjectMapper import instead of FQN in repository tests |
-| df330cc | feat(engine): wire casehub.idempotency.window config into WorkerScheduleEventHandler |
-| e628421 | docs: document casehub.idempotency.window in DESIGN.md, mark migration gap #193 resolved |
-| 8180144 | feat(blackboard): add waitForCompletion, inputMapping, outputMapping to Binding |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | f55aa47 | feat(engine-model): add Instant cutoff overload to findSchedulingEvents — Refs #193 |
-| MERGE with above | db991ae | feat(persistence-memory): implement findSchedulingEvents with Instant cutoff — same SPI impl pair |
-| MERGE with above | 7173a1f | feat(persistence-hibernate): implement findSchedulingEvents with Instant cutoff — same SPI impl pair |
-| SQUASH into above | ae9311f | fix(casehub-blackboard): update test-local InMemoryEventLogRepository — test fixup of SPI change |
-| SQUASH into above | 4f286e9 | test: rename withNullCutoff → withNullAfter — < 5 lines, rename |
-| SQUASH into above | bad672f | style(tests): use ObjectMapper import — < 5 lines, style-only |
-| KEEP | df330cc | feat(engine): wire casehub.idempotency.window config into WorkerScheduleEventHandler — Refs #193 |
-| SQUASH into above | e628421 | docs: document casehub.idempotency.window in DESIGN.md — docs follow feature |
-| KEEP | 8180144 | feat(blackboard): add waitForCompletion, inputMapping, outputMapping to Binding |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `f55aa47` feat(engine-model): add Instant after cutoff overload to findSchedulingEvents | ✅ KEEP | `feat(engine-model+persistence): add Instant cutoff overload to findSchedulingEvents — Refs #193` (unified with db991ae + 7173a1f + ae9311f + 4f286e9 + bad672f) |
+| `db991ae` feat(persistence-memory): implement findSchedulingEvents with Instant cutoff | 🔀 MERGE with f55aa47 | *(unified — same SPI impl pair)* |
+| `7173a1f` feat(persistence-hibernate): implement findSchedulingEvents with Instant cutoff | 🔀 MERGE with f55aa47 | *(unified — same SPI impl pair)* |
+| `ae9311f` fix(casehub-blackboard): update test-local InMemoryEventLogRepository | 🔽 SQUASH ↑ | *(absorbed — test fixup of SPI change)* |
+| `4f286e9` test(persistence-hibernate): rename withNullCutoff → withNullAfter for clarity | 🔽 SQUASH ↑ | *(absorbed — < 5 lines, rename)* |
+| `bad672f` style(tests): use ObjectMapper import instead of FQN in repository tests | 🔽 SQUASH ↑ | *(absorbed — < 5 lines, style-only)* |
+| `df330cc` feat(engine): wire casehub.idempotency.window config into WorkerScheduleEventHandler | ✅ KEEP | `feat(engine): wire casehub.idempotency.window config into WorkerScheduleEventHandler — Refs #193` (unified with e628421) |
+| `e628421` docs: document casehub.idempotency.window in DESIGN.md, mark migration gap #193 resolved | 🔽 SQUASH ↑ | *(absorbed — docs follow feature)* |
+| `8180144` feat(blackboard): add waitForCompletion, inputMapping, outputMapping to Binding | ✅ KEEP | `feat(blackboard): add waitForCompletion, inputMapping, outputMapping to Binding` |
 
 > **Result:** 3 commits.
 
@@ -1498,27 +1010,15 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 **Branch:** `feat/dlq-replay-194`
 
-### Before (original commits)
-| SHA | Message |
-|-----|---------|
-| c7a2853 | feat(resilience): add replayAttempts and lastReplayAttemptAt to DeadLetterEntry |
-| 2e30905 | feat(resilience): implement DeadLetterReplayService — explicit DLQ replay |
-| fb892a1 | feat(resilience): implement DeadLetterAutoReplayJob — optional @Scheduled auto-replay |
-| a07b552 | test(resilience): extend DLQ E2E test — replay on faulted case is rejected |
-| 6a08ae4 | fix(resilience): O(1) DLQ findById + arrivedAt-based delay in isEligible |
-| e428959 | docs: DLQ replay documented in DESIGN.md |
-| b623068 | fix: update CaseDefinitionRegistry import after PR #196 scheduler refactoring |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| MERGE both | c7a2853 | feat(resilience): DLQ replay — replayAttempts tracking, DeadLetterReplayService, DeadLetterAutoReplayJob — Refs #194 |
-| MERGE into above | 2e30905 | (same DLQ replay capability) |
-| MERGE into above | fb892a1 | (same DLQ replay capability) |
-| KEEP | a07b552 | test(resilience): DLQ E2E — replay on faulted case is rejected — Refs #194 |
-| SQUASH into first | 6a08ae4 | fix(resilience): O(1) DLQ findById + arrivedAt-based delay — same-module fix, same sitting |
-| SQUASH into first | e428959 | docs: DLQ replay in DESIGN.md — docs follow feature |
-| SQUASH into first | b623068 | fix: update CaseDefinitionRegistry import after PR #196 — < 5 lines, import fix |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `c7a2853` feat(resilience): add replayAttempts and lastReplayAttemptAt to DeadLetterEntry | 🔀 MERGE all three | `feat(resilience): DLQ replay — replayAttempts tracking, DeadLetterReplayService, DeadLetterAutoReplayJob — Refs #194` (unified with c7a2853 + 2e30905 + fb892a1 + 6a08ae4 + e428959 + b623068) |
+| `2e30905` feat(resilience): implement DeadLetterReplayService — explicit DLQ replay | 🔀 MERGE into c7a2853 | *(unified — same DLQ replay capability)* |
+| `fb892a1` feat(resilience): implement DeadLetterAutoReplayJob — optional @Scheduled auto-replay | 🔀 MERGE into c7a2853 | *(unified — same DLQ replay capability)* |
+| `a07b552` test(resilience): extend DLQ E2E test — replay on faulted case is rejected | ✅ KEEP | `test(resilience): DLQ E2E — replay on faulted case is rejected — Refs #194` |
+| `6a08ae4` fix(resilience): O(1) DLQ findById + arrivedAt-based delay in isEligible | 🔽 SQUASH ↑ | *(absorbed into DLQ feat — same-module fix, same sitting)* |
+| `e428959` docs: DLQ replay documented in DESIGN.md | 🔽 SQUASH ↑ | *(absorbed — docs follow feature)* |
+| `b623068` fix: update CaseDefinitionRegistry import after PR #196 scheduler refactoring | 🔽 SQUASH ↑ | *(absorbed — < 5 lines, import fix)* |
 
 > **Result:** 2 commits. DLQ replay unified; test scenario standalone.
 
@@ -1528,41 +1028,22 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 **Branch:** `feat/subcase-binding-195` (first merge)
 
-### Before (original commits)
-| SHA | Message |
-|-----|---------|
-| badabd2 | feat(api): move SubCase to api, add subCase field to Binding (mutually exclusive with capability) |
-| b49d88f | feat(engine): add SUBCASE_STARTED/COMPLETED event types and SubCaseScheduleEvent |
-| d3c29d0 | refactor(engine): extract CaseResumptionService from WorkflowExecutionCompletedHandler |
-| 4bb4924 | feat(engine): detect SubCase bindings in CaseContextChangedEventHandler |
-| 4574655 | test(engine): update Binding builder test — IllegalStateException replaces NPE |
-| e788950 | feat(blackboard): implement SubCaseExecutionHandler — spawns child CaseInstance on SubCaseScheduleEvent |
-| 3925d60 | feat(blackboard): implement SubCaseCompletionListener — routes child terminal state to parent |
-| 3d0c914 | fix(blackboard): SubCaseExecutionHandler — add blocking=true to prevent event-loop deadlock |
-| c8d31e4 | test(blackboard): SubCaseIntegrationTest — parent transitions to WAITING on SubCase spawn |
-| 2716f18 | docs: SubCaseBinding documented in DESIGN.md |
-| 30c8aa2 | fix(blackboard): fix double-write and outputMapping against wrong context in SubCase handlers |
-| 9efc291 | fix(blackboard): critical fixes from code quality review |
-| 0f6b320 | ci: trigger CI for PR #199 |
-| 0b862ae | fix: update imports after upstream/main rebase (PR #196 renamed engine-model) |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | badabd2 | feat(api): move SubCase to api, add subCase field to Binding — Refs #195 |
-| KEEP | b49d88f | feat(engine): add SUBCASE_STARTED/COMPLETED event types and SubCaseScheduleEvent — Refs #195 |
-| KEEP | d3c29d0 | refactor(engine): extract CaseResumptionService from WorkflowExecutionCompletedHandler — Refs #195 |
-| MERGE with above | 4bb4924 | feat(engine): detect SubCase bindings in CaseContextChangedEventHandler — same engine wiring pass |
-| SQUASH into above | 4574655 | test(engine): update Binding builder test — IllegalStateException replaces NPE — same-class test update |
-| KEEP | e788950 | feat(blackboard): implement SubCaseExecutionHandler — spawns child CaseInstance on SubCaseScheduleEvent — Refs #195 |
-| MERGE with above | 3925d60 | feat(blackboard): implement SubCaseCompletionListener — routes child terminal state to parent — part two of handler pair |
-| SQUASH into above | 3d0c914 | fix(blackboard): SubCaseExecutionHandler — add blocking=true to prevent event-loop deadlock — same handler hardened |
-| KEEP | c8d31e4 | test(blackboard): SubCaseIntegrationTest — parent transitions to WAITING on SubCase spawn — Refs #195 |
-| SQUASH into above | 2716f18 | docs: SubCaseBinding documented in DESIGN.md — docs follow test |
-| SQUASH into above | 30c8aa2 | fix(blackboard): fix double-write and outputMapping — same handlers, same sitting |
-| SQUASH into above | 9efc291 | fix(blackboard): critical fixes from code quality review — < 5 lines, review fixup |
-| SQUASH | 0f6b320 | ci: trigger CI for PR #199 — CI mechanical artifact |
-| SQUASH into closest | 0b862ae | fix: update imports after PR #196 rebase — < 5 lines, import-only |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `badabd2` feat(api): move SubCase to api, add subCase field to Binding (mutually exclusive with capability) | ✅ KEEP | `feat(api): move SubCase to api, add subCase field to Binding — Refs #195` |
+| `b49d88f` feat(engine): add SUBCASE_STARTED/COMPLETED event types and SubCaseScheduleEvent | ✅ KEEP | `feat(engine): add SUBCASE_STARTED/COMPLETED event types and SubCaseScheduleEvent — Refs #195` |
+| `d3c29d0` refactor(engine): extract CaseResumptionService from WorkflowExecutionCompletedHandler | ✅ KEEP | `refactor(engine): extract CaseResumptionService from WorkflowExecutionCompletedHandler — Refs #195` (unified with 4bb4924 + 4574655) |
+| `4bb4924` feat(engine): detect SubCase bindings in CaseContextChangedEventHandler | 🔀 MERGE with d3c29d0 | *(unified — same engine wiring pass)* |
+| `4574655` test(engine): update Binding builder test — IllegalStateException replaces NPE | 🔽 SQUASH ↑ | *(absorbed — same-class test update)* |
+| `e788950` feat(blackboard): implement SubCaseExecutionHandler — spawns child CaseInstance on SubCaseScheduleEvent | ✅ KEEP | `feat(blackboard): implement SubCaseExecutionHandler + SubCaseCompletionListener — Refs #195` (unified with 3925d60 + 3d0c914) |
+| `3925d60` feat(blackboard): implement SubCaseCompletionListener — routes child terminal state to parent | 🔀 MERGE with e788950 | *(unified — part two of handler pair)* |
+| `3d0c914` fix(blackboard): SubCaseExecutionHandler — add blocking=true to prevent event-loop deadlock | 🔽 SQUASH ↑ | *(absorbed — same handler hardened)* |
+| `c8d31e4` test(blackboard): SubCaseIntegrationTest — parent transitions to WAITING on SubCase spawn | ✅ KEEP | `test(blackboard): SubCaseIntegrationTest — parent transitions to WAITING on SubCase spawn — Refs #195` (unified with 2716f18 + 30c8aa2 + 9efc291 + 0b862ae) |
+| `2716f18` docs: SubCaseBinding documented in DESIGN.md | 🔽 SQUASH ↑ | *(absorbed — docs follow test)* |
+| `30c8aa2` fix(blackboard): fix double-write and outputMapping against wrong context in SubCase handlers | 🔽 SQUASH ↑ | *(absorbed — same handlers, same sitting)* |
+| `9efc291` fix(blackboard): critical fixes from code quality review | 🔽 SQUASH ↑ | *(absorbed — < 5 lines, review fixup)* |
+| `0f6b320` ci: trigger CI for PR #199 | ❌ DROP (CI mechanical artifact) | *(dropped)* |
+| `0b862ae` fix: update imports after upstream/main rebase (PR #196 renamed engine-model) | 🔽 SQUASH ↑ | *(absorbed — < 5 lines, import-only)* |
 
 > **Result:** 5 commits.
 
@@ -1570,10 +1051,9 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 ## PR #214 — fex(sql): Disable datasource Dev Services reuse in tests (2026-04-29) [TREBLEREEL]
 
-### Squash commit (unchanged)
-| SHA | Message |
-|-----|---------|
-| 07b2993 | fex(sql): Disable datasource Dev Services reuse in tests so Testcontainers Postgres instances are cleaned up after Maven runs. (#214) |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `07b2993` fex(sql): Disable datasource Dev Services reuse in tests so Testcontainers Postgres instances are cleaned up after Maven runs. (#214) | TREBLEREEL (unchanged) | *(kept as-is)* |
 
 ---
 
@@ -1581,35 +1061,19 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 **Branch:** `feat/subcase-binding-195` (second merge — imports refactor + ADR-0007)
 
-### Before (original commits — unique to this PR beyond PR #199)
-| SHA | Message |
-|-----|---------|
-| fb3e0aa | docs(claude): update engine-model → casehub-engine-common, add quarkus version |
-| ed3472a | docs(adr): ADR-0007 — four execution models as first-class citizens |
-| 16decd1 | docs(adr): ADR-0007 — add lineage constraint across all four execution models |
-| d724649 | docs(adr): ADR-0007 — add context propagation design principle |
-| c46d880 | docs(adr): ADR-0007 — add langchain4j-agentic integration constraint |
-| f8125d0 | docs(adr): ADR-0007 — expand langchain4j-agentic section with technical details |
-| 9218953 | docs(adr): ADR-0007 — correct context model: three distinct contexts |
-| 54f5f3b | docs(adr): ADR-0007 — context model is worker-level, with optional case-level |
-| 83a58d9 | docs(adr): ADR-0007 — link to implementation epic #201 |
-| 3b4c313 | refactor: update imports for quarkus-ledger-api module split |
-| f90bfc9 | fix(deps): explicitly declare quarkus-ledger-api dependency in engine modules |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | 3b4c313 | refactor: update imports for quarkus-ledger-api and quarkus-qhorus-api module splits |
-| MERGE with above | f90bfc9 | fix(deps): explicitly declare quarkus-ledger-api dependency — same module-split pass |
-| KEEP | ed3472a | adr: ADR-0007 — four execution models as first-class citizens |
-| SQUASH all ADR-0007 iterations into above | 16decd1 | (same ADR, iterative refinement — multiple passes squash into final ADR state) |
-| SQUASH into above | d724649 | (same) |
-| SQUASH into above | c46d880 | (same) |
-| SQUASH into above | f8125d0 | (same) |
-| SQUASH into above | 9218953 | (same) |
-| SQUASH into above | 54f5f3b | (same) |
-| SQUASH into above | 83a58d9 | (same) |
-| SQUASH into above | fb3e0aa | docs(claude): update engine-model name — CLAUDE.md maintenance, squash |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `fb3e0aa` docs(claude): update engine-model → casehub-engine-common, add quarkus version | 🔽 SQUASH ↑ | *(absorbed — CLAUDE.md maintenance, squash)* |
+| `ed3472a` docs(adr): ADR-0007 — four execution models as first-class citizens | ✅ KEEP | `adr: ADR-0007 — four execution models as first-class citizens` (all ADR-0007 iterations unified into final state) |
+| `16decd1` docs(adr): ADR-0007 — add lineage constraint across all four execution models | 🔽 SQUASH ↑ | *(absorbed — same ADR, iterative refinement)* |
+| `d724649` docs(adr): ADR-0007 — add context propagation design principle | 🔽 SQUASH ↑ | *(absorbed — same ADR)* |
+| `c46d880` docs(adr): ADR-0007 — add langchain4j-agentic integration constraint | 🔽 SQUASH ↑ | *(absorbed — same ADR)* |
+| `f8125d0` docs(adr): ADR-0007 — expand langchain4j-agentic section with technical details | 🔽 SQUASH ↑ | *(absorbed — same ADR)* |
+| `9218953` docs(adr): ADR-0007 — correct context model: three distinct contexts | 🔽 SQUASH ↑ | *(absorbed — same ADR)* |
+| `54f5f3b` docs(adr): ADR-0007 — context model is worker-level, with optional case-level | 🔽 SQUASH ↑ | *(absorbed — same ADR)* |
+| `83a58d9` docs(adr): ADR-0007 — link to implementation epic #201 | 🔽 SQUASH ↑ | *(absorbed — same ADR)* |
+| `3b4c313` refactor: update imports for quarkus-ledger-api module split | ✅ KEEP | `refactor: update imports for quarkus-ledger-api and quarkus-qhorus-api module splits` (unified with f90bfc9) |
+| `f90bfc9` fix(deps): explicitly declare quarkus-ledger-api dependency in engine modules | 🔀 MERGE with 3b4c313 | *(unified — same module-split pass)* |
 
 > **Result:** 2 commits. Import refactor; ADR-0007 (final state only — iterative ADR commits collapse into one).
 
@@ -1617,10 +1081,9 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 ## PR #215 — feat(worker): add configurable execution timeout with per-worker override (2026-04-29) [TREBLEREEL]
 
-### Squash commit (unchanged)
-| SHA | Message |
-|-----|---------|
-| ffa3c8c | feat(worker): add configurable execution timeout with per-worker override (#215) |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `ffa3c8c` feat(worker): add configurable execution timeout with per-worker override (#215) | TREBLEREEL (unchanged) | *(kept as-is)* |
 
 ---
 
@@ -1628,23 +1091,14 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 **Branch:** `fix/post-rename-jandex` on casehubio/engine
 
-### Before (original commits)
-| SHA | Message |
-|-----|---------|
-| 34658d3 | fix(core): post modules renaming fix |
-| 48c4d97 | fix(tests): restore CDI bean discovery broken by scheduler-quartz extraction |
-| 05d326c | fix(tests): add persistence-memory index and selected-alternatives to engine test config |
-| d76b4f1 | fix(tests): add beans.xml to persistence-hibernate and fix engine test index config |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `34658d3` fix(core): post modules renaming fix | 🔀 MERGE all four | `fix(core): post-rename Jandex, CDI discovery, and test config fixes` |
+| `48c4d97` fix(tests): restore CDI bean discovery broken by scheduler-quartz extraction | 🔀 MERGE into 34658d3 | *(unified — same root cause: Jandex/CDI after module rename)* |
+| `05d326c` fix(tests): add persistence-memory index and selected-alternatives to engine test config | 🔀 MERGE into 34658d3 | *(unified — same root cause)* |
+| `d76b4f1` fix(tests): add beans.xml to persistence-hibernate and fix engine test index config | 🔀 MERGE into 34658d3 | *(unified — same root cause)* |
 
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| MERGE all | 34658d3 | fix(core): post-rename Jandex, CDI discovery, and test config fixes — all four commits fix the same post-rename breakage |
-| MERGE into above | 48c4d97 | (same) |
-| MERGE into above | 05d326c | (same) |
-| MERGE into above | d76b4f1 | (same) |
-
-> **Result:** 1 commit. All four fix the same root cause (Jandex/CDI after module rename).
+> **Result:** 1 commit.
 
 ---
 
@@ -1652,21 +1106,12 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 **Branch:** `feat/worker-schedule-command-186` on casehubio/engine
 
-### Before (original commits)
-| SHA | Message |
-|-----|---------|
-| eb67bb3 | feat(worker): dispatch Qhorus COMMAND on worker channel after scheduling (#186) |
-| e4b2065 | chore: consistency pass — stale names, artifact leak, and terminology cleanup |
-| 5136a62 | chore: replace stale quarkus-ledger name with casehub-ledger in DESIGN.md |
-| a2a52a0 | chore: apply Spotless comment reflow in WorkItemLifecycleAdapter |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| KEEP | eb67bb3 | feat(worker): dispatch Qhorus COMMAND on worker channel after scheduling — Refs #186 |
-| SQUASH into above | e4b2065 | chore: consistency pass — stale names — squash policy: chore cleanup follows feature |
-| SQUASH into above | 5136a62 | chore: replace stale quarkus-ledger name in DESIGN.md — squash policy: chore cleanup |
-| SQUASH into above | a2a52a0 | chore: apply Spotless comment reflow — squash policy: formatting fixup |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `eb67bb3` feat(worker): dispatch Qhorus COMMAND on worker channel after scheduling (#186) | ✅ KEEP | `feat(worker): dispatch Qhorus COMMAND on worker channel after scheduling — Refs #186` (unified with e4b2065 + 5136a62 + a2a52a0) |
+| `e4b2065` chore: consistency pass — stale names, artifact leak, and terminology cleanup | 🔽 SQUASH ↑ | *(absorbed — chore cleanup follows feature)* |
+| `5136a62` chore: replace stale quarkus-ledger name with casehub-ledger in DESIGN.md | 🔽 SQUASH ↑ | *(absorbed — chore cleanup)* |
+| `a2a52a0` chore: apply Spotless comment reflow in WorkItemLifecycleAdapter | 🔽 SQUASH ↑ | *(absorbed — formatting fixup)* |
 
 > **Result:** 1 commit.
 
@@ -1676,21 +1121,12 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 **Branch:** `feat/case-channel-provider-post-220` on casehubio/engine
 
-### Before (original commits — unique beyond PR #218)
-| SHA | Message |
-|-----|---------|
-| 73fda63 | feat(api): expose WorkerContext.channels() for worker-to-channel posting |
-| 682cf37 | feat: expose WorkerContext.channels() via WorkerExecutionContext thread-local (Closes #220) |
-| 93c9009 | docs(claude): document IntelliJ MCP tool preference convention |
-| 9c59902 | fix(test): implement new LedgerEntryRepository methods in NoOpLedgerEntryRepository |
-
-### After (proposed)
-| Action | SHA | Proposed message |
-|--------|-----|-----------------|
-| MERGE both feat | 73fda63 | feat: WorkerContext.channels() exposed via API and WorkerExecutionContext thread-local — Closes #220 |
-| MERGE into above | 682cf37 | (same feature — API exposure + thread-local wiring are part 1 and 2) |
-| SQUASH | 93c9009 | docs(claude): IntelliJ MCP tool preference — CLAUDE.md maintenance, squash |
-| KEEP | 9c59902 | fix(test): implement new LedgerEntryRepository methods in NoOpLedgerEntryRepository |
+| Original commit | Action | Curated result |
+|----------------|--------|----------------|
+| `73fda63` feat(api): expose WorkerContext.channels() for worker-to-channel posting | 🔀 MERGE both | `feat: WorkerContext.channels() exposed via API and WorkerExecutionContext thread-local — Closes #220` |
+| `682cf37` feat: expose WorkerContext.channels() via WorkerExecutionContext thread-local (Closes #220) | 🔀 MERGE into 73fda63 | *(unified — API exposure + thread-local wiring are part 1 and 2)* |
+| `93c9009` docs(claude): document IntelliJ MCP tool preference convention | 🔽 SQUASH ↑ | *(absorbed — CLAUDE.md maintenance, squash)* |
+| `9c59902` fix(test): implement new LedgerEntryRepository methods in NoOpLedgerEntryRepository | ✅ KEEP | `fix(test): implement new LedgerEntryRepository methods in NoOpLedgerEntryRepository` |
 
 > **Result:** 2 commits.
 
@@ -1700,8 +1136,6 @@ The PR #126 squash commit in main_20260502 is the entry point. The granular comm
 
 ### Commits not appearing in main_20260502
 
-The following merged PRs have no distinct commit in `main_20260502` because their content was superseded or absorbed:
-
 | PR | Reason |
 |----|--------|
 | #52, #53, #54 | Content consolidated into PR #126 from mdproctor/engine:main |
@@ -1710,13 +1144,11 @@ The following merged PRs have no distinct commit in `main_20260502` because thei
 
 ### Stacked branch note
 
-PRs #88→#90 and #91→#100 were developed as stacked branches. The "before" commits shown per PR are unique commits added in that PR only. During reconstruction, branches are replayed in merge order; each subsequent branch extends the previous.
+PRs #88→#90 and #91→#100 were developed as stacked branches. The commits shown per PR are unique commits added in that PR only. During reconstruction, branches are replayed in merge order; each subsequent branch extends the previous.
 
 ### Low-quality squash messages (treblereel)
 
-Two treblereel squash commits have poor messages and may warrant a note when presenting the reconstructed history:
-
 | SHA | Original message | Suggested display note |
 |-----|-----------------|----------------------|
-| 7c2372a | Description: (#74) | Content: serialize concurrent signal processing with Vert.x local lock |
-| 49dc32f | Feat/persistence/engine decoupling (#85) | Title-case artifact from branch name |
+| `7c2372a` | Description: (#74) | Content: serialize concurrent signal processing with Vert.x local lock |
+| `49dc32f` | Feat/persistence/engine decoupling (#85) | Title-case artifact from branch name |
