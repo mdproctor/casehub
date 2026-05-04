@@ -164,6 +164,20 @@ CaseHub is the orchestration/choreography engine in a three-project Quarkus Nati
 
 @/Users/mdproctor/claude/claudony/docs/superpowers/specs/2026-04-13-quarkus-ai-ecosystem-design.md
 
+## Git Workflow
+
+**Fork model (all casehubio ecosystem repos):**
+- `origin` → your fork (`mdproctor/<repo>`)
+- `upstream` → casehubio (`casehubio/<repo>`)
+- Work on a branch → push to `origin` → PR to `casehubio`
+- Repos with fork configured: engine, ledger, work, qhorus, claudony
+
+**Merge policy:** Squash merges are disabled on all casehubio repos.
+Use rebase merge (preferred — linear history, all commits preserved) or merge commit.
+Configure via: `gh api --method PATCH repos/casehubio/<repo> -f allow_squash_merge=false`
+
+---
+
 ## Work Tracking
 
 **Issue tracking:** enabled
