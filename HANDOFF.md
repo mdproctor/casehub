@@ -1,39 +1,57 @@
 # Session Handover — CaseHub
-**Date:** 2026-05-01
-**Session:** WorkerExecutionContext wiring + engine#220 closed
+**Date:** 2026-05-04
+**Session:** Git History Recovery — squash-merge discovery, safety work, reconstruction plan parked
 
 ---
 
 ## Where We Are
 
 **What landed this session:**
-- **Jandex pin** — `jandex-maven-plugin 3.1.2` added to root `pluginManagement` in qhorus, ledger, work, claudony. Consistent with engine. Pushed to main in all four repos.
-- **engine#220 complete** — PR #224 open on `feat/case-channel-provider-post-220`:
-  - `WorkerContextProvider.buildContext()` gains `UUID caseId` (blocking + reactive SPIs)
-  - `EmptyWorkerContextProvider` injects `CaseChannelProvider`, populates `channels` via `listChannels(caseId)`
-  - `WorkerExecutionContext` — new thread-local in `api/model/`; set inside `CompletableFuture.supplyAsync` lambda in `QuartzWorkerExecutionJob` before function call, cleared in `finally`
-  - 490 tests pass locally; 6 new `WorkerExecutionContextTest`, updated contract tests, new integration test `workerExecutionContext_channelsAccessibleDuringExecution`
-  - Key gotcha: ThreadLocal set on Quartz thread is invisible in `supplyAsync` lambda (ForkJoinPool thread) — must set it inside the lambda
+- PRs #225, #226, #228 merged to casehubio/engine — NoOp ledger stubs, WorkerExecutionContext, test config fixes
+- All local engine branches pushed to both `mdproctor/engine` and `casehubio/engine`
+- `main_20260502` branch created on casehubio/engine — permanent snapshot before reconstruction
+- Fork workflow set up for ledger, work, qhorus, claudony (origin → fork, upstream → casehubio)
+- Squash merges disabled on all 6 casehubio repos (rebase + merge commit only)
+- Squash policy + reconstruction plan written and parked
 
-**CI on PR #224:** failing due to `casehub-ledger:0.2-SNAPSHOT` not in GitHub Packages — pre-existing dependency resolution gap, unrelated to this change. The `ci: use GH_PAT` fix is on the branch and should resolve it on re-run.
+**Discovery:** All 86 PRs on casehubio/engine were squash-merged — full granular history lost from main. Recovery plan exists; parked while code changes happen first.
 
 ---
 
 ## Immediate Next Steps
 
-1. **Merge PR #224** — once CI is green. Verify `casehub-ledger:0.2-SNAPSHOT` publishing is unblocked first.
-2. **engine#220 → qhorus#131** — with the engine SPI defined, design the Qhorus Channel layer (gateway, backends, WhatsApp, history store). See casehubio/qhorus#131.
+1. **Code changes in engine** — user's priority now; pick up whatever that is
+2. **Resume reconstruction** when ready — load `docs/superpowers/specs/reconstruction-compaction-parking-note.md` for full state, corrections needed, and 7-phase execution plan
+
+---
+
+## Reconstruction Status (parked)
+
+Full context: `docs/superpowers/specs/reconstruction-compaction-parking-note.md`
+
+Key corrections still needed before executing:
+- Remove ❌ DROP category from plan (engine has no workspace artifacts — filter-repo not needed for engine)
+- Reclassify `07a89a8` as SQUASH not DROP (revert chain with real files)
+- Clarify PRs #52/#53/#54 DROP entries (code covered via PR #126, not discarded)
+- Update cc-praxis git-squash skill (DROP → filter-repo approach; CLAUDE.md split policy)
+
+Plan document: https://github.com/mdproctor/casehub/blob/main/docs/superpowers/specs/engine-reconstruction-plan.md
 
 ---
 
 ## Repo Build Status
 
-*Unchanged — `git show HEAD~1:HANDOFF.md`*
+| Repo | Status |
+|------|--------|
+| casehubio/engine main | ✅ green, local + fork main synced |
+| casehubio/ledger/work/qhorus/claudony | ✅ fork workflow configured |
 
 ## Key References
 
 | What | Where |
 |---|---|
-| PR #224 (engine#220 impl) | `casehubio/engine/pull/224`, branch `feat/case-channel-provider-post-220` |
+| Reconstruction parking note | `docs/superpowers/specs/reconstruction-compaction-parking-note.md` |
+| Squash policy | `docs/superpowers/specs/commit-squash-policy.md` |
+| Reconstruction plan (side-by-side) | `docs/superpowers/specs/engine-reconstruction-plan.md` |
+| engine#220 backup branch | `casehubio/engine:main_20260502` |
 | Qhorus Channel abstraction | `casehubio/qhorus#131` |
-| Channel SPI design issue | `casehubio/engine#220` |
