@@ -26,3 +26,4 @@
 | [2026-04-30-mdp01-workaround-that-wasnt.md](2026-04-30-mdp01-workaround-that-wasnt.md) | 2026-04-30 | Misdiagnosed a sdk-java null output bug, got corrected by the maintainer, fixed it properly. |
 | [2026-05-01-mdp01-workers-can-talk-back.md](2026-05-01-mdp01-workers-can-talk-back.md) | 2026-05-01 | WorkerExecutionContext thread-local: closing the channel access gap so workers can read their case channels at runtime. |
 | [2026-05-05-mdp01-what-kind-of-message-is.md](2026-05-05-mdp01-what-kind-of-message-is.md) | 2026-05-05 | Adding MessageType to CaseChannelProvider SPI and trigger fields to ProvisionContext |
+| [2026-05-05-mdp02-cleaning-house-before-merge.md](2026-05-05-mdp02-cleaning-house-before-merge.md) | 2026-05-05 | Applying the compaction policy to PRs #232 and #233, and catching a hitchhiker commit that rode along in both branches |

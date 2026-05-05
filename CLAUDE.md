@@ -172,9 +172,16 @@ CaseHub is the orchestration/choreography engine in a three-project Quarkus Nati
 - Work on a branch → push to `origin` → PR to `casehubio`
 - Repos with fork configured: engine, ledger, work, qhorus, claudony
 
+**Branch discipline:** Always cut feature branches from `upstream/main`, not local `main`.
+Verify before pushing: `git log upstream/main..branch` — should show only intended commits.
+
 **Merge policy:** Squash merges are disabled on all casehubio repos.
 Use rebase merge (preferred — linear history, all commits preserved) or merge commit.
 Configure via: `gh api --method PATCH repos/casehubio/<repo> -f allow_squash_merge=false`
+
+**Commit compaction:** Apply the squash policy (`docs/superpowers/specs/commit-squash-policy.md`)
+to all PRs before merge — squash docs/chore follow-ons into their feat commit.
+Use `git reset --soft HEAD~1 && git commit --amend --no-edit` for single-step squash.
 
 ---
 
